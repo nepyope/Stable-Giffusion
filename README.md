@@ -7,4 +7,4 @@ This model was trained on approximately 2k image grids, and while it does genera
 
 Btw the idea is just to generate image grids from [WebVid10M](https://m-bain.github.io/webvid-dataset/), and train SD to generate those.
 
-<img src="grid.jpg" width="768" height="768">
+<img src="sunset.png" width="768" height="768">
