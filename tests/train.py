@@ -381,15 +381,16 @@ def main():
         weight_dtype = jnp.bfloat16
 
     # Load models and create wrapper for stable diffusion
-    tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer",use_auth_token=True)
+    sd_path = "flax/stable-diffusion-2-1"
+    tokenizer = CLIPTokenizer.from_pretrained(sd_path, subfolder="tokenizer",use_auth_token=True)
     text_encoder = FlaxCLIPTextModel.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="text_encoder", dtype=weight_dtype,use_auth_token=True
+        sd_path, subfolder="text_encoder", dtype=weight_dtype,use_auth_token=True
     )
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="vae", dtype=weight_dtype,use_auth_token=True
+        sd_path, subfolder="vae", dtype=weight_dtype,use_auth_token=True
     )
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="unet", dtype=weight_dtype,use_auth_token=True
+       sd_path, subfolder="unet", dtype=weight_dtype,use_auth_token=True
     )
 
     # Optimization
@@ -430,8 +431,8 @@ def main():
             vae_outputs = vae.apply(
                 {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
             )
-            latents = vae_outputs.latent_dist.sample(sample_rng)
-            # (NHWC) -> (NCHW)
+            latents = vae_outputs.latent_dist.sample(sample_rng)            
+# (NHWC) -> (NCHW)
             latents = jnp.transpose(latents, (0, 3, 1, 2))
             latents = latents * 0.18215
 
@@ -449,7 +450,7 @@ def main():
 
             # Add noise to the latents according to the noise magnitude at each timestep
             # (this is the forward diffusion process)
-            noisy_latents = noise_scheduler.add_noise(noise_scheduler_state, latents, noise, timesteps)
+            noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
             # Get the text embedding for conditioning
             encoder_hidden_states = text_encoder(
@@ -467,7 +468,7 @@ def main():
             if noise_scheduler.config.prediction_type == "epsilon":
                 target = noise
             elif noise_scheduler.config.prediction_type == "v_prediction":
-                target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
+                target = noise_scheduler.get_velocity(latents, noise, timesteps)
             else:
                 raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
 
