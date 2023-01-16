@@ -14,12 +14,13 @@ from diffusers import FlaxStableDiffusionPipeline
 dtype = jnp.bfloat16
 
 pipeline, params = FlaxStableDiffusionPipeline.from_pretrained(
-    "CompVis/stable-diffusion-v1-4",
+    "sd-test",
     revision="bf16",
     dtype=dtype,
+    safety_checker=None,
 )
 
-prompt = "A cinematic film still of Morgan Freeman starring as Jimi Hendrix, portrait, 40mm lens, shallow depth of field, close up, split lighting, cinematic"
+prompt = "drone shot tracking around powerful geyser in rotorua FRAME0"
 prompt = [prompt] * jax.device_count()
 prompt_ids = pipeline.prepare_inputs(prompt)
 print(prompt_ids.shape)
@@ -32,5 +33,14 @@ def create_key(seed=0):
 rng = create_key(0)
 rng = jax.random.split(rng, jax.device_count())
 
-images = pipeline(prompt_ids, p_params, rng, jit=True,width=1024,height=1024)[0]
-print(images.shape)
+images = pipeline(prompt_ids, p_params, rng, jit=True,width=512,height=512)[0]
+
+# Define the local destination folder
+local_folder = "results"
+
+# Iterate over the images and save them to the local folder
+for i, image in enumerate(images):
+	image = image[0]
+	image = (image * 255).astype(np.uint8)
+	img = Image.fromarray(image)
+	img.save(f"{local_folder}/image_{i}.png")
