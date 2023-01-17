@@ -1,3 +1,4 @@
+from PIL import Image
 import argparse
 import logging
 import math
@@ -277,19 +278,8 @@ def main():
             args.dataset_config_name,
             cache_dir=args.cache_dir,
         )
-    else:
-        data_files = {}
-        if args.train_data_dir is not None:
-            data_files["train"] = os.path.join(args.train_data_dir, "**")
-        dataset = load_dataset(
-            "imagefolder",
-            data_files=data_files,
-            cache_dir=args.cache_dir,
-        )
-        # See more about loading custom images at
-        # https://huggingface.co/docs/datasets/v2.4.0/en/image_load#imagefolder
-
-    # Preprocessing the datasets.
+    print(dataset["train"])
+        # Preprocessing the datasets.
     # We need to tokenize inputs and targets.
     column_names = dataset["train"].column_names
 
@@ -374,6 +364,7 @@ def main():
         train_dataset, shuffle=True, collate_fn=collate_fn, batch_size=total_train_batch_size, drop_last=True
     )
 
+
     weight_dtype = jnp.float32
     if args.mixed_precision == "fp16":
         weight_dtype = jnp.float16
@@ -392,6 +383,39 @@ def main():
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
        sd_path, subfolder="unet", dtype=weight_dtype,use_auth_token=True
     )
+
+
+
+    #listdir train dataset
+    datadir='datatest'
+    data = os.listdir(datadir)[:4]
+    #store images in a list
+    images = []
+    for i in data:
+        images.append(Image.open(f'{datadir}/{i}'))
+    #store captions in a list
+    captions = []
+    for i in data:
+        captions.append(i[:-4])
+
+    #tokenize captions using inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
+
+    inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
+    input_ids = inputs.input_ids
+    images = [image.convert("RGB") for image in images]
+    images = [train_transforms(image) for image in images]
+
+    #make a dict called batch
+    examples = []
+    for i in range(len(images)):
+        example = {}
+        example["pixel_values"] = torch.tensor(images[i]).float()
+        example["input_ids"] = input_ids[i]
+        examples.append(example)
+    batch = collate_fn(examples)
+    print(batch)
+
+
 
     # Optimization
     if args.scale_lr:

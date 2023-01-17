@@ -7,7 +7,7 @@ python3 train.py \
   --dataset_name=$dataset_name \
   --resolution=512 --center_crop --random_flip \
   --train_batch_size=1 \
-  --max_train_steps=50000 \
+  --max_train_steps=5000 \
   --learning_rate=1e-05 \
   --max_grad_norm=1 \
   --output_dir="sd-test"
