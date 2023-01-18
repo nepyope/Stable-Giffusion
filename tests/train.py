@@ -170,8 +170,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                      **{f"MSE/Frame {k}": float(loss) for k, loss in enumerate(sq)},
                      **{f"MAE/Frame {k}": float(loss) for k, loss in enumerate(ab)},
                      "Step": i, "Runtime": timediff,
-                     "Speed/Videos per Day": i * batch_size / timediff,
-                     "Speed/Frames per Day": i * batch_size * context / timediff})
+                     "Speed/Videos per Day": i * batch_size / timediff * 24 * 3600,
+                     "Speed/Frames per Day": i * batch_size * context / timediff * 24 * 3600})
         with open("out.np", "wb") as f:
             np.savez(f, **to_host(state.params))
 
