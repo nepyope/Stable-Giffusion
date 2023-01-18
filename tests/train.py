@@ -34,7 +34,7 @@ def _conv_dimension_numbers(input_shape):
 class Conv3d(nn.Conv):
     @nn.compact
     def __call__(self, inputs: jax.Array) -> jax.Array:
-        shape = input.shape
+        shape = inputs.shape
         inputs = inputs.reshape(-1, _CONTEXT, shape[1:])
 
         inputs = jnp.asarray(inputs, self.dtype)
