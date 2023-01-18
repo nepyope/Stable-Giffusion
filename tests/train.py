@@ -118,7 +118,7 @@ def to_host(k):
 def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-12,
          max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
          workers: int = os.cpu_count() // 2, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
-         kernel: int = 3, data_path: str = "./urls"):
+         kernel: int = 3, data_path: str = "./urls", batch_size: int = jax.local_device_count()):
     global _KERNEL, _CONTEXT, _RESHAPE
     _CONTEXT, _KERNEL = context, kernel
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32,
@@ -144,6 +144,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
             # TODO: use perceptual loss
             dist = out - batch["pixel_values"]
+            dist = dist.reshape(batch_size, context, *dist.shape[1:])
             dist_sq = lax.pmean(lax.square(dist).mean((0, 2, 3, 4)), "batch")
             dist_abs = lax.pmean(dist.abs().mean((0, 2, 3, 4)), "batch")
             return dist_sq.mean(), (dist_sq, dist_abs)
@@ -156,7 +157,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
     state = jax_utils.replicate(state)
-    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch)
+    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, batch_size, prefetch)
     start_time = time.time()
     for epoch in range(100):
         for i, video in tqdm.tqdm(enumerate(data, 1)):
@@ -169,8 +170,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                      **{f"MSE/Frame {k}": float(loss) for k, loss in enumerate(sq)},
                      **{f"MAE/Frame {k}": float(loss) for k, loss in enumerate(ab)},
                      "Step": i, "Runtime": timediff,
-                     "Speed/Videos per Day": i * batch / timediff,
-                     "Speed/Frames per Day": i * batch * context / timediff})
+                     "Speed/Videos per Day": i * batch_size / timediff,
+                     "Speed/Frames per Day": i * batch_size * context / timediff})
         with open("out.np", "wb") as f:
             np.savez(f, **to_host(state.params))
 
