@@ -127,7 +127,7 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
 def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-12,
          max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
          workers: int = os.cpu_count() // 2, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
-         kernel: int = 3):
+         kernel: int = 3, data_path: str = "./urls"):
     global _KERNEL, _CONTEXT
     _CONTEXT, _KERNEL = context, kernel
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32,
@@ -158,7 +158,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
     state = jax_utils.replicate(state)
-    data = DataLoader(workers, "./data", downloaders, resolution, fps, context, jax.local_device_count(), prefetch)
+    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch)
     for epoch in range(100):
         for i, video in enumerate(data):
             batch = shard({"pixel_values": video, "idx": i})
