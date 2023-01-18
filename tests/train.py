@@ -146,7 +146,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             dist = out - batch["pixel_values"]
             dist = dist.reshape(-1, context, *dist.shape[1:])
             dist_sq = lax.pmean(lax.square(dist).mean((0, 2, 3, 4)), "batch")
-            dist_abs = lax.pmean(dist.abs().mean((0, 2, 3, 4)), "batch")
+            dist_abs = lax.pmean(lax.abs(dist).mean((0, 2, 3, 4)), "batch")
             return dist_sq.mean(), (dist_sq, dist_abs)
 
         grad_fn = jax.value_and_grad(compute_loss, has_aux=True)
