@@ -166,7 +166,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             state, scalars = p_train_step(state, batch)
             (sq, sq_m, ab, ab_m) = to_host(scalars)
             timediff = time.time() - start_time
-            run.log({"MSE/Total": float(sq_m[0]), "MAE/Total": float(ab_m),
+            run.log({"MSE/Total": float(sq_m), "MAE/Total": float(ab_m),
                      **{f"MSE/Frame {k}": float(loss) for k, loss in enumerate(sq)},
                      **{f"MAE/Frame {k}": float(loss) for k, loss in enumerate(ab)},
                      "Step": i, "Runtime": timediff,
