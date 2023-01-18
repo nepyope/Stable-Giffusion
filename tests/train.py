@@ -88,7 +88,8 @@ class Conv3d(nn.Conv):
         else:
             padding = tuple((operator.index(lo), operator.index(hi)) for lo, hi in padding)
 
-        padding = ((_KERNEL - 1, 0),) + padding
+        if _RESHAPE:
+            padding = ((_KERNEL - 1, 0),) + padding
 
         y = lax.conv_general_dilated(inputs, kernel, strides, padding,
                                      lhs_dilation=input_dilation, rhs_dilation=kernel_dilation,
