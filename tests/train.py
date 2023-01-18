@@ -7,6 +7,7 @@ import numpy as np
 import optax
 import typer
 from diffusers import FlaxAutoencoderKL
+from diffusers.models.vae_flax import FlaxDiagonalGaussianDistribution
 from diffusers.utils import check_min_version
 from flax import jax_utils, linen as nn
 from flax.training import train_state
@@ -115,7 +116,7 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
         elif isinstance(v, (list, tuple)):
             new_weights[k] = list(zip(*sorted(patch_weights(dict(enumerate(v)), "conv" in k or do_patch).items()))[1])
         elif isinstance(v, jax.Array) and do_patch and k == "kernel":
-            new_weights[k] = jnp.stack([v] * _KERNEL, 0) * scale.reshape(-1, *(1,) * (v.ndim))
+            new_weights[k] = jnp.stack([v] * _KERNEL, 0) * scale.reshape(-1, *(1,) * v.ndim)
         elif isinstance(v, jax.Array):
             new_weights[k] = v
         else:
@@ -147,11 +148,18 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     def train_step(state: train_state.TrainState, batch: Dict[str, Union[np.ndarray, int]]):
         def compute_loss(params):
-            vae_outputs = vae.apply({"params": params}, batch["pixel_values"], method=vae.encode)
+            original_params = state.params
+            state.params = params
+            hidden_states = vae.encoder(batch["pixel_values"])
+            moments = vae.quant_conv(hidden_states)
+            posterior = FlaxDiagonalGaussianDistribution(moments)
             # Later on simply add previous latent and embed(timestamp) as "text embeddings" to the unet
-            latents = vae_outputs.latent_dist.sample(jax.random.PRNGKey(batch["idx"]))
-            out = vae.apply({"params": params}, latents, method=vae.decode)
+            latents = posterior.sample(jax.random.PRNGKey(batch["idx"]))
+
+            hidden_states = vae.post_quant_conv(latents)
+            out = vae.decoder(hidden_states)
             loss = lax.square(out - batch["pixel_values"]).mean()  # TODO: Use perceptual loss
+            state.params = original_params
             return lax.pmean(loss, "batch")
 
         grad_fn = jax.value_and_grad(compute_loss)
