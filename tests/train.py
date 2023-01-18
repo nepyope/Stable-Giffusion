@@ -20,6 +20,7 @@ from data import DataLoader
 check_min_version("0.10.0.dev0")
 _CONTEXT = 0
 _KERNEL = 3
+_RESHAPE = False
 
 
 def _conv_dimension_numbers(input_shape):
@@ -35,7 +36,8 @@ class Conv3d(nn.Conv):
     @nn.compact
     def __call__(self, inputs: jax.Array) -> jax.Array:
         shape = inputs.shape
-        inputs = inputs.reshape(-1, _CONTEXT, *shape[1:])
+        if _RESHAPE:
+            inputs = inputs.reshape(-1, _CONTEXT, *shape[1:])
 
         inputs = jnp.asarray(inputs, self.dtype)
 
@@ -99,8 +101,9 @@ class Conv3d(nn.Conv):
             bias = self.param('bias', self.bias_init, (self.features,), self.param_dtype)
             bias = jnp.asarray(bias, self.dtype)
             y += jnp.reshape(bias, (1,) * (y.ndim - 1) + (-1,))
-
-        return y.reshape(shape)
+        if _RESHAPE:
+            return y.reshape(shape[0], *y.shape[2:])
+        return y
 
 
 nn.Conv = Conv3d
@@ -128,7 +131,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
          workers: int = os.cpu_count() // 2, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
          kernel: int = 3, data_path: str = "./urls"):
-    global _KERNEL, _CONTEXT
+    global _KERNEL, _CONTEXT, _RESHAPE
     _CONTEXT, _KERNEL = context, kernel
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32,
                                                         use_auth_token=True)
@@ -141,6 +144,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     optimizer = optax.chain(optax.clip_by_global_norm(max_grad_norm), adamw)
 
     state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
+
+    _RESHAPE = True
 
     def train_step(state: train_state.TrainState, batch: Dict[str, Union[np.ndarray, int]]):
         def compute_loss(params):
