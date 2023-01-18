@@ -165,7 +165,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch)
     for epoch in range(100):
         for i, video in enumerate(data):
-            batch = shard({"pixel_values": video, "idx": i})
+            batch = shard({"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]), "idx": i})
             state, loss = p_train_step(state, batch)
             print(datetime.datetime.now(), epoch, i, loss)
         with open("out.np", "wb") as f:
