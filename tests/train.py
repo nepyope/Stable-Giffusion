@@ -70,11 +70,12 @@ def conv_call(self, inputs: jax.Array) -> jax.Array:
         effective_rhs_shape = [(k - 1) * r + 1 for k, r in zip(rhs_shape, kernel_dilation)]
         padding = lax.padtype_to_pads(np.take(pad_shape, lhs_perm)[2:], effective_rhs_shape, strides, padding)
 
-    y = _original_call(self, inputs)
-
-    if "quant" not in self.scope.name and not hasattr(self, "values_added"):
+    if quant_reshape and "values_added" not in self.__dict__:
         self.__dict__.update({"values_added": True, "padding": ((_KERNEL - 1, 0),) + tuple(padding),
-                              "strides": (1,) + tuple(strides), "input_dilation": (1,) + tuple(input_dilation)})
+                              "strides": (1,) + tuple(strides), "input_dilation": (1,) + tuple(input_dilation),
+                              "kernel_size": (3,) + tuple(kernel_size)})
+
+    y = _original_call(self, inputs)
 
     if quant_reshape:
         return y.reshape(shape[0], *y.shape[2:])
