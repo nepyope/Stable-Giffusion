@@ -187,7 +187,7 @@ class DataLoader:
                 continue
             batch.append(from_share(out))
             if len(batch) == self.batch_size:
-                yield np.stack(batch)
+                yield np.concatenate(batch, axis=0)
                 batch.clear()
         for w in workers:
             w.join()
