@@ -24,92 +24,64 @@ _RESHAPE = False
 
 def _conv_dimension_numbers(input_shape):
     """Computes the dimension numbers based on the input shape."""
-    ndim = len(input_shape)
-    lhs_spec = (0, ndim - 1) + tuple(range(1, ndim - 1))
-    rhs_spec = (ndim - 1, ndim - 2) + tuple(range(0, ndim - 2))
-    out_spec = lhs_spec
-    return lax.ConvDimensionNumbers(lhs_spec, rhs_spec, out_spec)
 
 
-class Conv3d(nn.Conv):
-    @nn.compact
-    def __call__(self, inputs: jax.Array) -> jax.Array:
-        shape = inputs.shape
-
-        inputs = jnp.asarray(inputs, self.dtype)
-
-        if isinstance(self.kernel_size, int):
-            raise TypeError('The kernel size must be specified as a'
-                            ' tuple/list of integers (eg.: [3, 3]).')
-        else:
-            kernel_size = tuple(self.kernel_size)
-
-        def maybe_broadcast(x):
-            if x is None:
-                # backward compatibility with using None as sentinel for
-                # broadcast 1
-                x = 1
-            if isinstance(x, int):
-                return (x,) * len(kernel_size)
-            return x
-
-        is_single_input = False
-        if inputs.ndim == len(kernel_size) + 1:
-            is_single_input = True
-            inputs = jnp.expand_dims(inputs, axis=0)
-
-        strides = maybe_broadcast(self.strides)  # self.strides or (1,) * (inputs.ndim - 2)
-        input_dilation = maybe_broadcast(self.input_dilation)
-        kernel_dilation = maybe_broadcast(self.kernel_dilation)
-
-        in_features = inputs.shape[-1]
-        assert in_features % self.feature_group_count == 0
-        reshape = _RESHAPE and "quant" not in self.scope.name
-        kernel_shape = (_KERNEL,) * reshape + kernel_size + (in_features // self.feature_group_count, self.features)
-        kernel = self.param('kernel', self.kernel_init, kernel_shape, self.param_dtype)
-
-        kernel = jnp.asarray(kernel, self.dtype)
-
-        if reshape:
-            inputs = inputs.reshape(-1, _CONTEXT, *shape[1:])
+_original_call = nn.Conv.__call__
 
 
-        padding = self.padding
-        if self.padding == 'CIRCULAR':
-            kernel_size_dilated = [(k - 1) * d + 1 for k, d in zip(kernel_size, kernel_dilation)]
-            pads = [(0, 0)] + [((k - 1) // 2, k // 2) for k in kernel_size_dilated] + [(0, 0)]
-            inputs = jnp.pad(inputs, pads, mode='wrap')
-            padding = 'VALID'
+def conv_call(self, inputs: jax.Array) -> jax.Array:
+    shape = inputs.shape
 
-        if isinstance(self.padding, str):
-            pad_shape = inputs.shape[int(reshape):]
-            lhs_perm, rhs_perm, _ = _conv_dimension_numbers(pad_shape)
-            rhs_shape = np.take(pad_shape, rhs_perm)[2:]
-            effective_rhs_shape = [(k - 1) * r + 1 for k, r in zip(rhs_shape, kernel_dilation)]
-            padding = lax.padtype_to_pads(np.take(pad_shape, lhs_perm)[2:], effective_rhs_shape, strides, padding)
+    inputs = jnp.asarray(inputs, self.dtype)
+    kernel_size = tuple(self.kernel_size)
 
-        if reshape:
-            padding = ((_KERNEL - 1, 0),) + tuple(padding)
-            strides = (1,) + tuple(strides)
-            input_dilation = (1,) + tuple(input_dilation)
+    def maybe_broadcast(x):
+        if x is None:
+            x = 1
+        if isinstance(x, int):
+            return (x,) * len(kernel_size)
+        return x
 
-        y = lax.conv_general_dilated(inputs, kernel, strides, padding,
-                                     lhs_dilation=input_dilation, rhs_dilation=kernel_dilation,
-                                     dimension_numbers=_conv_dimension_numbers(inputs.shape),
-                                     feature_group_count=self.feature_group_count,
-                                     precision=self.precision)
-        if is_single_input:
-            y = jnp.squeeze(y, axis=0)
-        if self.use_bias:
-            bias = self.param('bias', self.bias_init, (self.features,), self.param_dtype)
-            bias = jnp.asarray(bias, self.dtype)
-            y += jnp.reshape(bias, (1,) * (y.ndim - 1) + (-1,))
-        if reshape:
-            return y.reshape(shape[0], *y.shape[2:])
-        return y
+    if inputs.ndim == len(kernel_size) + 1:
+        inputs = jnp.expand_dims(inputs, axis=0)
+
+    strides = maybe_broadcast(self.strides)  # self.strides or (1,) * (inputs.ndim - 2)
+    input_dilation = maybe_broadcast(self.input_dilation)
+    kernel_dilation = maybe_broadcast(self.kernel_dilation)
+
+    quant_reshape = _RESHAPE and "quant" not in self.scope.name
+
+    if quant_reshape:
+        inputs = inputs.reshape(-1, _CONTEXT, *shape[1:])
+
+    padding = self.padding
+    if self.padding == 'CIRCULAR':
+        kernel_size_dilated = [(k - 1) * d + 1 for k, d in zip(kernel_size, kernel_dilation)]
+        pads = [(0, 0)] + [((k - 1) // 2, k // 2) for k in kernel_size_dilated] + [(0, 0)]
+        inputs = jnp.pad(inputs, pads, mode='wrap')
+        padding = 'VALID'
+
+    if isinstance(self.padding, str):
+        pad_shape = inputs.shape[int(quant_reshape):]
+        ndim = len(pad_shape)
+        lhs_perm = (0, ndim - 1) + tuple(range(1, ndim - 1))
+        rhs_perm = (ndim - 1, ndim - 2) + tuple(range(0, ndim - 2))
+        rhs_shape = np.take(pad_shape, rhs_perm)[2:]
+        effective_rhs_shape = [(k - 1) * r + 1 for k, r in zip(rhs_shape, kernel_dilation)]
+        padding = lax.padtype_to_pads(np.take(pad_shape, lhs_perm)[2:], effective_rhs_shape, strides, padding)
+
+    y = _original_call(self, inputs)
+
+    if "quant" not in self.scope.name and not hasattr(self, "values_added"):
+        self.__dict__.update({"values_added": True, "padding": ((_KERNEL - 1, 0),) + tuple(padding),
+                              "strides": (1,) + tuple(strides), "input_dilation": (1,) + tuple(input_dilation)})
+
+    if quant_reshape:
+        return y.reshape(shape[0], *y.shape[2:])
+    return y
 
 
-nn.Conv = Conv3d
+nn.Conv.__call__ = conv_call
 
 
 def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
@@ -172,7 +144,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32)}
             state, loss = p_train_step(state, batch)
-            print(datetime.datetime.now(), epoch, i, loss)
+            print(datetime.datetime.now(), epoch, i, loss[0])
         with open("out.np", "wb") as f:
             np.savez(f, **jax.device_get(jax.tree_util.tree_map(lambda x: x[0], state.params)))
 
