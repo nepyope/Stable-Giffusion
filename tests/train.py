@@ -10,7 +10,6 @@ from diffusers import FlaxAutoencoderKL
 from diffusers.utils import check_min_version
 from flax import jax_utils, linen as nn
 from flax.training import train_state
-from flax.training.common_utils import shard
 from jax import lax, numpy as jnp
 
 from data import DataLoader
@@ -125,6 +124,7 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
             new_weights[k] = v
     return new_weights
 
+
 @app.command()
 def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-12,
          max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
@@ -165,7 +165,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch)
     for epoch in range(100):
         for i, video in enumerate(data):
-            batch = shard({"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]), "idx": i})
+            batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
+                     "idx": jnp.full((jax.local_device_count(),), i, jnp.int32)}
             state, loss = p_train_step(state, batch)
             print(datetime.datetime.now(), epoch, i, loss)
         with open("out.np", "wb") as f:
