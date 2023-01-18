@@ -148,18 +148,10 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     def train_step(state: train_state.TrainState, batch: Dict[str, Union[np.ndarray, int]]):
         def compute_loss(params):
-            original_params = state.params
-            state.params = params
-            hidden_states = vae.encoder(batch["pixel_values"])
-            moments = vae.quant_conv(hidden_states)
-            posterior = FlaxDiagonalGaussianDistribution(moments)
-            # Later on simply add previous latent and embed(timestamp) as "text embeddings" to the unet
-            latents = posterior.sample(jax.random.PRNGKey(batch["idx"]))
-
-            hidden_states = vae.post_quant_conv(latents)
-            out = vae.decoder(hidden_states)
+            inp = jnp.transpose(batch["pixel_values"], (0, 3, 1, 2))
+            out = state.apply_fn(inp)
+            out = jnp.transpose(out, (0, 3, 1, 2))
             loss = lax.square(out - batch["pixel_values"]).mean()  # TODO: Use perceptual loss
-            state.params = original_params
             return lax.pmean(loss, "batch")
 
         grad_fn = jax.value_and_grad(compute_loss)
