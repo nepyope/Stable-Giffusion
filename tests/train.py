@@ -151,7 +151,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         def compute_loss(params):
             inp = jnp.transpose(batch["pixel_values"], (0, 3, 1, 2))
             out = vae.apply({"params": params}, inp).sample
-            out = jnp.transpose(out, (0, 3, 1, 2))
+            out = jnp.transpose(out, (0, 2, 3, 1))
             loss = lax.square(out - batch["pixel_values"]).mean()  # TODO: Use perceptual loss
             return lax.pmean(loss, "batch")
 
