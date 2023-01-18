@@ -1,7 +1,6 @@
 import dataclasses
 import json
 import multiprocessing
-import multiprocessing.shared_memory
 import os
 import random
 import shutil
@@ -11,7 +10,8 @@ import uuid
 from datetime import datetime
 from queue import Empty
 from typing import List, Callable
-
+from multiprocessing import managers
+from multiprocessing import shared_memory
 import ffmpeg
 import numpy as np
 import requests
@@ -27,7 +27,7 @@ class Share:
     name: str
 
 
-def to_share(inp: np.array, smm: multiprocessing.managers.SharedMemoryManager) -> Share:
+def to_share(inp: np.array, smm: managers.SharedMemoryManager) -> Share:
     mem = smm.SharedMemory(inp.nbytes)
     np_mem = np.array(inp.shape, dtype=inp.dtype, buffer=mem.buf)
     np_mem[:] = inp[:]
@@ -35,7 +35,7 @@ def to_share(inp: np.array, smm: multiprocessing.managers.SharedMemoryManager) -
 
 
 def from_share(share: Share) -> np.ndarray:
-    mem = multiprocessing.shared_memory.SharedMemory(name=share.name, create=False)
+    mem = shared_memory.SharedMemory(name=share.name, create=False)
     arr = np.copy(np.array(share.shape, share.dtype, buffer=mem.buf))
     mem.unlink()
     return arr
@@ -125,7 +125,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
     youtube_getter.add_default_info_extractors()
     random.Random(worker_id).shuffle(work)
 
-    with multiprocessing.managers.SharedMemoryManager() as smm:
+    with managers.SharedMemoryManager() as smm:
         for wor in work:
             video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
 
