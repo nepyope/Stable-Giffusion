@@ -8,10 +8,11 @@ import threading
 import traceback
 import uuid
 from datetime import datetime
-from queue import Empty
-from typing import List, Callable
 from multiprocessing import managers
 from multiprocessing import shared_memory
+from queue import Empty
+from typing import List, Callable
+
 import ffmpeg
 import numpy as np
 import requests
@@ -29,14 +30,14 @@ class Share:
 
 def to_share(inp: np.array, smm: managers.SharedMemoryManager) -> Share:
     mem = smm.SharedMemory(inp.nbytes)
-    np_mem = np.array(inp.shape, dtype=inp.dtype, buffer=mem.buf)
+    np_mem = np.ndarray(inp.shape, dtype=inp.dtype, buffer=mem.buf)
     np_mem[:] = inp[:]
     return Share(dtype=inp.dtype, shape=inp.shape, name=mem.name)
 
 
 def from_share(share: Share) -> np.ndarray:
     mem = shared_memory.SharedMemory(name=share.name, create=False)
-    arr = np.copy(np.array(share.shape, share.dtype, buffer=mem.buf))
+    arr = np.copy(np.ndarray(share.shape, share.dtype, buffer=mem.buf))
     mem.unlink()
     return arr
 
@@ -116,7 +117,7 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
 
 
 def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_image_size: int, target_fps: int,
-                 context_size: int, queue: multiprocessing.Queue):
+                 context_size: int, queue: multiprocessing.Queue, smm: managers.SharedMemoryManager):
     youtube_base = 'https://www.youtube.com/watch?v='
     youtube_getter = youtube_dl.YoutubeDL(
         {'writeautomaticsub': False, 'socket_timeout': 600, "quiet": True, "verbose": False, "no_warnings": True,
@@ -125,21 +126,20 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
     youtube_getter.add_default_info_extractors()
     random.Random(worker_id).shuffle(work)
 
-    with managers.SharedMemoryManager() as smm:
-        for wor in work:
-            video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+    for wor in work:
+        video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
 
-            if not video_urls:
-                continue
+        if not video_urls:
+            continue
 
-            frames = get_video_frames(video_urls, target_image_size, target_fps)
+        frames = get_video_frames(video_urls, target_image_size, target_fps)
 
-            if frames is None or not frames.size or frames.shape[0] < context_size:
-                continue
-            frames = frames[:frames.shape[0] // context_size * context_size]
-            frames = frames.reshape(-1, context_size, *frames.shape[1:])
-            for ctx in frames:
-                queue.put(to_share(ctx, smm))
+        if frames is None or not frames.size or frames.shape[0] < context_size:
+            continue
+        frames = frames[:frames.shape[0] // context_size * context_size]
+        frames = frames.reshape(-1, context_size, *frames.shape[1:])
+        for ctx in frames:
+            queue.put(to_share(ctx, smm))
     queue.put(_DONE)
 
 
@@ -165,30 +165,31 @@ class DataLoader:
         lock = multiprocessing.Semaphore(self.video_downloaders)
         queue = multiprocessing.Queue(self.prefetch)
         workers = []
-        for i in range(self.workers):
-            work = self.ids[int(len(self.ids) * i / self.workers):int(len(self.ids) * (i + 1) / self.workers)]
-            workers.append(multiprocessing.Process(args=(work, i, lock, self.resolution, self.fps, self.context, queue),
-                                                   daemon=True, target=frame_worker))
-        for w in workers:
-            w.start()
+        with managers.SharedMemoryManager() as smm:
+            for i in range(self.workers):
+                work = self.ids[int(len(self.ids) * i / self.workers):int(len(self.ids) * (i + 1) / self.workers)]
+                args = work, i, lock, self.resolution, self.fps, self.context, queue, smm
+                workers.append(multiprocessing.Process(args=args, daemon=True, target=frame_worker))
+            for w in workers:
+                w.start()
 
-        done = 0
-        batch = []
-        while True:
-            if done == self.workers:
-                break
-            try:
-                out = queue.get(timeout=120)
-            except Empty:
-                print(datetime.datetime.now(), "Queue empty. Waiting another 120 seconds.")
-                continue
-            if out == _DONE:
-                done += 1
-                continue
-            batch.append(from_share(out))
-            if len(batch) == self.batch_size:
-                yield np.concatenate(batch, axis=0)
-                batch.clear()
-        for w in workers:
-            w.join()
+            done = 0
+            batch = []
+            while True:
+                if done == self.workers:
+                    break
+                try:
+                    out = queue.get(timeout=120)
+                except Empty:
+                    print(datetime.datetime.now(), "Queue empty. Waiting another 120 seconds.")
+                    continue
+                if out == _DONE:
+                    done += 1
+                    continue
+                batch.append(from_share(out))
+                if len(batch) == self.batch_size:
+                    yield np.concatenate(batch, axis=0)
+                    batch.clear()
+            for w in workers:
+                w.join()
         raise StopIteration

@@ -1,5 +1,4 @@
 import datetime
-import operator
 import os
 from typing import Union, Dict, Any
 
@@ -16,6 +15,7 @@ from jax import lax, numpy as jnp
 
 from data import DataLoader
 
+app = typer.Typer(pretty_exceptions_enable=False)
 # Will error if the minimal version of diffusers is not installed. Remove at your own risks.
 check_min_version("0.10.0.dev0")
 _CONTEXT = 0
@@ -80,13 +80,11 @@ class Conv3d(nn.Conv):
             padding = 'VALID'
 
         if isinstance(self.padding, str):
-            lhs_perm, rhs_perm, _ = _conv_dimension_numbers(inputs.shape[1:])
-            rhs_shape = np.take(inputs.shape[1:], rhs_perm)[2:]
+            pad_shape = inputs.shape[int(_RESHAPE):]
+            lhs_perm, rhs_perm, _ = _conv_dimension_numbers(pad_shape)
+            rhs_shape = np.take(pad_shape, rhs_perm)[2:]
             effective_rhs_shape = [(k - 1) * r + 1 for k, r in zip(rhs_shape, kernel_dilation)]
-            padding = lax.padtype_to_pads(np.take(inputs.shape[1:], lhs_perm)[2:], effective_rhs_shape, strides,
-                                          padding)
-        else:
-            padding = tuple((operator.index(lo), operator.index(hi)) for lo, hi in padding)
+            padding = lax.padtype_to_pads(np.take(pad_shape, lhs_perm)[2:], effective_rhs_shape, strides, padding)
 
         if _RESHAPE:
             padding = ((_KERNEL - 1, 0),) + padding
@@ -127,7 +125,7 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
             new_weights[k] = v
     return new_weights
 
-
+@app.command()
 def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-12,
          max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
          workers: int = os.cpu_count() // 2, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
@@ -175,4 +173,4 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    app()
