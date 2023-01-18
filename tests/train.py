@@ -66,8 +66,7 @@ class Conv3d(nn.Conv):
 
         in_features = inputs.shape[-1]
         assert in_features % self.feature_group_count == 0
-        kernel_shape = kernel_size + (
-            in_features // self.feature_group_count, self.features)
+        kernel_shape = (_KERNEL,) * _RESHAPE + kernel_size + (in_features // self.feature_group_count, self.features)
         kernel = self.param('kernel', self.kernel_init, kernel_shape, self.param_dtype)
         kernel = jnp.asarray(kernel, self.dtype)
 
