@@ -159,7 +159,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch)
     start_time = time.time()
     for epoch in range(100):
-        for i, video in tqdm.tqdm(enumerate(data), 1):
+        for i, video in tqdm.tqdm(enumerate(data, 1)):
             batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32)}
             state, scalars = p_train_step(state, batch)
