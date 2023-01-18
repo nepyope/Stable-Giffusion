@@ -7,7 +7,6 @@ import numpy as np
 import optax
 import typer
 from diffusers import FlaxAutoencoderKL
-from diffusers.models.vae_flax import FlaxDiagonalGaussianDistribution
 from diffusers.utils import check_min_version
 from flax import jax_utils, linen as nn
 from flax.training import train_state
@@ -86,9 +85,9 @@ class Conv3d(nn.Conv):
             padding = lax.padtype_to_pads(np.take(pad_shape, lhs_perm)[2:], effective_rhs_shape, strides, padding)
 
         if _RESHAPE:
-            padding = ((_KERNEL - 1, 0),) + padding
-            strides = (1,) + strides
-            input_dilation = (1,) + input_dilation
+            padding = ((_KERNEL - 1, 0),) + tuple(padding)
+            strides = (1,) + tuple(strides)
+            input_dilation = (1,) + tuple(input_dilation)
 
         y = lax.conv_general_dilated(inputs, kernel, strides, padding,
                                      lhs_dilation=input_dilation, rhs_dilation=kernel_dilation,
