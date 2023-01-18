@@ -71,6 +71,11 @@ def conv_call(self, inputs: jax.Array) -> jax.Array:
         padding = lax.padtype_to_pads(np.take(pad_shape, lhs_perm)[2:], effective_rhs_shape, strides, padding)
 
     if quant_reshape and "values_added" not in self.__dict__:
+        # We need to change self.strides while keeping the rest of self intact, so that _original_call can use
+        # both the new values (such as the patched strides) and the old values (scope).
+        # Unfortunately, Flax overwrites __setattr_, so we can't set self.strides manually. instead, we have to
+        # circumvent their __setattr__ assertions (which are sensible in almost all cases!) by manually updating the
+        # object's __dict__. After the update, self.strides will have the new value, so that _original_call can use it.
         self.__dict__.update({"values_added": True, "padding": ((_KERNEL - 1, 0),) + tuple(padding),
                               "strides": (1,) + tuple(strides), "input_dilation": (1,) + tuple(input_dilation),
                               "kernel_size": (3,) + tuple(kernel_size)})
