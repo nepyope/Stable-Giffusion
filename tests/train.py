@@ -35,8 +35,6 @@ class Conv3d(nn.Conv):
     @nn.compact
     def __call__(self, inputs: jax.Array) -> jax.Array:
         shape = inputs.shape
-        if _RESHAPE:
-            inputs = inputs.reshape(-1, _CONTEXT, *shape[1:])
 
         inputs = jnp.asarray(inputs, self.dtype)
 
@@ -66,9 +64,15 @@ class Conv3d(nn.Conv):
 
         in_features = inputs.shape[-1]
         assert in_features % self.feature_group_count == 0
-        kernel_shape = (_KERNEL,) * _RESHAPE + kernel_size + (in_features // self.feature_group_count, self.features)
+        reshape = _RESHAPE and "quant" not in self.scope.name
+        kernel_shape = (_KERNEL,) * reshape + kernel_size + (in_features // self.feature_group_count, self.features)
         kernel = self.param('kernel', self.kernel_init, kernel_shape, self.param_dtype)
+
         kernel = jnp.asarray(kernel, self.dtype)
+
+        if reshape:
+            inputs = inputs.reshape(-1, _CONTEXT, *shape[1:])
+
 
         padding = self.padding
         if self.padding == 'CIRCULAR':
@@ -78,13 +82,13 @@ class Conv3d(nn.Conv):
             padding = 'VALID'
 
         if isinstance(self.padding, str):
-            pad_shape = inputs.shape[int(_RESHAPE):]
+            pad_shape = inputs.shape[int(reshape):]
             lhs_perm, rhs_perm, _ = _conv_dimension_numbers(pad_shape)
             rhs_shape = np.take(pad_shape, rhs_perm)[2:]
             effective_rhs_shape = [(k - 1) * r + 1 for k, r in zip(rhs_shape, kernel_dilation)]
             padding = lax.padtype_to_pads(np.take(pad_shape, lhs_perm)[2:], effective_rhs_shape, strides, padding)
 
-        if _RESHAPE:
+        if reshape:
             padding = ((_KERNEL - 1, 0),) + tuple(padding)
             strides = (1,) + tuple(strides)
             input_dilation = (1,) + tuple(input_dilation)
@@ -100,7 +104,7 @@ class Conv3d(nn.Conv):
             bias = self.param('bias', self.bias_init, (self.features,), self.param_dtype)
             bias = jnp.asarray(bias, self.dtype)
             y += jnp.reshape(bias, (1,) * (y.ndim - 1) + (-1,))
-        if _RESHAPE:
+        if reshape:
             return y.reshape(shape[0], *y.shape[2:])
         return y
 
@@ -113,7 +117,7 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
     scale = jnp.where(jnp.arange(_KERNEL) == (_KERNEL - 1), 1, 1e-3)
     for k, v in weights.items():
         if isinstance(v, dict):
-            new_weights[k] = patch_weights(v, "conv" in k or do_patch)
+            new_weights[k] = patch_weights(v, ("conv" in k and "quant" not in k) or do_patch)
         elif isinstance(v, (list, tuple)):
             new_weights[k] = list(zip(*sorted(patch_weights(dict(enumerate(v)), "conv" in k or do_patch).items()))[1])
         elif isinstance(v, jax.Array) and do_patch and k == "kernel":
