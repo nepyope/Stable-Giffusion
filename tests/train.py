@@ -87,6 +87,8 @@ class Conv3d(nn.Conv):
 
         if _RESHAPE:
             padding = ((_KERNEL - 1, 0),) + padding
+            strides = (1,) + strides
+            input_dilation = (1,) + input_dilation
 
         y = lax.conv_general_dilated(inputs, kernel, strides, padding,
                                      lhs_dilation=input_dilation, rhs_dilation=kernel_dilation,
