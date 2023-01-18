@@ -10,7 +10,12 @@ from typing import Optional
 import numpy as np
 import torch
 import torch.utils.checkpoint
-
+import os
+from pytube import YouTube
+import cv2
+from youtube_transcript_api import YouTubeTranscriptApi
+import json
+import re
 import jax
 import jax.numpy as jnp
 import optax
@@ -234,6 +239,18 @@ def get_params_to_save(params):
 def main():
     args = parse_args()
 
+    path = 'urls/chunks_721M_work_split_0.json'
+    #open the json file
+    with open(path) as f:
+        data = json.load(f)
+
+    ids = [item for sublist in data['id'] for item in sublist]
+    duration = [item for sublist in data['duration'] for item in sublist]
+    #zip the ids and duration together
+    ids_duration = list(zip(ids, duration))
+
+    max_batch = 10 * jax.device_count()
+
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
         datefmt="%m/%d/%Y %H:%M:%S",
@@ -249,99 +266,15 @@ def main():
     if args.seed is not None:
         set_seed(args.seed)
 
-    # Handle the repository creation
-    if jax.process_index() == 0:
-        if args.push_to_hub:
-            if args.hub_model_id is None:
-                repo_name = get_full_repo_name(Path(args.output_dir).name, token=args.hub_token)
-            else:
-                repo_name = args.hub_model_id
-            repo = Repository(args.output_dir, clone_from=repo_name)
-
-            with open(os.path.join(args.output_dir, ".gitignore"), "w+") as gitignore:
-                if "step_*" not in gitignore:
-                    gitignore.write("step_*\n")
-                if "epoch_*" not in gitignore:
-                    gitignore.write("epoch_*\n")
-        elif args.output_dir is not None:
-            os.makedirs(args.output_dir, exist_ok=True)
-
-    # Get the datasets: you can either provide your own training and evaluation files (see below)
-    # or specify a Dataset from the hub (the dataset will be downloaded automatically from the datasets Hub).
-
-    # In distributed training, the load_dataset function guarantees that only one local process can concurrently
-    # download the dataset.
-    if args.dataset_name is not None:
-        # Downloading and loading a dataset from the hub.
-        dataset = load_dataset(
-            args.dataset_name,
-            args.dataset_config_name,
-            cache_dir=args.cache_dir,
-        )
-    print(dataset["train"])
-        # Preprocessing the datasets.
-    # We need to tokenize inputs and targets.
-    column_names = dataset["train"].column_names
-
-    # 6. Get the column names for input/target.
-    dataset_columns = dataset_name_mapping.get(args.dataset_name, None)
-    if args.image_column is None:
-        image_column = dataset_columns[0] if dataset_columns is not None else column_names[0]
-    else:
-        image_column = args.image_column
-        if image_column not in column_names:
-            raise ValueError(
-                f"--image_column' value '{args.image_column}' needs to be one of: {', '.join(column_names)}"
-            )
-    if args.caption_column is None:
-        caption_column = dataset_columns[1] if dataset_columns is not None else column_names[1]
-    else:
-        caption_column = args.caption_column
-        if caption_column not in column_names:
-            raise ValueError(
-                f"--caption_column' value '{args.caption_column}' needs to be one of: {', '.join(column_names)}"
-            )
-
-    # Preprocessing the datasets.
-    # We need to tokenize input captions and transform the images.
-    def tokenize_captions(examples, is_train=True):
-        captions = []
-        for caption in examples[caption_column]:
-            if isinstance(caption, str):
-                captions.append(caption)
-            elif isinstance(caption, (list, np.ndarray)):
-                # take a random caption if there are multiple
-                captions.append(random.choice(caption) if is_train else caption[0])
-            else:
-                raise ValueError(
-                    f"Caption column `{caption_column}` should contain either strings or lists of strings."
-                )
-        inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
-        input_ids = inputs.input_ids
-        return input_ids
-
     train_transforms = transforms.Compose(
         [
-            transforms.Resize(args.resolution, interpolation=transforms.InterpolationMode.BILINEAR),
-            transforms.CenterCrop(args.resolution) if args.center_crop else transforms.RandomCrop(args.resolution),
-            transforms.RandomHorizontalFlip() if args.random_flip else transforms.Lambda(lambda x: x),
+            transforms.Resize((640,384), interpolation=transforms.InterpolationMode.BILINEAR),
+            #transforms.CenterCrop(args.resolution) if args.center_crop else transforms.RandomCrop(args.resolution),
+            #transforms.RandomHorizontalFlip() if args.random_flip else transforms.Lambda(lambda x: x),
             transforms.ToTensor(),
             transforms.Normalize([0.5], [0.5]),
         ]
     )
-
-    def preprocess_train(examples):
-        images = [image.convert("RGB") for image in examples[image_column]]
-        examples["pixel_values"] = [train_transforms(image) for image in images]
-        examples["input_ids"] = tokenize_captions(examples)
-
-        return examples
-
-    if jax.process_index() == 0:
-        if args.max_train_samples is not None:
-            dataset["train"] = dataset["train"].shuffle(seed=args.seed).select(range(args.max_train_samples))
-        # Set the training transforms
-        train_dataset = dataset["train"].with_transform(preprocess_train)
 
     def collate_fn(examples):
         pixel_values = torch.stack([example["pixel_values"] for example in examples])
@@ -359,10 +292,6 @@ def main():
 
         return batch
 
-    total_train_batch_size = args.train_batch_size * jax.local_device_count()
-    train_dataloader = torch.utils.data.DataLoader(
-        train_dataset, shuffle=True, collate_fn=collate_fn, batch_size=total_train_batch_size, drop_last=True
-    )
 
 
     weight_dtype = jnp.float32
@@ -386,37 +315,7 @@ def main():
 
 
 
-    #listdir train dataset
-    datadir='datatest'
-    data = os.listdir(datadir)[:4]
-    #store images in a list
-    images = []
-    for i in data:
-        images.append(Image.open(f'{datadir}/{i}'))
-    #store captions in a list
-    captions = []
-    for i in data:
-        captions.append(i[:-4])
-
-    #tokenize captions using inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
-
-    inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
-    input_ids = inputs.input_ids
-    images = [image.convert("RGB") for image in images]
-    images = [train_transforms(image) for image in images]
-
-    #make a dict called batch
-    examples = []
-    for i in range(len(images)):
-        example = {}
-        example["pixel_values"] = torch.tensor(images[i]).float()
-        example["input_ids"] = input_ids[i]
-        examples.append(example)
-    batch = collate_fn(examples)
-    print(batch)
-
-
-
+    total_train_batch_size = args.train_batch_size * jax.local_device_count()   
     # Optimization
     if args.scale_lr:
         args.learning_rate = args.learning_rate * total_train_batch_size
@@ -441,7 +340,7 @@ def main():
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=1000
     )
-    noise_scheduler_state = noise_scheduler.create_state()
+    noise_scheduler.create_state()
 
     # Initialize our training
     rng = jax.random.PRNGKey(args.seed)
@@ -520,48 +419,89 @@ def main():
     text_encoder_params = jax_utils.replicate(text_encoder.params)
     vae_params = jax_utils.replicate(vae_params)
 
-    # Train!
-    num_update_steps_per_epoch = math.ceil(len(train_dataloader))
 
-    # Scheduler and math around the number of training steps.
-    if args.max_train_steps is None:
-        args.max_train_steps = args.num_train_epochs * num_update_steps_per_epoch
+#get video and train
 
-    args.num_train_epochs = math.ceil(args.max_train_steps / num_update_steps_per_epoch)
+    for video in ids_duration[:5]:#test
+        frames = []
+        captions = []
+        if video[1] < 600:
+            try:
+                video_url = f"https://www.youtube.com/watch?v={video[0]}"
+                yt = YouTube(video_url)
+                folder = "frames"
+                video_path = f'{folder}/video.mp4'
+                # download video and save to "frames" folder as video.mp4
+                yt.streams.filter(res="480p").first().download(output_path=folder, filename="video.mp4")
 
-    logger.info("***** Running training *****")
-    logger.info(f"  Num examples = {len(train_dataset)}")
-    logger.info(f"  Num Epochs = {args.num_train_epochs}")
-    logger.info(f"  Instantaneous batch size per device = {args.train_batch_size}")
-    logger.info(f"  Total train batch size (w. parallel & distributed) = {total_train_batch_size}")
-    logger.info(f"  Total optimization steps = {args.max_train_steps}")
+                # open video as 24fps
+                vidcap = cv2.VideoCapture(video_path)
+                success, image = vidcap.read()
+                fps = int(vidcap.get(cv2.CAP_PROP_FPS))
+                vidcap.set(cv2.CAP_PROP_FPS, 24)#this changes the fps of the video, but not the total number of frames
 
-    global_step = 0
+                # get transcript
+                srt = YouTubeTranscriptApi.get_transcript(video[0])
+                caption_index = 0
+                caption_index = 0
+                caption = srt[caption_index]['text']
+                caption_duration = int(srt[caption_index]['duration'])*fps
+                count = 0
 
-    epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
-    for epoch in epochs:
-        # ======================== Training ================================
 
-        train_metrics = []
+                while success:
+                    #get current frame number
+                    if caption != "[Music]":
+                        frames.append(Image.fromarray(image))
+                        captions.append(f"{re.sub(r'[^A-Za-z0-9 ]', '', caption)} {caption_duration-count}")
+                    success, image = vidcap.read()
+                    count += 1
+                    if count == caption_duration:
+                        caption_index += 1
+                        caption = srt[caption_index]['text']
+                        caption_duration = int(srt[caption_index]['duration'])*fps
+                        count = 0
 
-        steps_per_epoch = len(train_dataset) // total_train_batch_size
-        train_step_progress_bar = tqdm(total=steps_per_epoch, desc="Training...", position=1, leave=False)
-        # train
-        for batch in train_dataloader:
-            batch = shard(batch)
-            state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
-            train_metrics.append(train_metric)
+                # close video 
+                vidcap.release()
 
-            train_step_progress_bar.update(1)
+                # delete video
+                os.remove(video_path)
+            except:
+                continue
 
-            global_step += 1
-            if global_step >= args.max_train_steps:
-                break
+        if len(frames) > 0:
+            inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
+            input_ids = inputs.input_ids
+            images = [image.convert("RGB") for image in frames]
+            images = [train_transforms(image) for image in images]
 
-        train_metric = jax_utils.unreplicate(train_metric)
+            #make a dict called batch
+            examples = []
+            for i in range(len(images)):
+                example = {}
+                example["pixel_values"] = torch.tensor(images[i]).float()
+                example["input_ids"] = input_ids[i]
+                examples.append(example)
+            data = collate_fn(examples[:max_batch])
+            n_batches = len(data)//max_batch
 
-        train_step_progress_bar.close()
-        epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
+            epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
+            #so in theory if i do like 1000 epochs it should be fine?
+            for epoch in epochs:
+                train_step_progress_bar = tqdm(total=n_batches, desc="Training...", position=1, leave=False)    
+                # ======================== Training ================================
+                train_metrics = []
+
+                batch = data
+                batch = shard(batch)
+                state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
+                train_metrics.append(train_metric)
+                train_step_progress_bar.update(1)
+
+                train_metric = jax_utils.unreplicate(train_metric)
+                train_step_progress_bar.close()
+                epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
 
     # Create the pipeline using using the trained modules and save it.
     if jax.process_index() == 0:
@@ -590,10 +530,6 @@ def main():
                 "safety_checker": safety_checker.params,
             },
         )
-
-        if args.push_to_hub:
-            repo.push_to_hub(commit_message="End of training", blocking=False, auto_lfs_prune=True)
-
 
 if __name__ == "__main__":
     main()
