@@ -1,11 +1,13 @@
-import datetime
 import os
+import time
 from typing import Union, Dict, Any
 
 import jax
 import numpy as np
 import optax
+import tqdm
 import typer
+import wandb
 from diffusers import FlaxAutoencoderKL
 from diffusers.utils import check_min_version
 from flax import jax_utils, linen as nn
@@ -108,6 +110,10 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
     return new_weights
 
 
+def to_host(k):
+    return jax.device_get(jax.tree_util.tree_map(lambda x: x[0], k))
+
+
 @app.command()
 def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-12,
          max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
@@ -119,6 +125,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                                                         use_auth_token=True)
     vae_params = patch_weights(vae_params)
     vae: FlaxAutoencoderKL = vae
+    run = wandb.init(project="stable-giffusion")
 
     adamw = optax.adamw(learning_rate=optax.constant_schedule(lr), b1=beta1, b2=beta2, eps=eps,
                         weight_decay=weight_decay)
@@ -134,25 +141,38 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             inp = jnp.transpose(batch["pixel_values"], (0, 3, 1, 2))
             out = vae.apply({"params": params}, inp).sample
             out = jnp.transpose(out, (0, 2, 3, 1))
-            loss = lax.square(out - batch["pixel_values"]).mean()  # TODO: Use perceptual loss
-            return lax.pmean(loss, "batch")
 
-        grad_fn = jax.value_and_grad(compute_loss)
-        loss, grad = grad_fn(state.params)
+            # TODO: use perceptual loss
+            dist = out - batch["pixel_values"]
+            dist_sq = lax.pmean(lax.square(dist).mean((0, 2, 3, 4)), "batch")
+            dist_abs = lax.pmean(dist.abs().mean((0, 2, 3, 4)), "batch")
+            return dist_sq.mean(), (dist_sq, dist_abs)
+
+        grad_fn = jax.value_and_grad(compute_loss, has_aux=True)
+        (loss, (dist_sq, dist_abs)), grad = grad_fn(state.params)
+        grad = lax.pmean(grad, "batch")
         new_state = state.apply_gradients(grads=grad)
-        return new_state, loss
+        return new_state, (dist_sq, dist_sq.mean(), dist_abs, dist_abs.mean())
 
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
     state = jax_utils.replicate(state)
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch)
+    start_time = time.time()
     for epoch in range(100):
-        for i, video in enumerate(data):
+        for i, video in tqdm.tqdm(enumerate(data), 1):
             batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32)}
-            state, loss = p_train_step(state, batch)
-            print(datetime.datetime.now(), epoch, i, loss[0])
+            state, scalars = p_train_step(state, batch)
+            (sq, sq_m, ab, ab_m) = to_host(scalars)
+            timediff = time.time() - start_time
+            run.log({"MSE/Total": float(sq_m[0]), "MAE/Total": float(ab_m),
+                     **{f"MSE/Frame {k}": float(loss) for k, loss in enumerate(sq)},
+                     **{f"MAE/Frame {k}": float(loss) for k, loss in enumerate(ab)},
+                     "Step": i, "Runtime": timediff,
+                     "Speed/Videos per Day": i * batch / timediff,
+                     "Speed/Frames per Day": i * batch * context / timediff})
         with open("out.np", "wb") as f:
-            np.savez(f, **jax.device_get(jax.tree_util.tree_map(lambda x: x[0], state.params)))
+            np.savez(f, **to_host(state.params))
 
 
 if __name__ == "__main__":
