@@ -159,7 +159,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                                                         use_auth_token=True)
     vae_params = patch_weights(vae_params)
     vae: FlaxAutoencoderKL = vae
-    run = wandb.init(project="stable-giffusion")
+    run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
 
     optimizer = optax.chain(optax.clip_by_global_norm(max_grad_norm),
                             scale_by_laprop(beta1, beta2, eps),
