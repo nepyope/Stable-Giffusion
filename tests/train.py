@@ -152,7 +152,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
          workers: int = os.cpu_count() // 2, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
          kernel: int = 3, data_path: str = "./urls", batch_size: int = jax.local_device_count(),
-         sample_interval: int = 64, parallel_videos: int = 128):
+         sample_interval: int = 64, parallel_videos: int = 128,
+         tracing_start_step: int = 128, tracing_stop_step: int = 196):
     global _KERNEL, _CONTEXT, _RESHAPE
     _CONTEXT, _KERNEL = context, kernel
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32,
@@ -233,6 +234,11 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                      "Step": i, "Runtime": timediff,
                      "Speed/Videos per Day": i * batch_size / timediff * 24 * 3600,
                      "Speed/Frames per Day": i * batch_size * context / timediff * 24 * 3600})
+
+            if i == tracing_start_step:
+                jax.profiler.start_trace("trace")
+            if i == tracing_stop_step:
+                jax.profiler.stop_trace()
         with open("out.np", "wb") as f:
             np.savez(f, **to_host(state.params))
 
