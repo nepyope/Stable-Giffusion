@@ -152,7 +152,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
          workers: int = os.cpu_count() // 2, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
          kernel: int = 3, data_path: str = "./urls", batch_size: int = jax.local_device_count(),
-         sample_interval: int = 64):
+         sample_interval: int = 64, parallel_videos: int = 128):
     global _KERNEL, _CONTEXT, _RESHAPE
     _CONTEXT, _KERNEL = context, kernel
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32,
@@ -210,7 +210,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
 
     state = jax_utils.replicate(state)
-    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, batch_size, prefetch)
+    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, batch_size, prefetch, parallel_videos)
     start_time = time.time()
     for epoch in range(100):
         for i, video in tqdm.tqdm(enumerate(data, 1)):

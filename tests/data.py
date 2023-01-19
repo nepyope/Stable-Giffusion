@@ -138,14 +138,13 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             continue
         frames = frames[:frames.shape[0] // context_size * context_size]
         frames = frames.reshape(-1, context_size, *frames.shape[1:])
-        for ctx in frames:
-            queue.put(to_share(ctx, smm))
+        queue.put(to_share(frames, smm))
     queue.put(_DONE)
 
 
 class DataLoader:
     def __init__(self, workers: int, url_dir: str, video_downloaders: int, resolution: int, fps: int, context: int,
-                 batch_size: int, prefetch: int, seed: int = 0):
+                 batch_size: int, prefetch: int, parallel_videos: int, seed: int = 0):
         self.workers = workers
         self.video_downloaders = video_downloaders
         self.resolution = resolution
@@ -154,6 +153,7 @@ class DataLoader:
         self.prefetch = prefetch
         self.batch_size = batch_size
         self.seed = seed
+        self.parallel_videos = parallel_videos
         self.ids = ids = []
         for path in os.listdir(url_dir):
             with open(f'{url_dir}/{path}', 'rb') as f:
@@ -174,22 +174,29 @@ class DataLoader:
                 w.start()
 
             done = 0
-            batch = []
+            samples = []
+            idx = 0
             while True:
                 if done == self.workers:
                     break
-                try:
-                    out = queue.get(timeout=120)
-                except Empty:
-                    print(datetime.datetime.now(), "Queue empty. Waiting another 120 seconds.")
-                    continue
-                if out == _DONE:
-                    done += 1
-                    continue
-                batch.append(from_share(out))
-                if len(batch) == self.batch_size:
+                if len(samples) < self.parallel_videos:
+                    try:
+                        out = queue.get(timeout=120)
+                    except Empty:
+                        print(datetime.datetime.now(), "Queue empty. Waiting another 120 seconds.")
+                        continue
+                    if out == _DONE:
+                        done += 1
+                        continue
+                    samples.append(list(from_share(out)))
+                else:
+                    batch = []
+                    for _ in range(self.batch_size):
+                        idx = (idx + 1) % self.parallel_videos
+                        while not samples[idx]:
+                            del samples[idx]
+                        batch.append(samples[idx].pop(0))
                     yield np.concatenate(batch, axis=0)
-                    batch.clear()
             for w in workers:
                 w.join()
         raise StopIteration
