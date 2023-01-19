@@ -189,7 +189,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         def compute_loss(params):
             img = batch["pixel_values"].astype(jnp.float32) / 255
             inp = jnp.transpose(img, (0, 3, 1, 2))
-            out = vae.apply({"params": params}, inp).sample
+            out = vae.apply({"params": params}, inp, sample_posterior=True).sample
             out = jnp.transpose(out, (0, 2, 3, 1))
 
             # TODO: use perceptual loss
@@ -216,8 +216,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32)}
             extra = {}
             if i % sample_interval == 0:
-                extra["Samples/Reconstruction"] = wandb.Image(p_sample(state.params, batch).reshape(-1, resolution, 3))
-                extra["Samples/Ground Truth"] = wandb.Image(batch["pixel_values"] / 255)
+                extra["Samples/Reconstruction"] = wandb.Image(to_host(p_sample(state.params, batch)).reshape(-1, resolution, 3))
+                extra["Samples/Ground Truth"] = wandb.Image(batch["pixel_values"][0].reshape(-1, resolution, 3) / 255)
 
             state, scalars = p_train_step(state, batch)
             (sq, sq_m, ab, ab_m) = to_host(scalars)
