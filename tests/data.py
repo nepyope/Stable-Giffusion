@@ -14,6 +14,7 @@ from queue import Empty
 from typing import List, Callable
 
 import ffmpeg
+import jax
 import numpy as np
 import requests
 import youtube_dl
@@ -159,6 +160,9 @@ class DataLoader:
             with open(f'{url_dir}/{path}', 'rb') as f:
                 vals = json.load(f)
                 ids.extend([x for i, d in zip(vals["id"], vals["duration"]) for x, z in zip(i, d) if z > context / fps])
+        random.Random(self.seed).shuffle(self.ids)
+        self.ids = ids[int(len(ids) * jax.process_index() / jax.process_count()):
+                       int(len(ids) * (jax.process_index() + 1) / jax.process_count())]
 
     def __iter__(self):
         random.Random(self.seed).shuffle(self.ids)
