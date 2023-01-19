@@ -75,6 +75,17 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
         ext = f.get('ext')
         format_note = f.get('format_note')
 
+        '''
+        if not 'automatic_captions' in info:
+            continue
+
+        url = info['automatic_captions']['en'][4]['url']
+        vtt = requests.get(url, proxies=proxies).text
+        print(vtt)
+        subs = decode_vtt(vtt)
+        '''
+
+
         if any(x is None for x in (width, height, url, ext, format_note)):
             continue
         if any(not x for x in (width, height, url, ext)):
@@ -83,6 +94,125 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
             continue
         video_urls.append({'width': width, 'height': height, 'ext': f['ext'], 'url': f['url']})
     return sorted(video_urls, key=lambda x: (x['ext'] != 'mp4', x['width'], x['height']))
+
+
+
+def decode_vtt(content: str):
+    '''
+    :param content: String with the of the .vtt file.
+    :return: String with combined text, List with Strings split at time stamps and List with float second time stamps.
+    This Function decodes a vtt to get the contend with  time stamps.
+    '''
+
+    if '</c><' in content and '><c>' in content:
+
+        # Split the content at line brake and check if word level time stamps are in the line.
+        content = [l for l in content.split('\n') if '<c>' in l]
+
+        # Connect list of strings back together.
+        content = "".join(content)
+
+        # Split String at time stamp headers.
+        content = content.split('><c>')
+
+        # Create output lists.
+        words = []
+        stamps = []
+
+        # Loop word and time stamp string list.
+        for c in content:
+
+            # Split word and time stamp part.
+            word = c[:-12]
+            stam = c[-12:]
+
+            # Clean word string.
+            if not '</c><' in word:
+                word = word.replace('</c>', ' ')
+
+            word = word.replace('</c>', '')
+            word = word.replace('<', '')
+            word = word.lstrip().rstrip()
+
+            # Check if time stamp is in stamp string.
+            if ':' in stam and '.' in stam:
+
+                # Split time stamp string at time punctuation marks.
+                stam = stam.split(':')
+                stam = stam[:-1] + stam[-1].split('.')
+
+                # Converting time stamp string in to second based float.
+                stam = datetime.timedelta(hours=int(stam[0]), minutes=int(stam[1]), seconds=int(stam[2]), milliseconds=int(stam[3]))
+                stam = stam.total_seconds()
+
+                # add word string and second based float to output list.
+                words.append(' ' + word)
+                stamps.append(stam)
+            else:
+                # If no time stamp contain in time stamp part we assume that it is a another word.
+                # If it as a another word we add it to the previous word string.
+                if len(words) > 0:
+                    words[-1] = words[-1] + " " + c.replace('</c>', '').replace('<', '').lstrip().rstrip()
+
+        return ''.join(words), words, stamps
+
+    else:
+
+        # Split the content at line brake.
+        content = content.split('\n')
+
+        # Create output lists.
+        words_buffer = []
+        stamps_buffer = []
+        words = []
+        stamps = []
+
+        # Loop word and time stamp string list.
+        for idx in range(len(content)):
+            if ' --> ' in content[idx]:
+                stamps_buffer.append(content[idx])
+
+                word_buffer = []
+                idx += 1
+                while idx + 1 < len(content) and ' --> ' not in content[idx + 1]:
+                    word_buffer.append(content[idx])
+                    idx += 1
+
+                words_buffer.append(" ".join(word_buffer))
+
+        for idx in range(len(stamps_buffer)):
+            s = stamps_buffer[idx].split(' --> ')
+
+            s_1 = s[0]
+            s_1 = s_1.split(':')
+            s_1 = s_1[:-1] + s_1[-1].split('.')
+
+            s_2 = s[1]
+            s_2 = s_2.split(':')
+            s_2 = s_2[:-1] + s_2[-1].split('.')
+
+            s_1 = datetime.timedelta(hours=int(s_1[0]), minutes=int(s_1[1]), seconds=int(s_1[2]),
+                                     milliseconds=int(s_1[3]))
+            s_1 = s_1.total_seconds()
+
+            s_2 = datetime.timedelta(hours=int(s_2[0]), minutes=int(s_2[1]), seconds=int(s_2[2]),
+                                     milliseconds=int(s_2[3]))
+            s_2 = s_2.total_seconds()
+
+            stamps_buffer[idx] = [s_1, s_2]
+
+        for idx in range(len(words_buffer)):
+            word = words_buffer[idx].lstrip().rstrip()
+            wor = [' ' + w for w in word.split(' ')]
+
+            stamp = stamps_buffer[idx]
+
+            time_snip = (stamp[1] - stamp[0]) / len(wor)
+
+            stamps += [stamp[0] + i * time_snip for i in range(len(wor))]
+            words += wor
+
+        return ''.join(words), words, stamps
 
 
 def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps: int) -> np.ndarray:
