@@ -13,8 +13,9 @@ from diffusers.utils import check_min_version
 from flax import jax_utils, linen as nn
 from flax.training import train_state
 from jax import lax, numpy as jnp
-from optax import OptState, Updates, GradientTransformation
+from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
+from optax._src.transform import ScaleByAdamState
 
 from data import DataLoader
 
@@ -116,13 +117,6 @@ def to_host(k):
     return jax.device_get(jax.tree_util.tree_map(lambda x: x[0], k))
 
 
-class ScaleByAdamState(OptState):
-    """State for the Adam algorithm."""
-    count: jax.Array  # shape=(), dtype=jnp.int32.
-    mu: Updates
-    nu: Updates
-
-
 def update_moment(updates, moments, decay, order):
     """Compute the exponential moving average of the `order-th` moment."""
     return jax.tree_map(lambda g, t: (1 - decay) * (g ** order) + decay * t, updates, moments)
@@ -216,7 +210,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32)}
             extra = {}
             if i % sample_interval == 0:
-                extra["Samples/Reconstruction"] = wandb.Image(to_host(p_sample(state.params, batch)).reshape(-1, resolution, 3))
+                extra["Samples/Reconstruction"] = wandb.Image(
+                    to_host(p_sample(state.params, batch)).reshape(-1, resolution, 3))
                 extra["Samples/Ground Truth"] = wandb.Image(batch["pixel_values"][0].reshape(-1, resolution, 3) / 255)
 
             state, scalars = p_train_step(state, batch)
