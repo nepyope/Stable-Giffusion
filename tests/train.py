@@ -138,12 +138,13 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     def train_step(state: train_state.TrainState, batch: Dict[str, Union[np.ndarray, int]]):
         def compute_loss(params):
-            inp = jnp.transpose(batch["pixel_values"], (0, 3, 1, 2))
+            img = batch["pixel_values"].astype(jnp.float32) / 255
+            inp = jnp.transpose(img, (0, 3, 1, 2))
             out = vae.apply({"params": params}, inp).sample
             out = jnp.transpose(out, (0, 2, 3, 1))
 
             # TODO: use perceptual loss
-            dist = out - batch["pixel_values"]
+            dist = out - img
             dist = dist.reshape(-1, context, *dist.shape[1:])
             dist_sq = lax.pmean(lax.square(dist).mean((0, 2, 3, 4)), "batch")
             dist_abs = lax.pmean(lax.abs(dist).mean((0, 2, 3, 4)), "batch")
