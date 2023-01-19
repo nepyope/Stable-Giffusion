@@ -173,12 +173,14 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     def sample(params, batch: Dict[str, Union[np.ndarray, int]]):
         inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
-        posterior = vae.apply({"params": params}, vae.encode, inp, deterministic=True)
+        posterior = vae.apply({"params": params}, inp, method=vae.encode)
+
         hidden_states_rng = posterior.latent_dist.sample(jax.random.PRNGKey(batch["idx"]))
         hidden_states_mode = posterior.latent_dist.mode()
 
-        sample_rng = vae.apply({"params": params}, vae.decode, hidden_states_rng).sample
-        sample_mode = vae.apply({"params": params}, vae.decode, hidden_states_mode).sample
+        sample_rng = vae.apply({"params": params}, hidden_states_rng, method=vae.decode).sample
+        sample_mode = vae.apply({"params": params}, hidden_states_mode, method=vae.decode).sample
+
         return jnp.transpose(sample_rng, (0, 2, 3, 1)), jnp.transpose(sample_mode, (0, 2, 3, 1))
 
     p_sample = jax.pmap(sample, "batch")
