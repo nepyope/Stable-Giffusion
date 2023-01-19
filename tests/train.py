@@ -172,18 +172,24 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     _RESHAPE = True
 
     def sample(params, batch: Dict[str, Union[np.ndarray, int]]):
-        img = batch["pixel_values"].astype(jnp.float32) / 255
-        inp = jnp.transpose(img, (0, 3, 1, 2))
-        out = vae.apply({"params": params}, inp).sample
-        return jnp.transpose(out, (0, 2, 3, 1))
+        inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
+        posterior = vae.apply({"params": params}, vae.encode, inp, deterministic=True)
+        hidden_states_rng = posterior.latent_dist.sample(jax.random.PRNGKey(batch["idx"]))
+        hidden_states_mode = posterior.latent_dist.mode()
 
-    p_sample = jax.pmap(sample, "batch", donate_argnums=(1,))
+        sample_rng = vae.apply({"params": params}, vae.decode, hidden_states_rng).sample
+        sample_mode = vae.apply({"params": params}, vae.decode, hidden_states_mode).sample
+        return jnp.transpose(sample_rng, (0, 2, 3, 1)), jnp.transpose(sample_mode, (0, 2, 3, 1))
+
+    p_sample = jax.pmap(sample, "batch")
 
     def train_step(state: train_state.TrainState, batch: Dict[str, Union[np.ndarray, int]]):
         def compute_loss(params):
+            gaussian, dropout = jax.random.split(jax.random.PRNGKey(batch["idx"]))
             img = batch["pixel_values"].astype(jnp.float32) / 255
             inp = jnp.transpose(img, (0, 3, 1, 2))
-            out = vae.apply({"params": params}, inp, sample_posterior=True).sample
+            out = vae.apply({"params": params}, inp, rngs={"gaussian": gaussian, "dropout": dropout},
+                            sample_posterior=True, deterministic=False).sample
             out = jnp.transpose(out, (0, 2, 3, 1))
 
             # TODO: use perceptual loss
@@ -210,8 +216,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32)}
             extra = {}
             if i % sample_interval == 0:
-                extra["Samples/Reconstruction"] = wandb.Image(
-                    to_host(p_sample(state.params, batch)).reshape(-1, resolution, 3))
+                s_rng, s_mode = to_host(p_sample(state.params, batch))
+                extra["Samples/Reconstruction (RNG)"] = wandb.Image(s_rng.reshape(-1, resolution, 3))
+                extra["Samples/Reconstruction (Mode)"] = wandb.Image(s_mode.reshape(-1, resolution, 3))
                 extra["Samples/Ground Truth"] = wandb.Image(batch["pixel_values"][0].reshape(-1, resolution, 3) / 255)
 
             state, scalars = p_train_step(state, batch)
