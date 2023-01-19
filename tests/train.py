@@ -118,7 +118,8 @@ def to_host(k):
 def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-12,
          max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
          workers: int = os.cpu_count() // 2, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
-         kernel: int = 3, data_path: str = "./urls", batch_size: int = jax.local_device_count()):
+         kernel: int = 3, data_path: str = "./urls", batch_size: int = jax.local_device_count(),
+         sample_interval: int = 64):
     global _KERNEL, _CONTEXT, _RESHAPE
     _CONTEXT, _KERNEL = context, kernel
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32,
@@ -135,6 +136,14 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
 
     _RESHAPE = True
+
+    def sample(params, batch: Dict[str, Union[np.ndarray, int]]):
+        img = batch["pixel_values"].astype(jnp.float32) / 255
+        inp = jnp.transpose(img, (0, 3, 1, 2))
+        out = vae.apply({"params": params}, inp).sample
+        return jnp.transpose(out, (0, 2, 3, 1))
+
+    p_sample = jax.pmap(sample, "batch", donate_argnums=(1,))
 
     def train_step(state: train_state.TrainState, batch: Dict[str, Union[np.ndarray, int]]):
         def compute_loss(params):
@@ -157,6 +166,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         return new_state, (dist_sq, dist_sq.mean(), dist_abs, dist_abs.mean())
 
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
+
     state = jax_utils.replicate(state)
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, batch_size, prefetch)
     start_time = time.time()
@@ -164,12 +174,18 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         for i, video in tqdm.tqdm(enumerate(data, 1)):
             batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32)}
+            extra = {}
+            if i % sample_interval == 0:
+                extra["Samples/Reconstruction"] = wandb.Image(p_sample(state.params, batch).reshape(-1, resolution, 3))
+                extra["Samples/Ground Truth"] = wandb.Image(batch["pixel_values"] / 255)
+
             state, scalars = p_train_step(state, batch)
             (sq, sq_m, ab, ab_m) = to_host(scalars)
             timediff = time.time() - start_time
             run.log({"MSE/Total": float(sq_m), "MAE/Total": float(ab_m),
                      **{f"MSE/Frame {k}": float(loss) for k, loss in enumerate(sq)},
                      **{f"MAE/Frame {k}": float(loss) for k, loss in enumerate(ab)},
+                     **extra,
                      "Step": i, "Runtime": timediff,
                      "Speed/Videos per Day": i * batch_size / timediff * 24 * 3600,
                      "Speed/Frames per Day": i * batch_size * context / timediff * 24 * 3600})
