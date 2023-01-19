@@ -1,0 +1,203 @@
+2023-01-19 12:47:22,769 INFO    StreamThr :72220 [internal.py:wandb_internal():87] W&B internal server running at pid: 72220, started at: 2023-01-19 12:47:22.768571
+2023-01-19 12:47:22,773 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: status
+2023-01-19 12:47:22,774 INFO    WriterThread:72220 [datastore.py:open_for_write():85] open: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/run-zln3cxk6.wandb
+2023-01-19 12:47:22,775 DEBUG   SenderThread:72220 [sender.py:send():334] send: header
+2023-01-19 12:47:22,912 DEBUG   SenderThread:72220 [sender.py:send():334] send: run
+2023-01-19 12:47:23,078 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: check_version
+2023-01-19 12:47:23,080 INFO    SenderThread:72220 [dir_watcher.py:__init__():216] watching files in: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files
+2023-01-19 12:47:23,080 INFO    SenderThread:72220 [sender.py:_start_run_threads():1065] run started: zln3cxk6 with start time 1674132442.768262
+2023-01-19 12:47:23,080 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: summary_record
+2023-01-19 12:47:23,081 INFO    SenderThread:72220 [sender.py:_save_file():1319] saving file wandb-summary.json with policy end
+2023-01-19 12:47:23,081 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: check_version
+2023-01-19 12:47:23,178 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: run_start
+2023-01-19 12:47:23,179 DEBUG   HandlerThread:72220 [system_info.py:__init__():31] System info init
+2023-01-19 12:47:23,179 DEBUG   HandlerThread:72220 [system_info.py:__init__():46] System info init done
+2023-01-19 12:47:23,179 INFO    HandlerThread:72220 [system_monitor.py:start():151] Starting system monitor
+2023-01-19 12:47:23,179 INFO    SystemMonitor:72220 [system_monitor.py:_start():116] Starting system asset monitoring threads
+2023-01-19 12:47:23,180 INFO    HandlerThread:72220 [system_monitor.py:probe():172] Collecting system info
+2023-01-19 12:47:23,180 INFO    SystemMonitor:72220 [interfaces.py:start():168] Started cpu
+2023-01-19 12:47:23,181 INFO    SystemMonitor:72220 [interfaces.py:start():168] Started disk
+2023-01-19 12:47:23,182 INFO    SystemMonitor:72220 [interfaces.py:start():168] Started memory
+2023-01-19 12:47:23,187 INFO    SystemMonitor:72220 [interfaces.py:start():168] Started network
+2023-01-19 12:47:23,212 DEBUG   HandlerThread:72220 [system_info.py:probe():195] Probing system
+2023-01-19 12:47:23,219 DEBUG   HandlerThread:72220 [system_info.py:_probe_git():180] Probing git
+2023-01-19 12:47:23,234 DEBUG   HandlerThread:72220 [system_info.py:_probe_git():188] Probing git done
+2023-01-19 12:47:23,234 DEBUG   HandlerThread:72220 [system_info.py:probe():241] Probing system done
+2023-01-19 12:47:23,234 DEBUG   HandlerThread:72220 [system_monitor.py:probe():181] {'os': 'Linux-5.13.0-1023-gcp-x86_64-with-glibc2.29', 'python': '3.8.10', 'heartbeatAt': '2023-01-19T12:47:23.212072', 'startedAt': '2023-01-19T12:47:22.759912', 'docker': None, 'cuda': None, 'args': (), 'state': 'running', 'program': 'train.py', 'codePath': 'tests/train.py', 'git': {'remote': 'https://github.com/nepyope/Stable-Giffusion', 'commit': '25991f8a7136a23974050fec5438ef3165fdeea0'}, 'email': None, 'root': '/home/ubuntu/Stable-Giffusion', 'host': 't1v-n-855f6bf4-w-0', 'username': 'ubuntu', 'executable': '/usr/bin/python3', 'cpu_count': 120, 'cpu_count_logical': 240, 'cpu_freq': {'current': 2249.9980000000096, 'min': 0.0, 'max': 0.0}, 'cpu_freq_per_core': [{'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}, {'current': 2249.998, 'min': 0.0, 'max': 0.0}], 'disk': {'total': 96.74600601196289, 'used': 19.88626480102539}, 'memory': {'total': 400.4725532531738}}
+2023-01-19 12:47:23,235 INFO    HandlerThread:72220 [system_monitor.py:probe():182] Finished collecting system info
+2023-01-19 12:47:23,235 INFO    HandlerThread:72220 [system_monitor.py:probe():185] Publishing system info
+2023-01-19 12:47:23,235 DEBUG   HandlerThread:72220 [system_info.py:_save_pip():51] Saving list of pip packages installed into the current environment
+2023-01-19 12:47:23,235 DEBUG   HandlerThread:72220 [system_info.py:_save_pip():67] Saving pip packages done
+2023-01-19 12:47:23,237 INFO    HandlerThread:72220 [system_monitor.py:probe():187] Finished publishing system info
+2023-01-19 12:47:23,241 DEBUG   SenderThread:72220 [sender.py:send():334] send: files
+2023-01-19 12:47:23,242 INFO    SenderThread:72220 [sender.py:_save_file():1319] saving file wandb-metadata.json with policy now
+2023-01-19 12:47:23,250 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: stop_status
+2023-01-19 12:47:23,250 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: stop_status
+2023-01-19 12:47:23,286 DEBUG   SenderThread:72220 [sender.py:send():334] send: telemetry
+2023-01-19 12:47:23,508 INFO    Thread-16 :72220 [upload_job.py:push():143] Uploaded file /tmp/tmpnfp_cd87wandb/2ug9hsam-wandb-metadata.json
+2023-01-19 12:47:24,082 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_created():275] file/dir created: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/wandb-summary.json
+2023-01-19 12:47:24,082 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_created():275] file/dir created: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/requirements.txt
+2023-01-19 12:47:24,082 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_created():275] file/dir created: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/wandb-metadata.json
+2023-01-19 12:47:25,081 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_created():275] file/dir created: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:47:27,082 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:47:27,843 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: status_report
+2023-01-19 12:47:31,083 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:47:33,084 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:47:33,349 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: status_report
+2023-01-19 12:47:35,085 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:47:37,086 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:47:38,249 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: keepalive
+2023-01-19 12:47:39,195 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: status_report
+2023-01-19 12:47:41,087 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:47:43,088 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:47:43,250 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: keepalive
+2023-01-19 12:47:44,274 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: status_report
+2023-01-19 12:47:47,089 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:47:48,251 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: keepalive
+2023-01-19 12:47:49,090 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:47:49,814 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: status_report
+2023-01-19 12:47:51,091 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:47:53,253 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: keepalive
+2023-01-19 12:47:55,092 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:47:55,385 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: status_report
+2023-01-19 12:47:56,093 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/config.yaml
+2023-01-19 12:47:58,254 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: keepalive
+2023-01-19 12:47:59,095 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:48:00,896 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: status_report
+2023-01-19 12:48:01,095 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:48:03,096 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:48:03,256 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: keepalive
+2023-01-19 12:48:05,097 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:48:06,161 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: status_report
+2023-01-19 12:48:06,206 DEBUG   SenderThread:72220 [sender.py:send():334] send: exit
+2023-01-19 12:48:06,206 INFO    SenderThread:72220 [sender.py:send_exit():557] handling exit code: 1
+2023-01-19 12:48:06,207 INFO    SenderThread:72220 [sender.py:send_exit():559] handling runtime: 43
+2023-01-19 12:48:06,212 INFO    SenderThread:72220 [sender.py:_save_file():1319] saving file wandb-summary.json with policy end
+2023-01-19 12:48:06,213 INFO    SenderThread:72220 [sender.py:send_exit():565] send defer
+2023-01-19 12:48:06,213 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:06,213 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 0
+2023-01-19 12:48:06,213 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:06,214 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 0
+2023-01-19 12:48:06,214 INFO    SenderThread:72220 [sender.py:transition_state():585] send defer: 1
+2023-01-19 12:48:06,214 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:06,214 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 1
+2023-01-19 12:48:06,214 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:06,214 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 1
+2023-01-19 12:48:06,214 INFO    SenderThread:72220 [sender.py:transition_state():585] send defer: 2
+2023-01-19 12:48:06,214 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:06,214 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 2
+2023-01-19 12:48:06,214 INFO    HandlerThread:72220 [system_monitor.py:finish():161] Stopping system monitor
+2023-01-19 12:48:06,295 DEBUG   SystemMonitor:72220 [system_monitor.py:_start():130] Starting system metrics aggregation loop
+2023-01-19 12:48:06,295 INFO    HandlerThread:72220 [interfaces.py:finish():175] Joined cpu
+2023-01-19 12:48:06,295 DEBUG   SystemMonitor:72220 [system_monitor.py:_start():137] Finished system metrics aggregation loop
+2023-01-19 12:48:06,296 INFO    HandlerThread:72220 [interfaces.py:finish():175] Joined disk
+2023-01-19 12:48:06,296 DEBUG   SystemMonitor:72220 [system_monitor.py:_start():141] Publishing last batch of metrics
+2023-01-19 12:48:06,296 INFO    HandlerThread:72220 [interfaces.py:finish():175] Joined memory
+2023-01-19 12:48:06,298 INFO    HandlerThread:72220 [interfaces.py:finish():175] Joined network
+2023-01-19 12:48:06,300 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:06,300 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 2
+2023-01-19 12:48:06,300 INFO    SenderThread:72220 [sender.py:transition_state():585] send defer: 3
+2023-01-19 12:48:06,300 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:06,300 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 3
+2023-01-19 12:48:06,301 DEBUG   SenderThread:72220 [sender.py:send():334] send: stats
+2023-01-19 12:48:06,302 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:06,302 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 3
+2023-01-19 12:48:06,302 INFO    SenderThread:72220 [sender.py:transition_state():585] send defer: 4
+2023-01-19 12:48:06,302 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:06,302 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 4
+2023-01-19 12:48:06,303 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:06,303 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 4
+2023-01-19 12:48:06,303 INFO    SenderThread:72220 [sender.py:transition_state():585] send defer: 5
+2023-01-19 12:48:06,303 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:06,303 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 5
+2023-01-19 12:48:06,303 DEBUG   SenderThread:72220 [sender.py:send():334] send: summary
+2023-01-19 12:48:06,303 INFO    SenderThread:72220 [sender.py:_save_file():1319] saving file wandb-summary.json with policy end
+2023-01-19 12:48:06,304 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:06,304 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 5
+2023-01-19 12:48:06,304 INFO    SenderThread:72220 [sender.py:transition_state():585] send defer: 6
+2023-01-19 12:48:06,304 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:06,304 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 6
+2023-01-19 12:48:06,304 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:06,304 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 6
+2023-01-19 12:48:06,304 INFO    SenderThread:72220 [sender.py:transition_state():585] send defer: 7
+2023-01-19 12:48:06,304 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: status_report
+2023-01-19 12:48:06,305 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:06,305 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 7
+2023-01-19 12:48:06,305 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:06,305 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 7
+2023-01-19 12:48:06,495 WARNING OutRawWr-stderr:72220 [sender.py:_output_raw_writer_thread():1156] Terminal output too large. Logging without processing.
+2023-01-19 12:48:07,022 INFO    SenderThread:72220 [sender.py:transition_state():585] send defer: 8
+2023-01-19 12:48:07,022 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:07,022 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 8
+2023-01-19 12:48:07,023 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:07,023 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 8
+2023-01-19 12:48:07,030 INFO    SenderThread:72220 [sender.py:transition_state():585] send defer: 9
+2023-01-19 12:48:07,030 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:07,031 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 9
+2023-01-19 12:48:07,031 DEBUG   SenderThread:72220 [sender.py:send():334] send: artifact
+2023-01-19 12:48:07,099 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/wandb-summary.json
+2023-01-19 12:48:07,099 INFO    Thread-13 :72220 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:48:07,196 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: poll_exit
+2023-01-19 12:48:07,284 INFO    SenderThread:72220 [sender.py:send_artifact():1415] sent artifact job-https___github.com_nepyope_Stable-Giffusion_tests_train.py - {'id': 'QXJ0aWZhY3Q6MzMyMzQxMTM1', 'digest': 'd1805cc17d6f9dda6136e30c395428ce', 'state': 'COMMITTED', 'aliases': [{'artifactCollectionName': 'job-https___github.com_nepyope_Stable-Giffusion_tests_train.py', 'alias': 'v2'}], 'artifactSequence': {'id': 'QXJ0aWZhY3RDb2xsZWN0aW9uOjUwMDI4NjEx', 'latestArtifact': {'id': 'QXJ0aWZhY3Q6MzMyMzQxMTM1', 'versionIndex': 2}}, 'version': 'v2'}
+2023-01-19 12:48:07,284 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:07,284 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 9
+2023-01-19 12:48:07,284 INFO    SenderThread:72220 [dir_watcher.py:finish():362] shutting down directory watcher
+2023-01-19 12:48:08,100 INFO    SenderThread:72220 [dir_watcher.py:finish():392] scan: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files
+2023-01-19 12:48:08,100 INFO    SenderThread:72220 [dir_watcher.py:finish():406] scan save: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/wandb-summary.json wandb-summary.json
+2023-01-19 12:48:08,100 INFO    SenderThread:72220 [dir_watcher.py:finish():406] scan save: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log output.log
+2023-01-19 12:48:08,100 INFO    SenderThread:72220 [dir_watcher.py:finish():406] scan save: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/wandb-metadata.json wandb-metadata.json
+2023-01-19 12:48:08,101 INFO    SenderThread:72220 [dir_watcher.py:finish():406] scan save: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/config.yaml config.yaml
+2023-01-19 12:48:08,101 INFO    SenderThread:72220 [dir_watcher.py:finish():406] scan save: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/requirements.txt requirements.txt
+2023-01-19 12:48:08,101 INFO    SenderThread:72220 [sender.py:transition_state():585] send defer: 10
+2023-01-19 12:48:08,101 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: poll_exit
+2023-01-19 12:48:08,102 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:08,102 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 10
+2023-01-19 12:48:08,108 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:08,108 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 10
+2023-01-19 12:48:08,108 INFO    SenderThread:72220 [file_pusher.py:finish():160] shutting down file pusher
+2023-01-19 12:48:08,198 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: poll_exit
+2023-01-19 12:48:08,198 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: poll_exit
+2023-01-19 12:48:08,361 INFO    Thread-19 :72220 [upload_job.py:push():143] Uploaded file /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/config.yaml
+2023-01-19 12:48:08,370 INFO    Thread-18 :72220 [upload_job.py:push():143] Uploaded file /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/output.log
+2023-01-19 12:48:08,371 INFO    Thread-17 :72220 [upload_job.py:push():143] Uploaded file /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/wandb-summary.json
+2023-01-19 12:48:08,378 INFO    Thread-20 :72220 [upload_job.py:push():143] Uploaded file /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/files/requirements.txt
+2023-01-19 12:48:08,578 INFO    Thread-12 :72220 [sender.py:transition_state():585] send defer: 11
+2023-01-19 12:48:08,579 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:08,579 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 11
+2023-01-19 12:48:08,580 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:08,580 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 11
+2023-01-19 12:48:08,580 INFO    SenderThread:72220 [file_pusher.py:join():165] waiting for file pusher
+2023-01-19 12:48:08,580 INFO    SenderThread:72220 [sender.py:transition_state():585] send defer: 12
+2023-01-19 12:48:08,580 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:08,580 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 12
+2023-01-19 12:48:08,580 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:08,581 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 12
+2023-01-19 12:48:08,629 INFO    SenderThread:72220 [sender.py:transition_state():585] send defer: 13
+2023-01-19 12:48:08,629 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:08,629 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 13
+2023-01-19 12:48:08,630 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:08,630 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 13
+2023-01-19 12:48:08,630 INFO    SenderThread:72220 [sender.py:transition_state():585] send defer: 14
+2023-01-19 12:48:08,630 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: defer
+2023-01-19 12:48:08,630 INFO    HandlerThread:72220 [handler.py:handle_request_defer():170] handle defer: 14
+2023-01-19 12:48:08,631 DEBUG   SenderThread:72220 [sender.py:send():334] send: final
+2023-01-19 12:48:08,631 DEBUG   SenderThread:72220 [sender.py:send():334] send: footer
+2023-01-19 12:48:08,631 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: defer
+2023-01-19 12:48:08,631 INFO    SenderThread:72220 [sender.py:send_request_defer():581] handle sender defer: 14
+2023-01-19 12:48:08,632 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: poll_exit
+2023-01-19 12:48:08,632 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: poll_exit
+2023-01-19 12:48:08,633 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: poll_exit
+2023-01-19 12:48:08,633 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: server_info
+2023-01-19 12:48:08,633 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: get_summary
+2023-01-19 12:48:08,634 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: poll_exit
+2023-01-19 12:48:08,634 DEBUG   SenderThread:72220 [sender.py:send_request():361] send_request: server_info
+2023-01-19 12:48:08,636 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: sampled_history
+2023-01-19 12:48:09,223 INFO    MainThread:72220 [wandb_run.py:_footer_history_summary_info():3427] rendering history
+2023-01-19 12:48:09,223 INFO    MainThread:72220 [wandb_run.py:_footer_history_summary_info():3459] rendering summary
+2023-01-19 12:48:09,223 INFO    MainThread:72220 [wandb_run.py:_footer_sync_info():3383] logging synced files
+2023-01-19 12:48:09,224 DEBUG   HandlerThread:72220 [handler.py:handle_request():144] handle_request: shutdown
+2023-01-19 12:48:09,224 INFO    HandlerThread:72220 [handler.py:finish():841] shutting down handler
+2023-01-19 12:48:09,634 INFO    WriterThread:72220 [datastore.py:close():299] close: /home/ubuntu/Stable-Giffusion/tests/wandb/run-20230119_124722-zln3cxk6/run-zln3cxk6.wandb
+2023-01-19 12:48:10,223 INFO    SenderThread:72220 [sender.py:finish():1491] shutting down sender
+2023-01-19 12:48:10,223 INFO    SenderThread:72220 [file_pusher.py:finish():160] shutting down file pusher
+2023-01-19 12:48:10,223 INFO    SenderThread:72220 [file_pusher.py:join():165] waiting for file pusher

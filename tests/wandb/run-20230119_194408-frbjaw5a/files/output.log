@@ -1,0 +1,2998 @@
+
+<data.DataLoader object at 0x7efb53353f10>
+0it [00:00, ?it/s]Process Process-25:
+Process Process-20:
+Process Process-17:
+Process Process-119:
+Process Process-22:
+Process Process-111:
+Process Process-6:
+Process Process-4:
+Process Process-11:
+Process Process-121:
+Process Process-106:
+Process Process-120:
+Process Process-28:
+Process Process-19:
+Process Process-21:
+Process Process-112:
+Process Process-5:
+Process Process-89:
+Process Process-90:
+Process Process-100:
+Process Process-116:
+Process Process-117:
+Process Process-101:
+Process Process-95:
+Process Process-8:
+Process Process-3:
+Process Process-2:
+Process Process-30:
+Process Process-7:
+Process Process-109:
+Process Process-110:
+Process Process-118:
+Process Process-113:
+Process Process-98:
+Process Process-23:
+Process Process-27:
+Process Process-102:
+Process Process-114:
+Process Process-92:
+Process Process-108:
+Process Process-115:
+Process Process-99:
+Process Process-24:
+Process Process-15:
+Process Process-91:
+Process Process-104:
+Process Process-10:
+Process Process-93:
+Process Process-13:
+Process Process-97:
+Process Process-103:
+Process Process-14:
+Process Process-9:
+Process Process-107:
+Process Process-87:
+Process Process-105:
+Process Process-96:
+Process Process-80:
+Process Process-88:
+Process Process-82:
+Process Process-83:
+Process Process-94:
+Process Process-84:
+Process Process-86:
+Process Process-81:
+Process Process-79:
+Process Process-85:
+Process Process-69:
+Process Process-74:
+Process Process-73:
+Process Process-78:
+Process Process-75:
+Process Process-71:
+Process Process-76:
+Process Process-72:
+Process Process-77:
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-68:
+Traceback (most recent call last):
+Process Process-66:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-62:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-57:
+Process Process-46:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-54:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-70:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-56:
+Process Process-59:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+Process Process-52:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-67:
+Process Process-63:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-60:
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-45:
+Process Process-58:
+Process Process-47:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+Process Process-34:
+Process Process-41:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Process Process-65:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Process Process-44:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-49:
+Process Process-39:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Process Process-35:
+Process Process-32:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+Process Process-43:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-40:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Process Process-50:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Process Process-64:
+Process Process-51:
+Process Process-61:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+Process Process-55:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+Process Process-36:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+Process Process-42:
+Process Process-29:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+Process Process-53:
+Process Process-37:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Process Process-12:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-48:
+Traceback (most recent call last):
+Process Process-33:
+Process Process-31:
+Process Process-18:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Process Process-16:
+Process Process-26:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+Process Process-38:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 66, in get_video_urls
+    with lock:
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 67, in get_video_urls
+    info = youtube_getter.extract_info(youtube_base + url, download=False)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 800, in extract_info
+    if not ie.suitable(url):
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 232, in get_video_frames
+    with requests.get(url, stream=True) as r, open(path, 'wb') as f:
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/requests/api.py", line 73, in get
+    return request("get", url, params=params, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/requests/api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/requests/sessions.py", line 587, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/requests/sessions.py", line 701, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/requests/adapters.py", line 489, in send
+    resp = conn.urlopen(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/connectionpool.py", line 703, in urlopen
+    httplib_response = self._make_request(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/connectionpool.py", line 449, in _make_request
+    six.raise_from(e, None)
+  File "<string>", line 3, in raise_from
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/connectionpool.py", line 444, in _make_request
+    httplib_response = conn.getresponse()
+  File "/usr/lib/python3.8/http/client.py", line 1348, in getresponse
+    response.begin()
+  File "/usr/lib/python3.8/http/client.py", line 316, in begin
+    version, status, reason = self._read_status()
+  File "/usr/lib/python3.8/http/client.py", line 277, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 232, in get_video_frames
+    with requests.get(url, stream=True) as r, open(path, 'wb') as f:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/requests/api.py", line 73, in get
+    return request("get", url, params=params, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/requests/api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/requests/sessions.py", line 587, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/requests/sessions.py", line 701, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/requests/adapters.py", line 489, in send
+    resp = conn.urlopen(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 269, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/connectionpool.py", line 703, in urlopen
+    httplib_response = self._make_request(
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 233, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/connectionpool.py", line 386, in _make_request
+    self._validate_conn(conn)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/connectionpool.py", line 1042, in _validate_conn
+    conn.connect()
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+0it [00:37, ?it/s]  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/connection.py", line 358, in connect
+    self.sock = conn = self._new_conn()
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/connection.py", line 174, in _new_conn
+    conn = connection.create_connection(
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/util/connection.py", line 85, in create_connection
+    sock.connect(sa)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+[31mAborted.
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 67, in get_video_urls
+    info = youtube_getter.extract_info(youtube_base + url, download=False)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 800, in extract_info
+    if not ie.suitable(url):
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 415, in suitable
+    return cls._VALID_URL_RE.match(url) is not None
+KeyboardInterrupt
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/sre_parse.py", line 948, in parse
+    p = _parse_sub(source, state, flags & SRE_FLAG_VERBOSE, 0)
+  File "/usr/lib/python3.8/sre_parse.py", line 948, in parse
+    p = _parse_sub(source, state, flags & SRE_FLAG_VERBOSE, 0)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/sre_parse.py", line 443, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+  File "/usr/lib/python3.8/sre_parse.py", line 817, in _parse
+    raise Verbose
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+sre_parse.Verbose
+During handling of the above exception, another exception occurred:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/sre_parse.py", line 443, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/sre_parse.py", line 817, in _parse
+    raise Verbose
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 67, in get_video_urls
+    info = youtube_getter.extract_info(youtube_base + url, download=False)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+sre_parse.Verbose
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 800, in extract_info
+    if not ie.suitable(url):
+During handling of the above exception, another exception occurred:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 67, in get_video_urls
+    info = youtube_getter.extract_info(youtube_base + url, download=False)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 414, in suitable
+    cls._VALID_URL_RE = re.compile(cls._VALID_URL)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 800, in extract_info
+    if not ie.suitable(url):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/re.py", line 252, in compile
+    return _compile(pattern, flags)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 414, in suitable
+    cls._VALID_URL_RE = re.compile(cls._VALID_URL)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/re.py", line 252, in compile
+    return _compile(pattern, flags)
+  File "/usr/lib/python3.8/re.py", line 304, in _compile
+    p = sre_compile.compile(pattern, flags)
+  File "/usr/lib/python3.8/re.py", line 304, in _compile
+    p = sre_compile.compile(pattern, flags)
+  File "/usr/lib/python3.8/sre_compile.py", line 764, in compile
+    p = sre_parse.parse(p, flags)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/sre_compile.py", line 764, in compile
+    p = sre_parse.parse(p, flags)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/sre_parse.py", line 948, in parse
+    p = _parse_sub(source, state, flags & SRE_FLAG_VERBOSE, 0)
+  File "/usr/lib/python3.8/sre_parse.py", line 956, in parse
+    p = _parse_sub(source, state, True, 0)
+  File "/usr/lib/python3.8/sre_parse.py", line 443, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/sre_parse.py", line 443, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+  File "/usr/lib/python3.8/sre_parse.py", line 834, in _parse
+    p = _parse_sub(source, state, sub_verbose, nested + 1)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 67, in get_video_urls
+    info = youtube_getter.extract_info(youtube_base + url, download=False)
+  File "/usr/lib/python3.8/sre_parse.py", line 852, in _parse
+    for i in range(len(subpattern))[::-1]:
+  File "/usr/lib/python3.8/sre_parse.py", line 443, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+  File "/usr/lib/python3.8/sre_parse.py", line 834, in _parse
+    p = _parse_sub(source, state, sub_verbose, nested + 1)
+  File "/usr/lib/python3.8/sre_parse.py", line 443, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+  File "/usr/lib/python3.8/sre_parse.py", line 834, in _parse
+    p = _parse_sub(source, state, sub_verbose, nested + 1)
+  File "/usr/lib/python3.8/sre_parse.py", line 443, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+  File "/usr/lib/python3.8/sre_parse.py", line 515, in _parse
+    if this in WHITESPACE:
+KeyboardInterrupt
+  File "/usr/lib/python3.8/sre_parse.py", line 161, in __len__
+    return len(self.data)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 800, in extract_info
+    if not ie.suitable(url):
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 414, in suitable
+    cls._VALID_URL_RE = re.compile(cls._VALID_URL)
+  File "/usr/lib/python3.8/re.py", line 252, in compile
+    return _compile(pattern, flags)
+  File "/usr/lib/python3.8/re.py", line 304, in _compile
+    p = sre_compile.compile(pattern, flags)
+  File "/usr/lib/python3.8/sre_compile.py", line 764, in compile
+    p = sre_parse.parse(p, flags)
+  File "/usr/lib/python3.8/sre_parse.py", line 956, in parse
+    p = _parse_sub(source, state, True, 0)
+  File "/usr/lib/python3.8/sre_parse.py", line 443, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+  File "/usr/lib/python3.8/sre_parse.py", line 509, in _parse
+    if this in "|)":
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 264, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 49, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 67, in get_video_urls
+    info = youtube_getter.extract_info(youtube_base + url, download=False)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 808, in extract_info
+    return self.__extract_info(url, ie, download, extra_info, process)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 815, in wrapper
+    return func(self, *args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 836, in __extract_info
+    ie_result = ie.extract(url)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 534, in extract
+    ie_result = self._real_extract(url)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/youtube.py", line 1839, in _real_extract
+    process_language(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/youtube.py", line 1826, in process_language
+    'url': update_url_query(base_url, query),
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/utils.py", line 3957, in update_url_query
+    query=compat_urllib_parse_urlencode(qs, True)))
+  File "/usr/lib/python3.8/urllib/parse.py", line 954, in urlencode
+    k = quote_via(str(k), safe, encoding, errors)
+  File "/usr/lib/python3.8/urllib/parse.py", line 870, in quote_plus
+    return quote(string, safe, encoding, errors)
+  File "/usr/lib/python3.8/urllib/parse.py", line 859, in quote
+    return quote_from_bytes(string, safe)
+  File "/usr/lib/python3.8/urllib/parse.py", line 892, in quote_from_bytes
+    if not bs.rstrip(_ALWAYS_SAFE_BYTES + safe):
+KeyboardInterrupt

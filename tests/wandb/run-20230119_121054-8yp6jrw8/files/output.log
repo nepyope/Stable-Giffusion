@@ -1,0 +1,2095 @@
+
+0it [00:00, ?it/s]Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 80, in get_subtitles
+    url = info['automatic_captions']['en']['url']
+TypeError: list indices must be integers or slices, not str
+IGNORED EXCEPTION \/\/\/
+<function get_subtitles at 0x7f873faf31f0> list indices must be integers or slices, not str
+IGNORED EXCEPTION /\/\/\
+None
+IGNORED EXCEPTION \/\/\/
+<function get_subtitles at 0x7f873faf31f0> list indices must be integers or slices, not str
+IGNORED EXCEPTION /\/\/\
+None
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 80, in get_subtitles
+    url = info['automatic_captions']['en']['url']
+TypeError: list indices must be integers or slices, not str
+IGNORED EXCEPTION \/\/\/
+<function get_subtitles at 0x7f873faf31f0> list indices must be integers or slices, not str
+IGNORED EXCEPTION /\/\/\
+None
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 80, in get_subtitles
+    url = info['automatic_captions']['en']['url']
+TypeError: list indices must be integers or slices, not str
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 80, in get_subtitles
+    url = info['automatic_captions']['en']['url']
+TypeError: list indices must be integers or slices, not str
+IGNORED EXCEPTION \/\/\/
+<function get_subtitles at 0x7f873faf31f0> list indices must be integers or slices, not str
+IGNORED EXCEPTION /\/\/\
+None
+IGNORED EXCEPTION \/\/\/
+<function get_subtitles at 0x7f873faf31f0> list indices must be integers or slices, not str
+IGNORED EXCEPTION /\/\/\
+None
+IGNORED EXCEPTION \/\/\/
+<function get_subtitles at 0x7f873faf31f0> list indices must be integers or slices, not str
+IGNORED EXCEPTION /\/\/\
+None
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 80, in get_subtitles
+    url = info['automatic_captions']['en']['url']
+TypeError: list indices must be integers or slices, not str
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 80, in get_subtitles
+    url = info['automatic_captions']['en']['url']
+TypeError: list indices must be integers or slices, not str
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 80, in get_subtitles
+    url = info['automatic_captions']['en']['url']
+TypeError: list indices must be integers or slices, not str
+IGNORED EXCEPTION \/\/\/
+<function get_subtitles at 0x7f873faf31f0> list indices must be integers or slices, not str
+IGNORED EXCEPTION /\/\/\
+None
+Process Process-4:
+Process Process-14:
+Process Process-10:
+Process Process-3:
+Process Process-5:
+Process Process-118:
+Process Process-117:
+Process Process-121:
+Process Process-6:
+Process Process-111:
+Process Process-8:
+Process Process-120:
+Process Process-119:
+Process Process-115:
+Process Process-108:
+Process Process-2:
+Process Process-114:
+Traceback (most recent call last):
+Process Process-112:
+Process Process-116:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-113:
+Process Process-109:
+Process Process-102:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-106:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Process Process-110:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+Process Process-105:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 78, in get_subtitles
+    info = youtube_getter.extract_info(youtube_base + url, download=False)
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-101:
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Process Process-104:
+Process Process-107:
+Process Process-96:
+Process Process-103:
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 800, in extract_info
+    if not ie.suitable(url):
+Process Process-93:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 167, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-99:
+Process Process-87:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-100:
+Traceback (most recent call last):
+Process Process-98:
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Process Process-89:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-88:
+Traceback (most recent call last):
+Process Process-97:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-79:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 128, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+Process Process-94:
+Traceback (most recent call last):
+Process Process-92:
+Process Process-90:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+Process Process-83:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+Process Process-76:
+Process Process-84:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+Process Process-85:
+Traceback (most recent call last):
+Process Process-91:
+Process Process-74:
+Process Process-80:
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+Traceback (most recent call last):
+Process Process-73:
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+Process Process-75:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-82:
+Process Process-69:
+Process Process-95:
+Traceback (most recent call last):
+Process Process-66:
+Process Process-62:
+Traceback (most recent call last):
+Process Process-81:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-67:
+Process Process-64:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-65:
+Traceback (most recent call last):
+Process Process-78:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-71:
+Process Process-70:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+Traceback (most recent call last):
+Process Process-86:
+Process Process-55:
+Process Process-59:
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Process Process-77:
+Traceback (most recent call last):
+Process Process-53:
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+Process Process-56:
+Process Process-49:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+Process Process-48:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Process Process-63:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-68:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+Process Process-46:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+Traceback (most recent call last):
+Process Process-36:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-72:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-38:
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 167, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-51:
+Traceback (most recent call last):
+Process Process-40:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-58:
+Process Process-28:
+Traceback (most recent call last):
+Process Process-47:
+Traceback (most recent call last):
+Process Process-57:
+Process Process-22:
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+Process Process-33:
+Process Process-24:
+Process Process-21:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+Traceback (most recent call last):
+Process Process-52:
+Process Process-41:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-50:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+Traceback (most recent call last):
+Process Process-44:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-16:
+Process Process-37:
+Process Process-34:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+Process Process-12:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+Process Process-7:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-32:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Process Process-54:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-27:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+Process Process-19:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Process Process-45:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Process Process-17:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Traceback (most recent call last):
+Process Process-60:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 167, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+Process Process-11:
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 128, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+Process Process-43:
+Process Process-30:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-20:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-18:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+Process Process-35:
+Process Process-61:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-13:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+Traceback (most recent call last):
+Process Process-9:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+Process Process-26:
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+Traceback (most recent call last):
+Process Process-29:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-31:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-25:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 167, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 128, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 167, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-39:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process Process-23:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-15:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 128, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process Process-42:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+Traceback (most recent call last):
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 128, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 167, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 95, in get_video_urls
+    info = youtube_getter.extract_info(youtube_base + url, download=False)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 808, in extract_info
+    return self.__extract_info(url, ie, download, extra_info, process)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 815, in wrapper
+    return func(self, *args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+Traceback (most recent call last):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 836, in __extract_info
+    ie_result = ie.extract(url)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 167, in frame_worker
+    frames = get_video_frames(video_urls, target_image_size, target_fps)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 95, in get_video_urls
+    info = youtube_getter.extract_info(youtube_base + url, download=False)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 808, in extract_info
+    return self.__extract_info(url, ie, download, extra_info, process)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 95, in get_video_urls
+    info = youtube_getter.extract_info(youtube_base + url, download=False)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 78, in get_subtitles
+    info = youtube_getter.extract_info(youtube_base + url, download=False)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 128, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 128, in get_video_frames
+    shutil.copyfileobj(r.raw, f)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 164, in frame_worker
+    subs = get_subtitles(youtube_getter, youtube_base, wor, lock)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 808, in extract_info
+    return self.__extract_info(url, ie, download, extra_info, process)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 800, in extract_info
+    if not ie.suitable(url):
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 815, in wrapper
+    return func(self, *args, **kwargs)
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 78, in get_subtitles
+    info = youtube_getter.extract_info(youtube_base + url, download=False)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/shutil.py", line 205, in copyfileobj
+    buf = fsrc_read(length)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 815, in wrapper
+    return func(self, *args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 77, in get_subtitles
+    with lock:
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 534, in extract
+    ie_result = self._real_extract(url)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 567, in read
+    data = self._fp_read(amt) if not fp_closed else b""
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/youtube.py", line 1885, in _real_extract
+    initial_data = self._call_api(
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/urllib3/response.py", line 533, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 78, in get_subtitles
+    info = youtube_getter.extract_info(youtube_base + url, download=False)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 95, in get_video_urls
+    info = youtube_getter.extract_info(youtube_base + url, download=False)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 800, in extract_info
+    if not ie.suitable(url):
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 836, in __extract_info
+    ie_result = ie.extract(url)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/youtube.py", line 290, in _call_api
+    return self._download_json(
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 808, in extract_info
+    return self.__extract_info(url, ie, download, extra_info, process)
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 815, in wrapper
+    return func(self, *args, **kwargs)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 159, in frame_worker
+    video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 799, in extract_info
+    for ie in ies:
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 534, in extract
+    ie_result = self._real_extract(url)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 895, in _download_json
+    res = self._download_json_handle(
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 836, in __extract_info
+    ie_result = ie.extract(url)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 836, in __extract_info
+    ie_result = ie.extract(url)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 874, in _download_json_handle
+    res = self._download_webpage_handle(
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/youtube.py", line 1493, in _real_extract
+    webpage = self._download_webpage(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 534, in extract
+    ie_result = self._real_extract(url)
+  File "/usr/lib/python3.8/http/client.py", line 459, in read
+    n = self.readinto(b)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 51, in _fn
+    return fn(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 798, in _download_webpage
+    res = self._download_webpage_handle(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/youtube.py", line 1790, in _real_extract
+    'upload_date': unified_strdate(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 667, in _download_webpage_handle
+    urlh = self._request_webpage(url_or_request, video_id, note, errnote, fatal, data=data, headers=headers, query=query, expected_status=expected_status)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 667, in _download_webpage_handle
+    urlh = self._request_webpage(url_or_request, video_id, note, errnote, fatal, data=data, headers=headers, query=query, expected_status=expected_status)
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 634, in _request_webpage
+    return self._downloader.urlopen(url_or_request)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/utils.py", line 2994, in unified_strdate
+    upload_date = datetime.datetime.strptime(date_str, expression).strftime('%Y%m%d')
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 634, in _request_webpage
+    return self._downloader.urlopen(url_or_request)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 2288, in urlopen
+    return self._opener.open(req, timeout=self._socket_timeout)
+  File "/usr/lib/python3.8/_strptime.py", line 568, in _strptime_datetime
+    tt, fraction, gmtoff_fraction = _strptime(data_string, format)
+  File "/home/ubuntu/Stable-Giffusion/tests/data.py", line 94, in get_video_urls
+    with lock:
+KeyboardInterrupt
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/http/client.py", line 503, in readinto
+    n = self.fp.readinto(b)
+  File "/usr/lib/python3.8/_strptime.py", line 333, in _strptime
+    format_regex = _TimeRE_cache.compile(format)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
+    return self._semlock.__enter__()
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/urllib/request.py", line 525, in open
+    response = self._open(req, data)
+  File "/usr/lib/python3.8/_strptime.py", line 263, in compile
+    return re_compile(self.pattern(format), IGNORECASE)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/YoutubeDL.py", line 2288, in urlopen
+    return self._opener.open(req, timeout=self._socket_timeout)
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/common.py", line 534, in extract
+    ie_result = self._real_extract(url)
+  File "/usr/lib/python3.8/urllib/request.py", line 542, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+  File "/usr/lib/python3.8/re.py", line 252, in compile
+    return _compile(pattern, flags)
+  File "/usr/lib/python3.8/urllib/request.py", line 525, in open
+    response = self._open(req, data)
+  File "/usr/lib/python3.8/urllib/request.py", line 502, in _call_chain
+    result = func(*args)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/re.py", line 304, in _compile
+    p = sre_compile.compile(pattern, flags)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/sre_compile.py", line 764, in compile
+    p = sre_parse.parse(p, flags)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/extractor/youtube.py", line 1790, in _real_extract
+    'upload_date': unified_strdate(
+  File "/usr/lib/python3.8/urllib/request.py", line 542, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+  File "/usr/lib/python3.8/sre_parse.py", line 948, in parse
+    p = _parse_sub(source, state, flags & SRE_FLAG_VERBOSE, 0)
+KeyboardInterrupt
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/utils.py", line 2735, in https_open
+    return self.do_open(functools.partial(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/utils.py", line 2994, in unified_strdate
+    upload_date = datetime.datetime.strptime(date_str, expression).strftime('%Y%m%d')
+  File "/usr/lib/python3.8/urllib/request.py", line 502, in _call_chain
+    result = func(*args)
+KeyboardInterrupt
+  File "/usr/lib/python3.8/sre_parse.py", line 443, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+  File "/usr/lib/python3.8/urllib/request.py", line 1358, in do_open
+    r = h.getresponse()
+  File "/usr/lib/python3.8/_strptime.py", line 568, in _strptime_datetime
+    tt, fraction, gmtoff_fraction = _strptime(data_string, format)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/youtube_dl/utils.py", line 2735, in https_open
+    return self.do_open(functools.partial(
+  File "/usr/lib/python3.8/sre_parse.py", line 835, in _parse
+    if not source.match(")"):
+  File "/usr/lib/python3.8/urllib/request.py", line 1358, in do_open
+    r = h.getresponse()
+  File "/usr/lib/python3.8/http/client.py", line 1348, in getresponse
+    response.begin()
+  File "/usr/lib/python3.8/http/client.py", line 316, in begin
+    version, status, reason = self._read_status()
+  File "/usr/lib/python3.8/http/client.py", line 1348, in getresponse
+    response.begin()
+  File "/usr/lib/python3.8/http/client.py", line 277, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+  File "/usr/lib/python3.8/http/client.py", line 316, in begin
+    version, status, reason = self._read_status()
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/http/client.py", line 277, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+  File "/usr/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/usr/lib/python3.8/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+KeyboardInterrupt
+KeyboardInterrupt
+  File "/usr/lib/python3.8/sre_parse.py", line 251, in match
+    self.__next()
+KeyboardInterrupt
+  File "/usr/lib/python3.8/_strptime.py", line 333, in _strptime
+    format_regex = _TimeRE_cache.compile(format)
+  File "/usr/lib/python3.8/_strptime.py", line 263, in compile
+    return re_compile(self.pattern(format), IGNORECASE)
+  File "/usr/lib/python3.8/re.py", line 252, in compile
+    return _compile(pattern, flags)
+  File "/usr/lib/python3.8/re.py", line 304, in _compile
+    p = sre_compile.compile(pattern, flags)
+  File "/usr/lib/python3.8/sre_compile.py", line 768, in compile
+    code = _code(p, flags)
+  File "/usr/lib/python3.8/sre_compile.py", line 607, in _code
+    _compile(code, p.data, flags)
+  File "/usr/lib/python3.8/sre_compile.py", line 168, in _compile
+    _compile(code, p, _combine_flags(flags, add_flags, del_flags))
+  File "/usr/lib/python3.8/sre_compile.py", line 209, in _compile
+    _compile(code, av, flags)
+KeyboardInterrupt
+0it [00:15, ?it/s]
+[31mAborted.
