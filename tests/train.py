@@ -13,6 +13,8 @@ from diffusers.utils import check_min_version
 from flax import jax_utils, linen as nn
 from flax.training import train_state
 from jax import lax, numpy as jnp
+from optax import OptState, Updates, GradientTransformation
+from optax._src.numerics import safe_int32_increment
 
 from data import DataLoader
 
@@ -114,6 +116,43 @@ def to_host(k):
     return jax.device_get(jax.tree_util.tree_map(lambda x: x[0], k))
 
 
+class ScaleByAdamState(OptState):
+    """State for the Adam algorithm."""
+    count: jax.Array  # shape=(), dtype=jnp.int32.
+    mu: Updates
+    nu: Updates
+
+
+def update_moment(updates, moments, decay, order):
+    """Compute the exponential moving average of the `order-th` moment."""
+    return jax.tree_map(lambda g, t: (1 - decay) * (g ** order) + decay * t, updates, moments)
+
+
+def bias_correction(moment, decay, count):
+    """Perform bias correction. This becomes a no-op as count goes to infinity."""
+    bias_correction = 1 - decay ** count
+    return jax.tree_map(lambda t: t / bias_correction.astype(t.dtype), moment)
+
+
+def scale_by_laprop(b1: float = 0.9, b2: float = 0.999, eps: float = 1e-8) -> GradientTransformation:
+    def init_fn(params):
+        mu = jax.tree_map(jnp.zeros_like, params)  # First moment
+        nu = jax.tree_map(jnp.zeros_like, params)  # Second moment
+        return ScaleByAdamState(count=jnp.zeros([], jnp.int32), mu=mu, nu=nu)
+
+    def update_fn(updates, state, params=None):
+        del params
+        nu = update_moment(updates, state.nu, b2, 2)
+        count_inc = safe_int32_increment(state.count)
+        nu_hat = bias_correction(nu, b2, count_inc)
+        updates = jax.tree_map(lambda m, v: m / lax.max(jnp.sqrt(v), eps), updates, nu_hat)
+        mu = update_moment(updates, state.mu, b1, 1)
+        mu_hat = bias_correction(mu, b1, count_inc)
+        return mu_hat, ScaleByAdamState(count=count_inc, mu=mu, nu=nu)
+
+    return GradientTransformation(init_fn, update_fn)
+
+
 @app.command()
 def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-12,
          max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
@@ -128,10 +167,11 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     vae: FlaxAutoencoderKL = vae
     run = wandb.init(project="stable-giffusion")
 
-    adamw = optax.adamw(learning_rate=optax.constant_schedule(lr), b1=beta1, b2=beta2, eps=eps,
-                        weight_decay=weight_decay)
-
-    optimizer = optax.chain(optax.clip_by_global_norm(max_grad_norm), adamw)
+    optimizer = optax.chain(optax.clip_by_global_norm(max_grad_norm),
+                            scale_by_laprop(beta1, beta2, eps),
+                            # optax.transform.add_decayed_weights(weight_decay, mask),  # TODO: mask normalization
+                            optax.sgd(lr),
+                            )
 
     state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
 
