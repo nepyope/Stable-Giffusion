@@ -18,7 +18,9 @@ import jax
 import numpy as np
 import requests
 import youtube_dl
-
+import requests
+import json
+import random
 _DONE = "DONE"
 
 
@@ -59,10 +61,15 @@ def try_except(fn: Callable, default=None):
 
 
 @try_except
-def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.Semaphore, target_image_size: int) -> \
+def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.Semaphore, target_image_size: int, ip_addresses: list) -> \
         List[dict]:
     # We have to lock this part because it can lead to errors if multiple thread try to scrape video Information at
     # the same time.
+
+    proxy = random.randint(0, len(ip_addresses) - 1)
+    proxies = {"http": f"http://{ip_addresses[proxy]}"}
+
+
     with lock:
         info = youtube_getter.extract_info(youtube_base + url, download=False)
     if info is None or 'formats' not in info:
@@ -74,7 +81,6 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
         url = f.get('url')
         ext = f.get('ext')
         format_note = f.get('format_note')
-
         '''
         if not 'automatic_captions' in info:
             continue
@@ -83,9 +89,8 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
         vtt = requests.get(url, proxies=proxies).text
         print(vtt)
         subs = decode_vtt(vtt)
-        '''
-
-
+        print(subs)
+'''
         if any(x is None for x in (width, height, url, ext, format_note)):
             continue
         if any(not x for x in (width, height, url, ext)):
@@ -257,8 +262,16 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
     youtube_getter.add_default_info_extractors()
     random.Random(worker_id).shuffle(work)
 
+    r = requests.get("https://proxy.webshare.io/api/proxy/list/", headers={"Authorization": "wt7c6034fy30k5gk14jlacqh0xflh8j4x7a5lcut"})
+    #append ips to a proxy list
+    ip_addresses  = []
+    for r in r.json()['results']:
+        p = f"{r['username']}:{r['password']}"+'@'+f"{r['proxy_address']}:{r['ports']['http']}"
+        ip_addresses.append(p)
+
+
     for wor in work:
-        video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+        video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size, ip_addresses)
 
         if not video_urls:
             continue

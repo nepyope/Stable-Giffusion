@@ -1,0 +1,553 @@
+
+0it [00:00, ?it/s]
+[[[[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  ...
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]]
+ [[[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  ...
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]]
+ [[[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  ...
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]
+  [[  0   0   0]
+   [  0   0   0]
+   [  0   0   0]
+   ...
+   [  0   0   0]
+   [  0   0   0]
+   [  0   0   0]]]
+ ...
+ [[[240 255 229]
+   [240 255 229]
+   [240 255 233]
+   ...
+   [194 194 194]
+   [194 194 194]
+   [193 193 193]]
+  [[240 255 229]
+   [240 255 229]
+   [239 255 232]
+   ...
+   [194 194 194]
+   [194 194 194]
+   [193 193 193]]
+  [[243 255 231]
+   [240 255 229]
+   [239 255 230]
+   ...
+   [194 194 194]
+   [194 194 194]
+   [193 193 193]]
+  ...
+  [[198 198 201]
+   [194 194 196]
+   [193 193 195]
+   ...
+   [172 171 178]
+   [172 171 178]
+   [173 172 179]]
+  [[164 164 166]
+   [157 157 159]
+   [153 153 155]
+   ...
+   [178 176 183]
+   [179 178 185]
+   [179 178 185]]
+  [[153 153 155]
+   [145 145 147]
+   [138 138 140]
+   ...
+   [194 193 200]
+   [195 194 201]
+   [195 194 201]]]
+ [[[240 255 229]
+   [240 255 229]
+   [240 255 233]
+   ...
+   [194 194 194]
+   [192 192 192]
+   [193 193 193]]
+  [[240 255 229]
+   [240 255 229]
+   [239 255 232]
+   ...
+   [194 194 194]
+   [192 192 192]
+   [193 193 193]]
+  [[243 255 231]
+   [240 255 229]
+   [239 255 230]
+   ...
+   [194 194 194]
+   [193 193 193]
+   [193 193 193]]
+  ...
+  [[198 198 201]
+   [194 194 196]
+   [193 193 195]
+   ...
+   [172 171 178]
+   [172 171 178]
+   [173 172 179]]
+  [[164 164 166]
+   [157 157 159]
+   [153 153 155]
+   ...
+   [178 176 183]
+   [179 178 185]
+   [179 178 185]]
+  [[153 153 155]
+   [145 145 147]
+   [138 138 140]
+   ...
+   [194 193 200]
+   [195 194 201]
+   [195 194 201]]]
+ [[[239 255 228]
+   [240 255 229]
+   [240 255 233]
+   ...
+   [194 194 194]
+   [192 192 192]
+   [193 193 193]]
+  [[240 255 229]
+   [240 255 229]
+   [240 255 231]
+   ...
+   [194 194 194]
+   [192 192 192]
+   [193 193 193]]
+  [[243 255 231]
+   [242 255 230]
+   [240 255 231]
+   ...
+   [194 194 194]
+   [193 193 193]
+   [193 193 193]]
+  ...
+  [[198 198 201]
+   [194 194 196]
+   [193 193 195]
+   ...
+   [172 171 178]
+   [172 171 178]
+   [173 172 179]]
+  [[164 164 166]
+   [157 157 159]
+   [153 153 155]
+   ...
+   [178 176 183]
+   [179 178 185]
+   [179 178 185]]
+  [[153 153 155]
+   [145 145 147]
+   [138 138 140]
+   ...
+   [194 193 200]
+   [195 194 201]
+0it [16:47, ?it/s]
+Traceback (most recent call last):
+  File "train_predict.py", line 260, in <module>
+    app()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/main.py", line 311, in __call__
+    return get_command(self)(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/click/core.py", line 1130, in __call__
+    return self.main(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/core.py", line 716, in main
+    return _main(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/core.py", line 216, in _main
+    rv = self.invoke(ctx)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/click/core.py", line 1404, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/click/core.py", line 760, in invoke
+    return __callback(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/main.py", line 683, in wrapper
+    return callback(**use_params)  # type: ignore
+  File "train_predict.py", line 240, in main
+    state, scalars = p_train_step(state, batch)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/traceback_util.py", line 162, in reraise_with_filtered_traceback
+    return fun(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/api.py", line 2253, in cache_miss
+    execute = pxla.xla_pmap_impl_lazy(fun_, *tracers, **params)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/pxla.py", line 974, in xla_pmap_impl_lazy
+    compiled_fun, fingerprint = parallel_callable(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/linear_util.py", line 303, in memoized_fun
+    ans = call(fun, *args)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/pxla.py", line 1245, in parallel_callable
+    pmap_computation = lower_parallel_callable(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/profiler.py", line 314, in wrapper
+    return func(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/pxla.py", line 1414, in lower_parallel_callable
+    jaxpr, consts, replicas, parts, shards = stage_parallel_callable(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/pxla.py", line 1321, in stage_parallel_callable
+    jaxpr, out_sharded_avals, consts = pe.trace_to_jaxpr_final(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/profiler.py", line 314, in wrapper
+    return func(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/partial_eval.py", line 2065, in trace_to_jaxpr_final
+    jaxpr, out_avals, consts = trace_to_subjaxpr_dynamic(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/partial_eval.py", line 1998, in trace_to_subjaxpr_dynamic
+    ans = fun.call_wrapped(*in_tracers_)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/linear_util.py", line 167, in call_wrapped
+    ans = self.f(*args, **dict(self.params, **kwargs))
+  File "train_predict.py", line 218, in train_step
+    (loss, (dist_sq, dist_abs)), grad = grad_fn(state.params)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/traceback_util.py", line 162, in reraise_with_filtered_traceback
+    return fun(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/api.py", line 1167, in value_and_grad_f
+    ans, vjp_py, aux = _vjp(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/api.py", line 2659, in _vjp
+    out_primal, out_vjp, aux = ad.vjp(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/ad.py", line 137, in vjp
+    out_primals, pvals, jaxpr, consts, aux = linearize(traceable, *primals, has_aux=True)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/ad.py", line 124, in linearize
+    jaxpr, out_pvals, consts = pe.trace_to_jaxpr_nounits(jvpfun_flat, in_pvals)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/profiler.py", line 314, in wrapper
+    return func(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/partial_eval.py", line 767, in trace_to_jaxpr_nounits
+    jaxpr, (out_pvals, consts, env) = fun.call_wrapped(pvals)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/linear_util.py", line 167, in call_wrapped
+    ans = self.f(*args, **dict(self.params, **kwargs))
+  File "train_predict.py", line 207, in compute_loss
+    out = vae.apply({"params": params}, inp[ :context//2,:,:,:], rngs={"gaussian": gaussian, "dropout": dropout},
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/traceback_util.py", line 162, in reraise_with_filtered_traceback
+    return fun(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 1291, in apply
+    return apply(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/core/scope.py", line 891, in wrapper
+    y = fn(root, *args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 1743, in scope_fn
+    return fn(module.clone(parent=scope), *args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 411, in wrapped_module_method
+    return self._call_wrapped_method(fun, args, kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 732, in _call_wrapped_method
+    y = fun(self, *args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/diffusers/models/vae_flax.py", line 846, in __call__
+    posterior = self.encode(sample, deterministic=deterministic, return_dict=return_dict)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 411, in wrapped_module_method
+    return self._call_wrapped_method(fun, args, kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 732, in _call_wrapped_method
+    y = fun(self, *args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/diffusers/models/vae_flax.py", line 822, in encode
+    hidden_states = self.encoder(sample, deterministic=deterministic)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 411, in wrapped_module_method
+    return self._call_wrapped_method(fun, args, kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 732, in _call_wrapped_method
+    y = fun(self, *args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/diffusers/models/vae_flax.py", line 552, in __call__
+    sample = self.conv_in(sample)
+  File "train_predict.py", line 61, in conv_call
+    inputs = inputs.reshape(-1, _CONTEXT, *shape[1:])
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/numpy/lax_numpy.py", line 790, in _reshape
+    newshape = _compute_newshape(a, args[0] if len(args) == 1 else args)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/numpy/lax_numpy.py", line 784, in _compute_newshape
+    return tuple(- core.divide_shape_sizes(np.shape(a), newshape)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/numpy/lax_numpy.py", line 784, in <genexpr>
+    return tuple(- core.divide_shape_sizes(np.shape(a), newshape)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/core.py", line 1849, in divide_shape_sizes
+    return handler.divide_shape_sizes(ds[:len(s1)], ds[len(s1):])
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/core.py", line 1737, in divide_shape_sizes
+    raise InconclusiveDimensionOperation(f"Cannot divide evenly the sizes of shapes {tuple(s1)} and {tuple(s2)}")
+jax._src.traceback_util.UnfilteredStackTrace: jax.core.InconclusiveDimensionOperation: Cannot divide evenly the sizes of shapes (8, 384, 384, 3) and (-1, 16, 384, 384, 3)
+The stack trace below excludes JAX-internal frames.
+The preceding is the original exception that occurred, unmodified.
+--------------------
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "train_predict.py", line 260, in <module>
+    app()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/main.py", line 328, in __call__
+    raise e
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/main.py", line 311, in __call__
+    return get_command(self)(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/click/core.py", line 1130, in __call__
+    return self.main(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/core.py", line 716, in main
+    return _main(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/core.py", line 216, in _main
+    rv = self.invoke(ctx)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/click/core.py", line 1404, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/click/core.py", line 760, in invoke
+    return __callback(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/main.py", line 683, in wrapper
+    return callback(**use_params)  # type: ignore
+  File "train_predict.py", line 240, in main
+    state, scalars = p_train_step(state, batch)
+  File "train_predict.py", line 218, in train_step
+    (loss, (dist_sq, dist_abs)), grad = grad_fn(state.params)
+  File "train_predict.py", line 207, in compute_loss
+    out = vae.apply({"params": params}, inp[ :context//2,:,:,:], rngs={"gaussian": gaussian, "dropout": dropout},
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/diffusers/models/vae_flax.py", line 846, in __call__
+    posterior = self.encode(sample, deterministic=deterministic, return_dict=return_dict)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/diffusers/models/vae_flax.py", line 822, in encode
+    hidden_states = self.encoder(sample, deterministic=deterministic)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/diffusers/models/vae_flax.py", line 552, in __call__
+    sample = self.conv_in(sample)
+  File "train_predict.py", line 61, in conv_call
+    inputs = inputs.reshape(-1, _CONTEXT, *shape[1:])
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/numpy/lax_numpy.py", line 790, in _reshape
+    newshape = _compute_newshape(a, args[0] if len(args) == 1 else args)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/numpy/lax_numpy.py", line 784, in _compute_newshape
+    return tuple(- core.divide_shape_sizes(np.shape(a), newshape)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/numpy/lax_numpy.py", line 784, in <genexpr>
+    return tuple(- core.divide_shape_sizes(np.shape(a), newshape)
+jax.core.InconclusiveDimensionOperation: Cannot divide evenly the sizes of shapes (8, 384, 384, 3) and (-1, 16, 384, 384, 3)
+Traceback (most recent call last):
+  File "train_predict.py", line 260, in <module>
+    app()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/main.py", line 311, in __call__
+    return get_command(self)(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/click/core.py", line 1130, in __call__
+    return self.main(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/core.py", line 716, in main
+    return _main(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/core.py", line 216, in _main
+    rv = self.invoke(ctx)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/click/core.py", line 1404, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/click/core.py", line 760, in invoke
+    return __callback(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/main.py", line 683, in wrapper
+    return callback(**use_params)  # type: ignore
+  File "train_predict.py", line 240, in main
+    state, scalars = p_train_step(state, batch)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/traceback_util.py", line 162, in reraise_with_filtered_traceback
+    return fun(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/api.py", line 2253, in cache_miss
+    execute = pxla.xla_pmap_impl_lazy(fun_, *tracers, **params)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/pxla.py", line 974, in xla_pmap_impl_lazy
+    compiled_fun, fingerprint = parallel_callable(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/linear_util.py", line 303, in memoized_fun
+    ans = call(fun, *args)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/pxla.py", line 1245, in parallel_callable
+    pmap_computation = lower_parallel_callable(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/profiler.py", line 314, in wrapper
+    return func(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/pxla.py", line 1414, in lower_parallel_callable
+    jaxpr, consts, replicas, parts, shards = stage_parallel_callable(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/pxla.py", line 1321, in stage_parallel_callable
+    jaxpr, out_sharded_avals, consts = pe.trace_to_jaxpr_final(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/profiler.py", line 314, in wrapper
+    return func(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/partial_eval.py", line 2065, in trace_to_jaxpr_final
+    jaxpr, out_avals, consts = trace_to_subjaxpr_dynamic(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/partial_eval.py", line 1998, in trace_to_subjaxpr_dynamic
+    ans = fun.call_wrapped(*in_tracers_)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/linear_util.py", line 167, in call_wrapped
+    ans = self.f(*args, **dict(self.params, **kwargs))
+  File "train_predict.py", line 218, in train_step
+    (loss, (dist_sq, dist_abs)), grad = grad_fn(state.params)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/traceback_util.py", line 162, in reraise_with_filtered_traceback
+    return fun(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/api.py", line 1167, in value_and_grad_f
+    ans, vjp_py, aux = _vjp(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/api.py", line 2659, in _vjp
+    out_primal, out_vjp, aux = ad.vjp(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/ad.py", line 137, in vjp
+    out_primals, pvals, jaxpr, consts, aux = linearize(traceable, *primals, has_aux=True)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/ad.py", line 124, in linearize
+    jaxpr, out_pvals, consts = pe.trace_to_jaxpr_nounits(jvpfun_flat, in_pvals)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/profiler.py", line 314, in wrapper
+    return func(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/interpreters/partial_eval.py", line 767, in trace_to_jaxpr_nounits
+    jaxpr, (out_pvals, consts, env) = fun.call_wrapped(pvals)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/linear_util.py", line 167, in call_wrapped
+    ans = self.f(*args, **dict(self.params, **kwargs))
+  File "train_predict.py", line 207, in compute_loss
+    out = vae.apply({"params": params}, inp[ :context//2,:,:,:], rngs={"gaussian": gaussian, "dropout": dropout},
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/traceback_util.py", line 162, in reraise_with_filtered_traceback
+    return fun(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 1291, in apply
+    return apply(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/core/scope.py", line 891, in wrapper
+    y = fn(root, *args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 1743, in scope_fn
+    return fn(module.clone(parent=scope), *args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 411, in wrapped_module_method
+    return self._call_wrapped_method(fun, args, kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 732, in _call_wrapped_method
+    y = fun(self, *args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/diffusers/models/vae_flax.py", line 846, in __call__
+    posterior = self.encode(sample, deterministic=deterministic, return_dict=return_dict)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 411, in wrapped_module_method
+    return self._call_wrapped_method(fun, args, kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 732, in _call_wrapped_method
+    y = fun(self, *args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/diffusers/models/vae_flax.py", line 822, in encode
+    hidden_states = self.encoder(sample, deterministic=deterministic)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 411, in wrapped_module_method
+    return self._call_wrapped_method(fun, args, kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/flax/linen/module.py", line 732, in _call_wrapped_method
+    y = fun(self, *args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/diffusers/models/vae_flax.py", line 552, in __call__
+    sample = self.conv_in(sample)
+  File "train_predict.py", line 61, in conv_call
+    inputs = inputs.reshape(-1, _CONTEXT, *shape[1:])
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/numpy/lax_numpy.py", line 790, in _reshape
+    newshape = _compute_newshape(a, args[0] if len(args) == 1 else args)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/numpy/lax_numpy.py", line 784, in _compute_newshape
+    return tuple(- core.divide_shape_sizes(np.shape(a), newshape)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/numpy/lax_numpy.py", line 784, in <genexpr>
+    return tuple(- core.divide_shape_sizes(np.shape(a), newshape)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/core.py", line 1849, in divide_shape_sizes
+    return handler.divide_shape_sizes(ds[:len(s1)], ds[len(s1):])
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/core.py", line 1737, in divide_shape_sizes
+    raise InconclusiveDimensionOperation(f"Cannot divide evenly the sizes of shapes {tuple(s1)} and {tuple(s2)}")
+jax._src.traceback_util.UnfilteredStackTrace: jax.core.InconclusiveDimensionOperation: Cannot divide evenly the sizes of shapes (8, 384, 384, 3) and (-1, 16, 384, 384, 3)
+The stack trace below excludes JAX-internal frames.
+The preceding is the original exception that occurred, unmodified.
+--------------------
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "train_predict.py", line 260, in <module>
+    app()
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/main.py", line 328, in __call__
+    raise e
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/main.py", line 311, in __call__
+    return get_command(self)(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/click/core.py", line 1130, in __call__
+    return self.main(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/core.py", line 716, in main
+    return _main(
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/core.py", line 216, in _main
+    rv = self.invoke(ctx)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/click/core.py", line 1404, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/click/core.py", line 760, in invoke
+    return __callback(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/typer/main.py", line 683, in wrapper
+    return callback(**use_params)  # type: ignore
+  File "train_predict.py", line 240, in main
+    state, scalars = p_train_step(state, batch)
+  File "train_predict.py", line 218, in train_step
+    (loss, (dist_sq, dist_abs)), grad = grad_fn(state.params)
+  File "train_predict.py", line 207, in compute_loss
+    out = vae.apply({"params": params}, inp[ :context//2,:,:,:], rngs={"gaussian": gaussian, "dropout": dropout},
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/diffusers/models/vae_flax.py", line 846, in __call__
+    posterior = self.encode(sample, deterministic=deterministic, return_dict=return_dict)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/diffusers/models/vae_flax.py", line 822, in encode
+    hidden_states = self.encoder(sample, deterministic=deterministic)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/diffusers/models/vae_flax.py", line 552, in __call__
+    sample = self.conv_in(sample)
+  File "train_predict.py", line 61, in conv_call
+    inputs = inputs.reshape(-1, _CONTEXT, *shape[1:])
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/numpy/lax_numpy.py", line 790, in _reshape
+    newshape = _compute_newshape(a, args[0] if len(args) == 1 else args)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/numpy/lax_numpy.py", line 784, in _compute_newshape
+    return tuple(- core.divide_shape_sizes(np.shape(a), newshape)
+  File "/home/ubuntu/.local/lib/python3.8/site-packages/jax/_src/numpy/lax_numpy.py", line 784, in <genexpr>
+    return tuple(- core.divide_shape_sizes(np.shape(a), newshape)
+jax.core.InconclusiveDimensionOperation: Cannot divide evenly the sizes of shapes (8, 384, 384, 3) and (-1, 16, 384, 384, 3)
