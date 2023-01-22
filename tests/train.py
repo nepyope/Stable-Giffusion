@@ -156,8 +156,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          tracing_start_step: int = 128, tracing_stop_step: int = 196):
     global _KERNEL, _CONTEXT, _RESHAPE
     _CONTEXT, _KERNEL = context, kernel
-    vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32,
-                                                        use_auth_token=True)
+    vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     vae_params = patch_weights(vae_params)
     vae: FlaxAutoencoderKL = vae
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")

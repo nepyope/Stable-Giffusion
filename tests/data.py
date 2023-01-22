@@ -18,7 +18,6 @@ import jax
 import numpy as np
 import requests
 import youtube_dl
-import requests
 import json
 import random
 _DONE = "DONE"
@@ -66,10 +65,9 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
     # We have to lock this part because it can lead to errors if multiple thread try to scrape video Information at
     # the same time.
 
+
     proxy = random.randint(0, len(ip_addresses) - 1)
-    proxies = {"http": f"http://{ip_addresses[proxy]}"}
-
-
+    proxies = {"http": f"socks5://{ip_addresses[proxy]}", "https": f"socks5://{ip_addresses[proxy]}"}
     with lock:
         info = youtube_getter.extract_info(youtube_base + url, download=False)
     if info is None or 'formats' not in info:
@@ -81,16 +79,16 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
         url = f.get('url')
         ext = f.get('ext')
         format_note = f.get('format_note')
-        '''
+
+
         if not 'automatic_captions' in info:
             continue
 
         url = info['automatic_captions']['en'][4]['url']
+        print(info['automatic_captions']['en'])
         vtt = requests.get(url, proxies=proxies).text
-        print(vtt)
-        subs = decode_vtt(vtt)
-        print(subs)
-'''
+        #subs = decode_vtt(vtt)
+
         if any(x is None for x in (width, height, url, ext, format_note)):
             continue
         if any(not x for x in (width, height, url, ext)):
@@ -266,8 +264,9 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
     #append ips to a proxy list
     ip_addresses  = []
     for r in r.json()['results']:
-        p = f"{r['username']}:{r['password']}"+'@'+f"{r['proxy_address']}:{r['ports']['http']}"
+        p = f"{r['username']}:{r['password']}"+'@'+f"{r['proxy_address']}:{r['ports']['socks5']}"
         ip_addresses.append(p)
+
 
 
     for wor in work:
