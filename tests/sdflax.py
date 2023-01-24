@@ -1,5 +1,5 @@
 import logging
-
+import threading
 import os
 import random
 
@@ -226,28 +226,34 @@ def main():
     text_encoder_params = jax_utils.replicate(text_encoder.params)
     vae_params = jax_utils.replicate(vae_params)
 
-
     ####LOAD DATA
     url_dir = 'surl'
     for path in os.listdir(url_dir):
         with open(f'{url_dir}/{path}', 'rb') as f:
             vals = json.load(f)
-            ids = [x for x in list(zip(vals["url"], vals["duration"], vals["text"])) if x[1] > 5 and x[1]<20 and x[2] != ""]
+            ids = [x for x in list(zip(vals["url"], vals["duration"], vals["text"])) if x[1] >= 11 and x[1]<20 and x[2] != ""]
     random.shuffle(ids)
     ids = iter(ids)
 
     ######TRAIN LOOP    
 
-    epochs = 30 #5 at most? depends on resolution. 5*256*256 seems the max, 2 for widescreen.
+    epochs = 10000000 #5 at most? depends on resolution. 5*256*256 seems the max, 2 for widescreen. this is also the number of videos. 
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
     epochs = tqdm(range(epochs), desc="Epoch ... ", position=0)    
 
-    def get_data(ids,batch_per_device):
+    n_batches = 0
+    caption = ""
+
+
+    def get_data(ids,batch_per_device,data, n_batches, batch_size, caption):
         id = next(ids)
         print('downloading video...')
         url = id[0]
         duration = id[1]
-        caption = id[2]
+
+        caption.append([])
+        caption[-1].append(id[2])
+        caption.pop(0)
 
 
         r = requests.get(url, allow_redirects=True)
@@ -258,28 +264,41 @@ def main():
         # Get the total number of frames in the video
         total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 
-        data = []
+        data.append([])
+
         for i in range(0, total_frames):
             video.set(cv2.CAP_PROP_POS_FRAMES, i)
             ret, frame = video.read()
             if ret:
-                data.append(frame)
+                data[-1].append(frame)
+        
+        data.pop(0)
 
-        batch_size = batch_per_device*jax.device_count() 
+        batch_size.append([])
+        batch_size[-1].append(batch_per_device*jax.device_count())
+        batch_size.pop(0)
 
-        n_batches = len(data) // batch_size
+        n_batches.append([])
+        n_batches[-1].append(len(data[0]) // batch_size[0][0])
+        n_batches.pop(0)
 
-        return data, n_batches, batch_size, caption
-    
-    
+    new_data = [[]]
+    new_n_batches = [[]]
+    new_batch_size = [[]]
+    new_caption = [[]]
 
+    fetch = threading.Thread(target=get_data, name="Downloader", args=(ids,batch_per_device,new_data, new_n_batches, new_batch_size, new_caption))
+    fetch.start()
+    fetch.join()
+
+    data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
 
     for epoch in epochs:
+        
+        fetch = threading.Thread(target=get_data, name="Downloader", args=(ids,batch_per_device,new_data, new_n_batches, new_batch_size, new_caption))
+        fetch.start()
 
-        ###LOAD NEXT VIDEO
-        data, n_batches, batch_size, caption = get_data(ids,batch_per_device)        
-
-        for _ in range(10):#repeat training 10 times
+        for _ in range(10):#repeat training 10 times. how low can i get this?
 
             iters = tqdm(range(n_batches), desc="Iter ... ", position=1)
             ######UNET TRAINING
@@ -378,7 +397,7 @@ def main():
 
                 run.log({"VAE loss": vae_loss})
 
-        if epoch % 1 == 0:
+        if epoch % 100 == 0:#save every 10 epochs
 
             if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
                 print('saving model...')
@@ -441,8 +460,10 @@ def main():
                 del rng
                 del safety_checker
                 del scheduler
-                print('resuming training')          
-
+                print('resuming training')      
+        
+        fetch.join()
+        data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
 
 if __name__ == "__main__":
     main()
