@@ -3,7 +3,7 @@ import logging
 import os
 import random
 
-
+import gdown
 from PIL import Image
 import numpy as np
 import torch
@@ -45,17 +45,9 @@ def main():
     # create the directory if it does not exist
     if not os.path.exists("surl"):
         os.makedirs("surl")
-
-        file_id = "1SqW2Bxk8kZf9yuOkxkr0KFINHmJPvwQb"#DATASET
-
-        # construct the URL to download the file
-        url = f"https://drive.google.com/uc?id={file_id}"
-
-        # make the request to download the file
-        response = requests.get(url)
-
-        with open("surl/results_10M_train.json", "wb") as f:
-            f.write(response.content)
+        url = 'https://drive.google.com/file/d/1SqW2Bxk8kZf9yuOkxkr0KFINHmJPvwQb'
+        output = 'surl/results_10M_train.json'
+        gdown.download(url, output, quiet=False)
 
 
     resolution = (256,256)
