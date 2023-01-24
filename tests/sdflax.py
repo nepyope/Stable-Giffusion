@@ -50,7 +50,7 @@ def main():
         gdown.download(url, output, quiet=False)
 
 
-    resolution = (256,256)
+    resolution = (256,512)
     batch_per_device = 2
     lr = 1e-4/(batch_per_device*jax.device_count())#i guess
 
