@@ -45,8 +45,8 @@ def main():
     # create the directory if it does not exist
     if not os.path.exists("surl"):
         os.makedirs("surl")
-        url = 'https://drive.google.com/file/d/1SqW2Bxk8kZf9yuOkxkr0KFINHmJPvwQb'
-        output = 'surl/results_10M_train.json'
+        url = 'https://drive.google.com/uc?id=1SqW2Bxk8kZf9yuOkxkr0KFINHmJPvwQb'
+        output = '10M_train.json'
         gdown.download(url, output, quiet=False)
 
 
