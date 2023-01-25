@@ -231,10 +231,10 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
             encoded = text_encoder(batch["input_ids"], batch["attention_mask"], params=text_encoder.params)[0]
-            encoded = encoded.reshape(local_batch, 1, encoded.shape[1:])
-            encoded = lax.broadcast_in_dim(encoded, (local_batch, context, encoded.shape[1:]), (0, 1, 2, 3))
+            encoded = encoded.reshape(local_batch, 1, *encoded.shape[1:])
+            encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 1, 2, 3))
             encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
-            latents = latents.reshape(local_batch, context, latents.reshape[1:])
+            latents = latents.reshape(local_batch, context, *latents.reshape[1:])
             latents = latents * mask
             latents = latents.reshape(local_batch * context, -1, encoded.shape[3])
             encoded = jnp.concatenate([encoded, latents], 1)
