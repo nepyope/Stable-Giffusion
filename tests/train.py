@@ -203,7 +203,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         hidden_states_mode = posterior.latent_dist.mode()
 
         latents = jnp.transpose(hidden_states_rng, (0, 3, 1, 2))
-        latents = latents * 0.18215
+        original_latents = latents = latents * 0.18215
 
         encoded = text_encoder(batch["input_ids"], batch["attention_mask"], params=text_encoder.params)[0]
         encoded = encoded.reshape(local_batch, 1, *encoded.shape[1:])
@@ -222,7 +222,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, i, encoded).sample
             return state - unet_pred, None
 
-        out, _ = lax.scan(_step, jax.random.normal(latent_rng, latents.shape, latents.dtype),
+        out, _ = lax.scan(_step, jax.random.normal(latent_rng, original_latents.shape, original_latents.dtype),
                           jnp.arange(schedule_length))
         out = jnp.transpose(out, (0, 2, 3, 1))
 
