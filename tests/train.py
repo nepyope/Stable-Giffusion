@@ -188,7 +188,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     noise_scheduler.create_state()
     local_batch = batch_size // jax.local_device_count()
 
-    def sample(params, batch: Dict[str, Union[np.ndarray, int]], text_encoder_params):
+    def sample(params, batch: Dict[str, Union[np.ndarray, int]]):
         global _RESHAPE
         inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
         _RESHAPE = True
@@ -199,7 +199,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         hidden_states_mode = posterior.latent_dist.mode()
 
         # encoder_hidden_states = text_encoder(batch["input_ids"], batch["attention_mask"],
-        #                                     params=text_encoder_params)[0]
+        #                                     params=text_encoder.params)[0]
         # unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoder_hidden_states).sample
 
         sample_rng = vae.apply({"params": params}, hidden_states_rng, method=vae.decode).sample
@@ -210,7 +210,6 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     p_sample = jax.pmap(sample, "batch")
 
     def train_step(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
-                   text_encoder_params,
                    batch: Dict[str, Union[np.ndarray, int]]):
         def compute_loss(unet_params, vae_params):
             global _RESHAPE
@@ -227,7 +226,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
             encoder_hidden_states = text_encoder(batch["input_ids"], batch["attention_mask"],
-                                                 params=text_encoder_params)[0]
+                                                 params=text_encoder.params)[0]
             print(encoder_hidden_states.shape, noisy_latents.shape)
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoder_hidden_states).sample
 
@@ -262,6 +261,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     vae_state = jax_utils.replicate(vae_state)
     unet_state = jax_utils.replicate(unet_state)
+
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, batch_size, prefetch, parallel_videos,
                       tokenizer)
     start_time = time.time()
