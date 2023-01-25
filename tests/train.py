@@ -189,14 +189,14 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     noise_scheduler.create_state()
     local_batch = batch_size // jax.local_device_count()
 
-    def sample(params, batch: Dict[str, Union[np.ndarray, int]]):
+    def sample(unet_params, vae_params, batch: Dict[str, Union[np.ndarray, int]]):
         global _RESHAPE
 
         latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 4)
 
         inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
         _RESHAPE = True
-        posterior = vae.apply({"params": params}, inp, method=vae.encode)
+        posterior = vae.apply({"params": unet_params}, inp, method=vae.encode)
         _RESHAPE = False
 
         hidden_states_rng = posterior.latent_dist.sample(sample_rng)
@@ -227,9 +227,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         out = jnp.transpose(out, (0, 2, 3, 1))
 
         _RESHAPE = True
-        sample_rng = vae.apply({"params": params}, hidden_states_rng, method=vae.decode).sample
-        sample_mode = vae.apply({"params": params}, hidden_states_mode, method=vae.decode).sample
-        sample_out = vae.apply({"params": params}, out, method=vae.decode).sample
+        sample_rng = vae.apply({"params": vae_params}, hidden_states_rng, method=vae.decode).sample
+        sample_mode = vae.apply({"params": vae_params}, hidden_states_mode, method=vae.decode).sample
+        sample_out = vae.apply({"params": vae_params}, out, method=vae.decode).sample
         _RESHAPE = False
 
         return jnp.transpose(sample_rng, (0, 2, 3, 1)), jnp.transpose(sample_mode, (0, 2, 3, 1)), \
@@ -312,7 +312,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                      "attention_mask": attention_mask.reshape(jax.local_device_count(), -1, *attention_mask.shape[1:])}
             extra = {}
             if i % sample_interval == 0:
-                s_rng, s_mode, s_unet = to_host(p_sample(vae_state.params, batch))
+                s_rng, s_mode, s_unet = to_host(p_sample(unet_state.params, vae_state.params, batch))
                 extra["Samples/Reconstruction (RNG)"] = wandb.Image(s_rng.reshape(-1, resolution, 3))
                 extra["Samples/Reconstruction (Mode)"] = wandb.Image(s_mode.reshape(-1, resolution, 3))
                 extra["Samples/Reconstruction (U-Net)"] = wandb.Image(s_unet.reshape(-1, resolution, 3))
