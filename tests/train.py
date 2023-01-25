@@ -213,7 +213,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                    batch: Dict[str, Union[np.ndarray, int]]):
         def compute_loss(unet_params, vae_params):
             global _RESHAPE
-            gaussian, dropout, sample_rng, noise_rng, timestep_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]))
+            gaussian, dropout, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 5)
             vae_outputs = vae.apply({"params": vae_params}, batch["pixel_values"], deterministic=True,
                                     method=vae.encode)
             latents = vae_outputs.latent_dist.sample(sample_rng)
@@ -221,7 +221,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             latents = lax.stop_gradient(latents * 0.18215)
 
             noise = jax.random.normal(noise_rng, latents.shape)
-            timesteps = jax.random.randint(timestep_rng, (latents.shape[0],), 0,
+            timesteps = jax.random.randint(step_rng, (latents.shape[0],), 0,
                                            noise_scheduler.config.num_train_timesteps)
             noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
