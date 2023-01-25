@@ -198,9 +198,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         hidden_states_rng = posterior.latent_dist.sample(jax.random.PRNGKey(batch["idx"]))
         hidden_states_mode = posterior.latent_dist.mode()
 
-        # encoder_hidden_states = text_encoder(batch["input_ids"], batch["attention_mask"],
+        # encoder = text_encoder(batch["input_ids"], batch["attention_mask"],
         #                                     params=text_encoder.params)[0]
-        # unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoder_hidden_states).sample
+        # unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoder).sample
 
         sample_rng = vae.apply({"params": params}, hidden_states_rng, method=vae.decode).sample
         sample_mode = vae.apply({"params": params}, hidden_states_mode, method=vae.decode).sample
@@ -218,8 +218,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             img = batch["pixel_values"].astype(jnp.float32) / 255
             inp = jnp.transpose(img, (0, 3, 1, 2))
             _RESHAPE = True
-            vae_outputs = vae.apply({"params": vae_params}, inp, deterministic=True,
-                                    method=vae.encode)
+            vae_outputs = vae.apply({"params": vae_params}, inp, deterministic=True, method=vae.encode)
             _RESHAPE = False
             latents = vae_outputs.latent_dist.sample(sample_rng)
             latents = jnp.transpose(latents, (0, 3, 1, 2))
@@ -230,10 +229,10 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                                            noise_scheduler.config.num_train_timesteps)
             noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
-            encoder_hidden_states = text_encoder(batch["input_ids"], batch["attention_mask"],
-                                                 params=text_encoder.params)[0]
-            print(encoder_hidden_states.shape, noisy_latents.shape)
-            unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoder_hidden_states).sample
+            encoded = text_encoder(batch["input_ids"], batch["attention_mask"], params=text_encoder.params)[0]
+            encoded = lax.broadcast_in_dim(encoded, (local_batch, context, encoded.shape[1:]), (0, 2, 3))
+            encoded = encoded.reshape(local_batch * context, encoded.shape[2:])
+            unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoded).sample
 
             _RESHAPE = True
             vae_pred = vae.apply({"params": vae_params}, inp, rngs={"gaussian": gaussian, "dropout": dropout},
