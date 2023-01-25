@@ -21,6 +21,7 @@ from flax import jax_utils
 from flax import linen as nn
 from flax.training import train_state
 from jax import lax
+from jax.experimental.compilation_cache import compilation_cache
 from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
@@ -30,8 +31,9 @@ from transformers import CLIPTokenizer, FlaxCLIPTextModel
 from data import DataLoader
 
 app = typer.Typer(pretty_exceptions_enable=False)
-# Will error if the minimal version of diffusers is not installed. Remove at your own risks.
 check_min_version("0.10.0.dev0")
+compilation_cache.initialize_cache("compilation_cache")
+
 _CONTEXT = 0
 _KERNEL = 3
 _RESHAPE = False
@@ -203,9 +205,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         hidden_states_rng = posterior.latent_dist.sample(jax.random.PRNGKey(batch["idx"]))
         hidden_states_mode = posterior.latent_dist.mode()
 
-        #encoder_hidden_states = text_encoder(batch["input_ids"], batch["attention_mask"],
+        # encoder_hidden_states = text_encoder(batch["input_ids"], batch["attention_mask"],
         #                                     params=text_encoder_params)[0]
-        #unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoder_hidden_states).sample
+        # unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoder_hidden_states).sample
 
         sample_rng = vae.apply({"params": params}, hidden_states_rng, method=vae.decode).sample
         sample_mode = vae.apply({"params": params}, hidden_states_mode, method=vae.decode).sample
