@@ -268,8 +268,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         for i, (video, input_ids, attention_mask) in tqdm.tqdm(enumerate(data, 1)):
             batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32),
-                     "input_ids": input_ids,
-                     "attention_mask": attention_mask}
+                     "input_ids": input_ids.reshape(jax.local_device_count(), -1, *input_ids.shape[1:]),
+                     "attention_mask": attention_mask.reshape(jax.local_device_count(), -1, *attention_mask.shape[1:])}
             extra = {}
             if i % sample_interval == 0:
                 s_rng, s_mode = to_host(p_sample(vae_state.params, batch))
