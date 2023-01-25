@@ -25,7 +25,6 @@ from jax.experimental.compilation_cache import compilation_cache
 from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
-from tqdm.auto import tqdm
 from transformers import CLIPTokenizer, FlaxCLIPTextModel
 
 from data import DataLoader
