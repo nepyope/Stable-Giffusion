@@ -209,7 +209,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     p_sample = jax.pmap(sample, "batch")
 
-    mask = jnp.arange(context).reshape(1, -1, 1, 1, 1) >= jnp.arange(context).reshape(1, 1, -1, 1, 1)
+    mask = jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) >= jnp.arange(context).reshape(1, 1, -1, 1, 1, 1)
 
     def train_step(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
                    batch: Dict[str, Union[np.ndarray, int]]):
@@ -232,9 +232,11 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
             encoded = text_encoder(batch["input_ids"], batch["attention_mask"], params=text_encoder.params)[0]
             encoded = encoded.reshape(local_batch, 1, *encoded.shape[1:])
-            encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 1, 2, 3))
+            encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[2:]), (0, 1, 2, 3))
             encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
-            latents = latents.reshape(local_batch, context, *latents.reshape[1:])
+            latents = latents.reshape(local_batch, context, 1, *latents.shape[1:])
+            latents = lax.broadcast_in_dim(latents, (local_batch, context, context, *latents.shape[3:]),
+                                           (0, 2, 3, 4, 5))
             latents = latents * mask
             latents = latents.reshape(local_batch * context, -1, encoded.shape[3])
             encoded = jnp.concatenate([encoded, latents], 1)
