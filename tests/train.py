@@ -158,7 +158,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          workers: int = os.cpu_count() // 2, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
          kernel: int = 3, data_path: str = "./urls", batch_size: int = jax.local_device_count(),
          sample_interval: int = 64, parallel_videos: int = 128,
-         tracing_start_step: int = 128, tracing_stop_step: int = 196):
+         tracing_start_step: int = 128, tracing_stop_step: int = 196,
+         schedule_length: int = 1024):
     global _KERNEL, _CONTEXT, _RESHAPE
     _CONTEXT, _KERNEL = context, kernel
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
@@ -184,28 +185,53 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     unet_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
     noise_scheduler = FlaxDDPMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear",
-                                        num_train_timesteps=1000)
+                                        num_train_timesteps=schedule_length)
     noise_scheduler.create_state()
     local_batch = batch_size // jax.local_device_count()
 
     def sample(params, batch: Dict[str, Union[np.ndarray, int]]):
         global _RESHAPE
+
+        latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 3)
+
         inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
         _RESHAPE = True
         posterior = vae.apply({"params": params}, inp, method=vae.encode)
         _RESHAPE = False
 
-        hidden_states_rng = posterior.latent_dist.sample(jax.random.PRNGKey(batch["idx"]))
+        hidden_states_rng = posterior.latent_dist.sample(sample_rng)
         hidden_states_mode = posterior.latent_dist.mode()
 
-        # encoder = text_encoder(batch["input_ids"], batch["attention_mask"],
-        #                                     params=text_encoder.params)[0]
-        # unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoder).sample
+        latents = jnp.transpose(hidden_states_rng, (0, 3, 1, 2))
+        latents = latents * 0.18215
+
+        encoded = text_encoder(batch["input_ids"], batch["attention_mask"], params=text_encoder.params)[0]
+        encoded = encoded.reshape(local_batch, 1, *encoded.shape[1:])
+        encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[2:]), (0, 1, 2, 3))
+        encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
+        latents = latents.reshape(local_batch, context, 1, *latents.shape[1:])
+        latents = lax.broadcast_in_dim(latents, (local_batch, context, context, *latents.shape[3:]),
+                                       (0, 1, 2, 3, 4, 5))
+        latents = latents * mask
+        latents = latents.reshape(local_batch * context, -1, encoded.shape[2])
+        encoded = jnp.concatenate([encoded, latents], 1)
+
+        def _step(state, i):
+            noise = jax.random.normal(jax.random.PRNGKey(i), state.shape)
+            noisy_latents = noise_scheduler.add_noise(state, noise, i)
+            unet_pred = unet.apply({"params": unet_params}, noisy_latents, i, encoded).sample
+            return state - unet_pred, None
+
+        out, _ = lax.scan(_step, jax.random.normal(latent_rng, latents.shape, latents.dtype),
+                          jnp.arange(schedule_length))
+        out = jnp.transpose(out, (0, 2, 3, 1))
 
         sample_rng = vae.apply({"params": params}, hidden_states_rng, method=vae.decode).sample
         sample_mode = vae.apply({"params": params}, hidden_states_mode, method=vae.decode).sample
+        sample_out = vae.apply({"params": params}, out, method=vae.decode).sample
 
-        return jnp.transpose(sample_rng, (0, 2, 3, 1)), jnp.transpose(sample_mode, (0, 2, 3, 1))
+        return jnp.transpose(sample_rng, (0, 2, 3, 1)), jnp.transpose(sample_mode, (0, 2, 3, 1)), \
+            jnp.transpose(sample_out, (0, 2, 3, 1))
 
     p_sample = jax.pmap(sample, "batch")
 
@@ -284,9 +310,10 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                      "attention_mask": attention_mask.reshape(jax.local_device_count(), -1, *attention_mask.shape[1:])}
             extra = {}
             if i % sample_interval == 0:
-                s_rng, s_mode = to_host(p_sample(vae_state.params, batch))
+                s_rng, s_mode, s_unet = to_host(p_sample(vae_state.params, batch))
                 extra["Samples/Reconstruction (RNG)"] = wandb.Image(s_rng.reshape(-1, resolution, 3))
                 extra["Samples/Reconstruction (Mode)"] = wandb.Image(s_mode.reshape(-1, resolution, 3))
+                extra["Samples/Reconstruction (U-Net)"] = wandb.Image(s_unet.reshape(-1, resolution, 3))
                 extra["Samples/Ground Truth"] = wandb.Image(batch["pixel_values"][0].reshape(-1, resolution, 3) / 255)
 
             unet_state, vae_state, scalars = p_train_step(unet_state, vae_state, batch)
