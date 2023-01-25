@@ -1,4 +1,3 @@
-import ftfy
 import dataclasses
 import datetime
 import json
@@ -15,6 +14,7 @@ from queue import Empty
 from typing import List, Callable, Tuple
 
 import ffmpeg
+import ftfy
 import jax
 import numpy as np
 import requests
@@ -61,13 +61,11 @@ def try_except(fn: Callable, default=None):
 
 
 @try_except
-def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.Semaphore, target_image_size: int,
-                   ip_addresses: list) -> Tuple[List[dict], str]:
+def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.Semaphore, target_image_size: int
+                   ) -> List[dict]:
     # We have to lock this part because it can lead to errors if multiple thread try to scrape video Information at
     # the same time.
 
-    proxy = random.randint(0, len(ip_addresses) - 1)
-    proxies = {"http": f"socks5://{ip_addresses[proxy]}", "https": f"socks5://{ip_addresses[proxy]}"}
     with lock:
         info = youtube_getter.extract_info(youtube_base + url, download=False)
     if info is None or 'formats' not in info:
@@ -80,7 +78,9 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
         ext = f.get('ext')
         format_note = f.get('format_note')
 
-        if not 'automatic_captions' in info:
+        if ('automatic_captions' not in info or "en" not in info["automatic_captions"]
+                or not info['automatic_captions']['en'] or "url" not in info['automatic_captions']['en'][0]
+                or not info['automatic_captions']['en'][0]["url"]):
             continue
 
         if any(x is None for x in (width, height, url, ext, format_note)):
@@ -89,19 +89,14 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
             continue
         if format_note == "tiny" or width <= target_image_size or height <= target_image_size:
             continue
-        video_urls.append({'width': width, 'height': height, 'ext': f['ext'], 'url': f['url']})
+        video_urls.append({'width': width, 'height': height, 'ext': f['ext'], 'url': f['url'],
+                           "sub_url": info['automatic_captions']['en'][0]['url']})
 
-    url = info['automatic_captions']['en'][0]['url']
-    subs = requests.get(url, proxies=proxies).text
-    subs = subs[subs.find("<transcript>") + len("<transcript>"):subs.find('</text>')]
-    subs = subs[subs.find('>')+1:]
-    subs = ftfy.ftfy(subs)
-
-    return sorted(video_urls, key=lambda x: (x['ext'] != 'mp4', x['width'], x['height'])), subs
+    return sorted(video_urls, key=lambda x: (x['ext'] != 'mp4', x['width'], x['height']))
 
 
-
-def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps: int) -> np.ndarray:
+def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps: int, proxy: str
+                     ) -> Tuple[np.ndarray, str]:
     filename = uuid.uuid4()
     path = str(filename)
     for video_url in video_urls:
@@ -130,11 +125,19 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
 
         if os.path.exists(path):
             os.remove(path)
-        return np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3))
+
+        subs = requests.get(video_url["sub_url"],
+                            proxies={"http": f"socks5://{proxy}", "https": f"socks5://{proxy}"}).text
+        subs = subs[subs.find("<transcript>") + len("<transcript>"):subs.find('</text>')]
+        subs = subs[subs.find('>') + 1:]
+        subs = ftfy.ftfy(subs)
+
+        return np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3)), subs
 
 
 def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_image_size: int, target_fps: int,
-                 context_size: int, queue: multiprocessing.Queue, smm: managers.SharedMemoryManager):
+                 context_size: int, queue: multiprocessing.Queue, smm: managers.SharedMemoryManager,
+                 ip_addresses: List[str]):
     youtube_base = 'https://www.youtube.com/watch?v='
     youtube_getter = youtube_dl.YoutubeDL(
         {'writeautomaticsub': False, 'socket_timeout': 600, "quiet": True, "verbose": False, "no_warnings": True,
@@ -143,26 +146,17 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
     youtube_getter.add_default_info_extractors()
     random.Random(worker_id).shuffle(work)
 
-    r = requests.get("https://proxy.webshare.io/api/proxy/list/",
-                     headers={"Authorization": "wt7c6034fy30k5gk14jlacqh0xflh8j4x7a5lcut"})
-    # append ips to a proxy list
-    ip_addresses = []
-    for r in r.json()['results']:
-        p = f"{r['username']}:{r['password']}" + '@' + f"{r['proxy_address']}:{r['ports']['socks5']}"
-        ip_addresses.append(p)
+    for i, wor in enumerate(work):
+        video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
 
-    for wor in work:
-        video_urls_subs = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size, ip_addresses)
-
-        if not video_urls_subs or not video_urls_subs[0]:
+        if not video_urls:
             continue
 
-        video_urls, subs = video_urls_subs
-
-        frames = get_video_frames(video_urls, target_image_size, target_fps)
+        frames, subs = get_video_frames(video_urls, target_image_size, target_fps, ip_addresses[i % len(ip_addresses)])
 
         if frames is None or not frames.size or frames.shape[0] < context_size:
             continue
+
         frames = frames[:frames.shape[0] // context_size * context_size]
         frames = frames.reshape(-1, context_size, *frames.shape[1:])
         queue.put((to_share(frames, smm), subs))
@@ -198,9 +192,16 @@ class DataLoader:
         queue = multiprocessing.Queue(self.prefetch)
         workers = []
         with managers.SharedMemoryManager() as smm:
+            r = requests.get("https://proxy.webshare.io/api/proxy/list/",
+                             headers={"Authorization": "wt7c6034fy30k5gk14jlacqh0xflh8j4x7a5lcut"})
+            ip_addresses = [f"{r['username']}:{r['password']}" + '@' + f"{r['proxy_address']}:{r['ports']['socks5']}"
+                            for r in r.json()['results']]
+
             for i in range(self.workers):
                 work = self.ids[int(len(self.ids) * i / self.workers):int(len(self.ids) * (i + 1) / self.workers)]
-                args = work, i, lock, self.resolution, self.fps, self.context, queue, smm
+                ip_addresses = ip_addresses[int(len(ip_addresses) * i / self.workers):
+                                            int(len(ip_addresses) * (i + 1) / self.workers)]
+                args = work, i, lock, self.resolution, self.fps, self.context, queue, smm, ip_addresses
                 workers.append(multiprocessing.Process(args=args, daemon=True, target=frame_worker))
             for w in workers:
                 w.start()
