@@ -194,14 +194,13 @@ class DataLoader:
         with managers.SharedMemoryManager() as smm:
             r = requests.get("https://proxy.webshare.io/api/proxy/list/",
                              headers={"Authorization": "wt7c6034fy30k5gk14jlacqh0xflh8j4x7a5lcut"})
-            ip_addresses = [f"{r['username']}:{r['password']}" + '@' + f"{r['proxy_address']}:{r['ports']['socks5']}"
-                            for r in r.json()['results']]
+            proxies = [f"{r['username']}:{r['password']}" + '@' + f"{r['proxy_address']}:{r['ports']['socks5']}"
+                       for r in r.json()['results']]
 
             for i in range(self.workers):
                 work = self.ids[int(len(self.ids) * i / self.workers):int(len(self.ids) * (i + 1) / self.workers)]
-                ip_addresses = ip_addresses[int(len(ip_addresses) * i / self.workers):
-                                            int(len(ip_addresses) * (i + 1) / self.workers)]
-                args = work, i, lock, self.resolution, self.fps, self.context, queue, smm, ip_addresses
+                ips = proxies[int(len(proxies) * i / self.workers): int(len(proxies) * (i + 1) / self.workers)]
+                args = work, i, lock, self.resolution, self.fps, self.context, queue, smm, ips
                 workers.append(multiprocessing.Process(args=args, daemon=True, target=frame_worker))
             for w in workers:
                 w.start()
