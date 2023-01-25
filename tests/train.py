@@ -226,9 +226,11 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                           jnp.arange(schedule_length))
         out = jnp.transpose(out, (0, 2, 3, 1))
 
+        _RESHAPE = True
         sample_rng = vae.apply({"params": params}, hidden_states_rng, method=vae.decode).sample
         sample_mode = vae.apply({"params": params}, hidden_states_mode, method=vae.decode).sample
         sample_out = vae.apply({"params": params}, out, method=vae.decode).sample
+        _RESHAPE = False
 
         return jnp.transpose(sample_rng, (0, 2, 3, 1)), jnp.transpose(sample_mode, (0, 2, 3, 1)), \
             jnp.transpose(sample_out, (0, 2, 3, 1))
