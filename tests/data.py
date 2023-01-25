@@ -230,7 +230,8 @@ class DataLoader:
                             del samples[idx]
                         np_batch.append(samples[idx][0].pop(0))
                         subtitles.append(samples[idx][1])
-                    tokens = self.tokenizer(subtitles, return_tensors="np", padding="longest")
+                    tokens = self.tokenizer(subtitles, return_tensors="np", padding="max_length", truncation=True,
+                                            max_length=77)
                     yield np.concatenate(np_batch, axis=0), tokens["input_ids"], tokens["attention_mask"]
             for w in workers:
                 w.join()
