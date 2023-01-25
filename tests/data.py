@@ -226,13 +226,16 @@ class DataLoader:
                     subtitles = []
                     for _ in range(self.batch_size):
                         idx = (idx + 1) % self.parallel_videos
-                        while not samples[idx][0]:
+                        while len(samples) > idx and not samples[idx][0]:
                             del samples[idx]
+                        if len(samples) < idx:
+                            break
                         np_batch.append(samples[idx][0].pop(0))
                         subtitles.append(samples[idx][1])
-                    tokens = self.tokenizer(subtitles, return_tensors="np", padding="max_length", truncation=True,
-                                            max_length=77)
-                    yield np.concatenate(np_batch, axis=0), tokens["input_ids"], tokens["attention_mask"]
+                    else:  # if for loop finishes
+                        tokens = self.tokenizer(subtitles, return_tensors="np", padding="max_length", truncation=True,
+                                                max_length=77)
+                        yield np.concatenate(np_batch, axis=0), tokens["input_ids"], tokens["attention_mask"]
             for w in workers:
                 w.join()
         raise StopIteration
