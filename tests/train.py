@@ -238,7 +238,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             latents = lax.broadcast_in_dim(latents, (local_batch, context, context, *latents.shape[3:]),
                                            (0, 1, 2, 3, 4, 5))
             latents = latents * mask
-            latents = latents.reshape(local_batch * context, -1, encoded.shape[3])
+            latents = latents.reshape(local_batch * context, -1, encoded.shape[2])
             encoded = jnp.concatenate([encoded, latents], 1)
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoded).sample
 
