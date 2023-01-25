@@ -51,7 +51,7 @@ def main():
 
 
     resolution = (256,256)
-    batch_per_device = 2
+    batch_per_device = 1
     lr = 1e-4/(batch_per_device*jax.device_count())#i guess
 
     logging.basicConfig(
