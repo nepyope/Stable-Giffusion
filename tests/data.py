@@ -152,10 +152,12 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
         ip_addresses.append(p)
 
     for wor in work:
-        video_urls, subs = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size, ip_addresses)
+        video_urls_subs = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size, ip_addresses)
 
-        if not video_urls:
+        if not video_urls_subs or not video_urls_subs[0]:
             continue
+
+        video_urls, subs = video_urls_subs
 
         frames = get_video_frames(video_urls, target_image_size, target_fps)
 
