@@ -213,7 +213,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     def train_step(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
                    batch: Dict[str, Union[np.ndarray, int]]):
-        def compute_loss(unet_params, vae_params):
+        def compute_loss(params):
+            unet_params, vae_params = params
             global _RESHAPE
             gaussian, dropout, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 5)
 
@@ -260,7 +261,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             return unet_dist_sq.mean() + vae_dist_sq.mean(), (unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs)
 
         grad_fn = jax.value_and_grad(compute_loss, has_aux=True)
-        (loss, scalars), (unet_grad, vae_grad) = grad_fn(unet_state.params, vae_state.params)
+        (loss, scalars), (unet_grad, vae_grad) = grad_fn((unet_state.params, vae_state.params))
         unet_grad = lax.pmean(unet_grad, "batch")
         vae_grad = lax.pmean(vae_grad, "batch")
         new_unet_state = unet_state.apply_gradients(grads=unet_grad)
