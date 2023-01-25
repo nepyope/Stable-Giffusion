@@ -261,6 +261,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
 
     vae_state = jax_utils.replicate(vae_state)
+    unet_state = jax_utils.replicate(unet_state)
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, batch_size, prefetch, parallel_videos,
                       tokenizer)
     start_time = time.time()
