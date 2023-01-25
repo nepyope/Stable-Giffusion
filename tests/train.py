@@ -9,13 +9,7 @@ import optax
 import tqdm
 import typer
 import wandb
-from diffusers import (
-    FlaxAutoencoderKL,
-    FlaxUNet2DConditionModel,
-)
-from diffusers import (
-    FlaxDDPMScheduler,
-)
+from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel, FlaxDDPMScheduler
 from diffusers.utils import check_min_version
 from flax import jax_utils
 from flax import linen as nn
