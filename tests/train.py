@@ -209,7 +209,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     p_sample = jax.pmap(sample, "batch")
 
-    mask = jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) >= jnp.arange(context).reshape(1, 1, -1, 1, 1, 1)
+    mask = jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) > jnp.arange(context).reshape(1, 1, -1, 1, 1, 1)
 
     def train_step(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
                    batch: Dict[str, Union[np.ndarray, int]]):
