@@ -196,7 +196,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
         inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
         _RESHAPE = True
-        posterior = vae.apply({"params": unet_params}, inp, method=vae.encode)
+        posterior = vae.apply({"params": vae_params}, inp, method=vae.encode)
         _RESHAPE = False
 
         hidden_states_rng = posterior.latent_dist.sample(sample_rng)
