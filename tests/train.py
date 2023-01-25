@@ -214,8 +214,11 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         def compute_loss(unet_params, vae_params):
             global _RESHAPE
             gaussian, dropout, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 5)
+
+            img = batch["pixel_values"].astype(jnp.float32) / 255
+            inp = jnp.transpose(img, (0, 3, 1, 2))
             _RESHAPE = True
-            vae_outputs = vae.apply({"params": vae_params}, batch["pixel_values"], deterministic=True,
+            vae_outputs = vae.apply({"params": vae_params}, inp, deterministic=True,
                                     method=vae.encode)
             _RESHAPE = False
             latents = vae_outputs.latent_dist.sample(sample_rng)
@@ -232,8 +235,6 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             print(encoder_hidden_states.shape, noisy_latents.shape)
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoder_hidden_states).sample
 
-            img = batch["pixel_values"].astype(jnp.float32) / 255
-            inp = jnp.transpose(img, (0, 3, 1, 2))
             _RESHAPE = True
             vae_pred = vae.apply({"params": vae_params}, inp, rngs={"gaussian": gaussian, "dropout": dropout},
                                  sample_posterior=True, deterministic=False).sample
