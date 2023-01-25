@@ -266,7 +266,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     start_time = time.time()
     for epoch in range(100):
         for i, (video, input_ids, attention_mask) in tqdm.tqdm(enumerate(data, 1)):
-            batch = {"pixel_values": video.reshape(jax.local_device_count(), local_batch, *video.shape[1:]),
+            batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32),
                      "input_ids": input_ids,
                      "attention_mask": attention_mask}
