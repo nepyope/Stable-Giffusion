@@ -144,15 +144,16 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
          "ignoreerrors": True
          })
     youtube_getter.add_default_info_extractors()
-    random.Random(worker_id).shuffle(work)
+    rng = random.Random(worker_id)
+    rng.shuffle(work)
 
-    for i, wor in enumerate(work):
+    for i, wor in enumerate(work, worker_id):
         video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
 
         if not video_urls:
             continue
 
-        frames, subs = get_video_frames(video_urls, target_image_size, target_fps, ip_addresses[i % len(ip_addresses)])
+        frames, subs = get_video_frames(video_urls, target_image_size, target_fps, rng.choice(ip_addresses))
 
         if frames is None or not frames.size or frames.shape[0] < context_size:
             continue
@@ -192,15 +193,14 @@ class DataLoader:
         queue = multiprocessing.Queue(self.prefetch)
         workers = []
         with managers.SharedMemoryManager() as smm:
-            r = requests.get("https://proxy.webshare.io/api/proxy/list/",
+            r = requests.get("https://proxy.webshare.io/api/proxy/list/?mode=backbone&page_size=1000",
                              headers={"Authorization": "wt7c6034fy30k5gk14jlacqh0xflh8j4x7a5lcut"})
             proxies = [f"{r['username']}:{r['password']}" + '@' + f"{r['proxy_address']}:{r['ports']['socks5']}"
                        for r in r.json()['results']]
 
             for i in range(self.workers):
                 work = self.ids[int(len(self.ids) * i / self.workers):int(len(self.ids) * (i + 1) / self.workers)]
-                ips = proxies[int(len(proxies) * i / self.workers): int(len(proxies) * (i + 1) / self.workers)]
-                args = work, i, lock, self.resolution, self.fps, self.context, queue, smm, ips
+                args = work, i, lock, self.resolution, self.fps, self.context, queue, smm, proxies
                 workers.append(multiprocessing.Process(args=args, daemon=True, target=frame_worker))
             for w in workers:
                 w.start()
