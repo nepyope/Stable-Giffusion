@@ -11,7 +11,7 @@ import uuid
 from multiprocessing import managers
 from multiprocessing import shared_memory
 from queue import Empty
-from typing import List, Callable, Tuple
+from typing import List, Callable, Tuple, Dict
 
 import ffmpeg
 import ftfy
@@ -19,6 +19,7 @@ import jax
 import numpy as np
 import requests
 import transformers
+import urllib3.exceptions
 import youtube_dl
 
 _DONE = "DONE"
@@ -95,6 +96,28 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
     return sorted(video_urls, key=lambda x: (x['ext'] != 'mp4', x['width'], x['height']))
 
 
+def get_proxies():
+    r = requests.get("https://proxy.webshare.io/api/proxy/list/?mode=backbone&page_size=1000",
+                     headers={"Authorization": "wt7c6034fy30k5gk14jlacqh0xflh8j4x7a5lcut"})
+    return [f"{r['username']}:{r['password']}" + '@' + f"{r['proxy_address']}:{r['ports']['socks5']}"
+            for r in r.json()['results']]
+
+
+def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
+    while True:
+        for p in proxies:
+            try:
+                subs = requests.get(video_urls[0]["sub_url"],
+                                    proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
+                subs = subs[subs.find("<transcript>") + len("<transcript>"):subs.find('</text>')]
+                subs = subs[subs.find('>') + 1:]
+                return ftfy.ftfy(subs)
+            except urllib3.exceptions.MaxRetryError:
+                pass
+        proxies.clear()
+        proxies.extend(get_proxies())
+
+
 def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps: int, proxy: str
                      ) -> Tuple[np.ndarray, str]:
     filename = uuid.uuid4()
@@ -126,12 +149,6 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
         if os.path.exists(path):
             os.remove(path)
 
-        subs = requests.get(video_url["sub_url"],
-                            proxies={"http": f"socks5://{proxy}", "https": f"socks5://{proxy}"}).text
-        subs = subs[subs.find("<transcript>") + len("<transcript>"):subs.find('</text>')]
-        subs = subs[subs.find('>') + 1:]
-        subs = ftfy.ftfy(subs)
-
         return np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3)), subs
 
 
@@ -153,10 +170,13 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
         if not video_urls:
             continue
 
-        frames, subs = get_video_frames(video_urls, target_image_size, target_fps, rng.choice(ip_addresses))
+        frames = get_video_frames(video_urls, target_image_size, target_fps, rng.choice(ip_addresses))
 
         if frames is None or not frames.size or frames.shape[0] < context_size:
             continue
+
+        rng.shuffle(ip_addresses)
+        subs = get_subs(video_urls, ip_addresses)
 
         frames = frames[:frames.shape[0] // context_size * context_size]
         frames = frames.reshape(-1, context_size, *frames.shape[1:])
@@ -193,11 +213,7 @@ class DataLoader:
         queue = multiprocessing.Queue(self.prefetch)
         workers = []
         with managers.SharedMemoryManager() as smm:
-            r = requests.get("https://proxy.webshare.io/api/proxy/list/?mode=backbone&page_size=1000",
-                             headers={"Authorization": "wt7c6034fy30k5gk14jlacqh0xflh8j4x7a5lcut"})
-            proxies = [f"{r['username']}:{r['password']}" + '@' + f"{r['proxy_address']}:{r['ports']['socks5']}"
-                       for r in r.json()['results']]
-
+            proxies = get_proxies()
             for i in range(self.workers):
                 work = self.ids[int(len(self.ids) * i / self.workers):int(len(self.ids) * (i + 1) / self.workers)]
                 args = work, i, lock, self.resolution, self.fps, self.context, queue, smm, proxies
