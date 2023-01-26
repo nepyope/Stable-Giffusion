@@ -243,7 +243,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
         latents = jax.random.normal(latent_rng, latents.shape, latents.dtype) * noise_scheduler.init_noise_sigma
         latents = lax.broadcast_in_dim(latents, (3, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
-        state = noise_scheduler.set_timesteps(sched_state, num_inference_steps=schedule_length, shape=latents.shape)
+        state = noise_scheduler.set_timesteps(sched_state, schedule_length, latents.shape)
         (out, _), _ = lax.scan(_step, (latents, state), jnp.arange(schedule_length)[::-1])
         out = jnp.transpose(out, (0, 2, 3, 1)) / 0.18215
 
