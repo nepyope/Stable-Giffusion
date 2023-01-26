@@ -209,7 +209,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     def vae_apply(*args, method=vae.__call__, **kwargs):
         global _RESHAPE
         _RESHAPE = True
-        out = vae.apply(*args, method=flax.linen.remat(lambda *a: method(*a, **kwargs)))
+        out = vae.apply(*args, method=method, **kwargs)
         _RESHAPE = False
         return out
 
@@ -289,6 +289,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             vae_dist_sq, vae_dist_abs = distance(vae_pred, img)
             return unet_dist_sq.mean() + vae_dist_sq.mean(), (unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs)
 
+        compute_loss = jax.remat(compute_loss, policy=jax.checkpoint_policies.checkpoint_dots_with_no_batch_dims)
         grad_fn = jax.value_and_grad(compute_loss, has_aux=True)
         (loss, scalars), (unet_grad, vae_grad) = grad_fn((unet_state.params, vae_state.params))
         unet_grad = lax.pmean(unet_grad, "batch")
