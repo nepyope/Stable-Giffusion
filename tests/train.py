@@ -2,6 +2,7 @@ import os
 import time
 from typing import Union, Dict, Any, Optional
 
+import flax.linen
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -10,7 +11,6 @@ import tqdm
 import typer
 import wandb
 from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel, FlaxPNDMScheduler
-from diffusers.models.vae_flax import FlaxResnetBlock2D, FlaxAttentionBlock
 from diffusers.utils import check_min_version
 from flax import jax_utils
 from flax import linen as nn
@@ -99,9 +99,6 @@ def conv_call(self, inputs: jax.Array) -> jax.Array:
 
 
 nn.Conv.__call__ = conv_call
-
-FlaxResnetBlock2D.__call__ = jax.remat(FlaxResnetBlock2D.__call__)
-FlaxAttentionBlock.__call__ = jax.remat(FlaxAttentionBlock.__call__)
 
 
 def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
@@ -209,10 +206,10 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         latents = latents.reshape(local_batch * context, -1, encoded.shape[2])
         return jnp.concatenate([encoded, latents], 1)
 
-    def vae_apply(*args, **kwargs):
+    def vae_apply(*args, method=vae.__call__, **kwargs):
         global _RESHAPE
         _RESHAPE = True
-        out = vae.apply(*args, **kwargs)
+        out = vae.apply(*args, method=flax.linen.remat(method), **kwargs)
         _RESHAPE = False
         return out
 
