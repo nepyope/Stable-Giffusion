@@ -164,7 +164,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          sample_interval: int = 64, parallel_videos: int = 128,
          tracing_start_step: int = 128, tracing_stop_step: int = 196,
          schedule_length: int = 1024,
-         guidance: float = 7.5):
+         guidance: float = 7.5,
+         unet_batch_factor: int = 16):
     global _KERNEL, _CONTEXT, _RESHAPE
     _CONTEXT, _KERNEL = context, kernel
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
@@ -218,9 +219,6 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     def sample_vae(params: Any, inp: jax.Array):
         return jnp.transpose(vae_apply({"params": params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
 
-    def guide(x, y):
-        return x + guidance * (y - x)
-
     def sample(unet_params, vae_params, batch: Dict[str, Union[np.ndarray, int]]):
         latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 4)
 
@@ -271,7 +269,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             img = batch["pixel_values"].astype(jnp.float32) / 255
             inp = jnp.transpose(img, (0, 3, 1, 2))
             vae_outputs = vae_apply({"params": vae_params}, inp, deterministic=True, method=vae.encode)
-            latents = vae_outputs.latent_dist.sample(sample_rng)
+            latents = jnp.concatenate([vae_outputs.latent_dist.sample(r)
+                                       for r in jax.random.split(sample_rng, unet_batch_factor)])
             latents = jnp.transpose(latents, (0, 3, 1, 2))
             latents = lax.stop_gradient(latents * 0.18215)
 
@@ -280,6 +279,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
             encoded = get_encoded(latents, batch["input_ids"], batch["attention_mask"])
+            encoded = lax.broadcast_in_dim(encoded, (unet_batch_factor, *encoded.shape),
+                                           tuple(range(1, 1 + encoded.shape))).reshape(-1, *encoded.shape[1:])
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoded).sample
 
             vae_pred = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gaussian, "dropout": dropout},
