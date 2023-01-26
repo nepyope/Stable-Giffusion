@@ -209,7 +209,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     def vae_apply(*args, method=vae.__call__, **kwargs):
         global _RESHAPE
         _RESHAPE = True
-        out = vae.apply(*args, method=flax.linen.remat(method), **kwargs)
+        out = vae.apply(*args, method=flax.linen.remat(lambda *a: method(*a, **kwargs)))
         _RESHAPE = False
         return out
 
