@@ -1,6 +1,6 @@
 import os
 import time
-from typing import Union, Dict, Any
+from typing import Union, Dict, Any, Optional
 
 import jax
 import jax.numpy as jnp
@@ -9,7 +9,7 @@ import optax
 import tqdm
 import typer
 import wandb
-from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel, FlaxDDPMScheduler
+from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel, FlaxPNDMScheduler
 from diffusers.utils import check_min_version
 from flax import jax_utils
 from flax import linen as nn
@@ -20,7 +20,6 @@ from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
 from transformers import CLIPTokenizer, FlaxCLIPTextModel
-
 from data import DataLoader
 
 app = typer.Typer(pretty_exceptions_enable=False)
@@ -159,7 +158,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          kernel: int = 3, data_path: str = "./urls", batch_size: int = jax.local_device_count(),
          sample_interval: int = 64, parallel_videos: int = 128,
          tracing_start_step: int = 128, tracing_stop_step: int = 196,
-         schedule_length: int = 1024):
+         schedule_length: int = 1024,
+         text_guidance: float = 1, frame_guidance: float = 2, pure_guidance: float = 7):
     global _KERNEL, _CONTEXT, _RESHAPE
     _CONTEXT, _KERNEL = context, kernel
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
@@ -184,16 +184,17 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     vae_state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
     unet_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
-    noise_scheduler = FlaxDDPMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear",
+    noise_scheduler = FlaxPNDMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear",
                                         num_train_timesteps=schedule_length)
-    noise_scheduler.create_state()
+    sched_state = noise_scheduler.create_state()
+
     local_batch = batch_size // jax.local_device_count()
     mask = jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) > jnp.arange(context).reshape(1, 1, -1, 1, 1, 1)
+    unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np").input_ids
 
-    def get_encoded(latents: jax.Array, batch: Dict[str, jax.Array]):
-        encoded = text_encoder(batch["input_ids"], batch["attention_mask"], params=text_encoder.params)[0]
-        encoded = encoded.reshape(local_batch, 1, *encoded.shape[1:])
-        encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[2:]), (0, 1, 2, 3))
+    def get_encoded(latents: jax.Array, input_ids: jax.Array, attention_mask: Optional[jax.Array]):
+        encoded = text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
+        encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[2:]), (0, 2, 3))
         encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
         latents = latents.reshape(local_batch, context, 1, *latents.shape[1:])
         latents = lax.broadcast_in_dim(latents, (local_batch, context, context, *latents.shape[3:]),
@@ -222,14 +223,24 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         hidden_states_mode = posterior.latent_dist.mode()
 
         latents = jnp.transpose(hidden_states_rng, (0, 3, 1, 2)) * 0.18215
-        encoded = get_encoded(latents, batch)
+        vid_text = get_encoded(latents, batch["input_ids"], batch["attention_mask"])
+        vid_no_text = get_encoded(latents, unconditioned_tokens, jnp.ones_like(unconditioned_tokens))
+        no_vid_text = get_encoded(jnp.zeros_like(latents), batch["input_ids"], batch["attention_mask"])
+        no_vid_no_text = get_encoded(jnp.zeros_like(latents), unconditioned_tokens, jnp.ones_like(unconditioned_tokens))
+        encoded = jnp.concatenate([vid_text, vid_no_text, no_vid_text, no_vid_no_text])
 
         def _step(state, i):
-            unet_pred = unet.apply({"params": unet_params}, state, i, encoded).sample
-            return noise_scheduler.add_noise(state, -unet_pred, i), None
+            latents, state = state
+            state = jax.random.normal(latent_rng, state.shape, state.dtype)
+            state = lax.broadcast_in_dim(state, (4, *state.shape), (1, 2, 3, 4)).reshape(-1, *state.shape[1:])
 
-        out, _ = lax.scan(_step, jax.random.normal(latent_rng, latents.shape, latents.dtype),
-                          jnp.arange(schedule_length))
+            unet_pred = unet.apply({"params": unet_params}, state, i, encoded).sample
+            vt, vnt, nvt, nvnt = jnp.split(unet_pred, 4, 0)
+            pred = nvnt + text_guidance * (nvt - nvnt) + frame_guidance * (vnt - nvnt) + pure_guidance * (vt - nvnt)
+            return noise_scheduler.step(state, pred, i, latents).to_tuple(), None
+
+        state = noise_scheduler.set_timesteps(sched_state, num_inference_steps=schedule_length, shape=latents.shape)
+        (out, _), _ = lax.scan(_step, (latents, state), jnp.arange(schedule_length)[::-1])
         out = jnp.transpose(out, (0, 2, 3, 1)) / 0.18215
 
         sample_rng = sample_vae(vae_params, hidden_states_rng)
