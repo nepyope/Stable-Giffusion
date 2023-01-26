@@ -220,7 +220,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             noise = jax.random.normal(jax.random.PRNGKey(i), state.shape)
             noisy_latents = noise_scheduler.add_noise(state, noise, i)
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, i, encoded).sample
-            return state - unet_pred, None
+            return noise_scheduler.add_noise(state, -unet_pred, i), None
 
         out, _ = lax.scan(_step, jax.random.normal(latent_rng, original_latents.shape, original_latents.dtype),
                           jnp.arange(schedule_length))
