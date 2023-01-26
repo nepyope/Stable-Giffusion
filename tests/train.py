@@ -210,7 +210,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         return out
 
     def sample_vae(params: Any, inp: jax.Array):
-        return jnp.transpose(vae_apply({"params": vae_params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
+        return jnp.transpose(vae_apply({"params": params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
 
     def sample(unet_params, vae_params, batch: Dict[str, Union[np.ndarray, int]]):
         latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 4)
