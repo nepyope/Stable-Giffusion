@@ -220,11 +220,11 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             noise = jax.random.normal(jax.random.PRNGKey(i), state.shape)
             noisy_latents = noise_scheduler.add_noise(state, noise, i)
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, i, encoded).sample
-            return noise_scheduler.add_noise(state, -unet_pred, i), None
+            return noise_scheduler.add_noise(noisy_latents, -unet_pred, i), None
 
         out, _ = lax.scan(_step, jax.random.normal(latent_rng, original_latents.shape, original_latents.dtype),
                           jnp.arange(schedule_length))
-        out = jnp.transpose(out, (0, 2, 3, 1))
+        out = jnp.transpose(out, (0, 2, 3, 1)) / 0.18215
 
         _RESHAPE = True
         sample_rng = vae.apply({"params": vae_params}, hidden_states_rng, method=vae.decode).sample
