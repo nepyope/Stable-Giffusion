@@ -188,23 +188,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                                         num_train_timesteps=schedule_length)
     noise_scheduler.create_state()
     local_batch = batch_size // jax.local_device_count()
+    mask = jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) > jnp.arange(context).reshape(1, 1, -1, 1, 1, 1)
 
-    def sample(unet_params, vae_params, batch: Dict[str, Union[np.ndarray, int]]):
-        global _RESHAPE
-
-        latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 4)
-
-        inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
-        _RESHAPE = True
-        posterior = vae.apply({"params": vae_params}, inp, method=vae.encode)
-        _RESHAPE = False
-
-        hidden_states_rng = posterior.latent_dist.sample(sample_rng)
-        hidden_states_mode = posterior.latent_dist.mode()
-
-        latents = jnp.transpose(hidden_states_rng, (0, 3, 1, 2))
-        original_latents = latents = latents * 0.18215
-
+    def get_encoded(latents: jax.Array, batch: Dict[str, jax.Array]):
         encoded = text_encoder(batch["input_ids"], batch["attention_mask"], params=text_encoder.params)[0]
         encoded = encoded.reshape(local_batch, 1, *encoded.shape[1:])
         encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[2:]), (0, 1, 2, 3))
@@ -214,42 +200,61 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                                        (0, 1, 2, 3, 4, 5))
         latents = latents * mask
         latents = latents.reshape(local_batch * context, -1, encoded.shape[2])
-        encoded = jnp.concatenate([encoded, latents], 1)
+        return jnp.concatenate([encoded, latents], 1)
+
+    def vae_apply(*args, **kwargs):
+        global _RESHAPE
+        _RESHAPE = True
+        out = vae.apply(*args, **kwargs)
+        _RESHAPE = False
+        return out
+
+    def sample_vae(params: Any, inp: jax.Array):
+        return jnp.transpose(vae_apply({"params": vae_params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
+
+    def sample(unet_params, vae_params, batch: Dict[str, Union[np.ndarray, int]]):
+        latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 4)
+
+        inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
+        posterior = vae_apply({"params": vae_params}, inp, method=vae.encode)
+
+        hidden_states_rng = posterior.latent_dist.sample(sample_rng)
+        hidden_states_mode = posterior.latent_dist.mode()
+
+        latents = jnp.transpose(hidden_states_rng, (0, 3, 1, 2)) * 0.18215
+        encoded = get_encoded(latents, batch)
 
         def _step(state, i):
-            noise = jax.random.normal(jax.random.PRNGKey(i), state.shape)
             unet_pred = unet.apply({"params": unet_params}, state, i, encoded).sample
             return noise_scheduler.add_noise(state, -unet_pred, i), None
 
-        out, _ = lax.scan(_step, jax.random.normal(latent_rng, original_latents.shape, original_latents.dtype),
+        out, _ = lax.scan(_step, jax.random.normal(latent_rng, latents.shape, latents.dtype),
                           jnp.arange(schedule_length))
         out = jnp.transpose(out, (0, 2, 3, 1)) / 0.18215
 
-        _RESHAPE = True
-        sample_rng = vae.apply({"params": vae_params}, hidden_states_rng, method=vae.decode).sample
-        sample_mode = vae.apply({"params": vae_params}, hidden_states_mode, method=vae.decode).sample
-        sample_out = vae.apply({"params": vae_params}, out, method=vae.decode).sample
-        _RESHAPE = False
+        sample_rng = sample_vae(vae_params, hidden_states_rng)
+        sample_mode = sample_vae(vae_params, hidden_states_mode)
+        sample_out = sample_vae(vae_params, out)
 
-        return jnp.transpose(sample_rng, (0, 2, 3, 1)), jnp.transpose(sample_mode, (0, 2, 3, 1)), \
-            jnp.transpose(sample_out, (0, 2, 3, 1))
+        return sample_rng, sample_mode, sample_out
 
     p_sample = jax.pmap(sample, "batch")
 
-    mask = jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) > jnp.arange(context).reshape(1, 1, -1, 1, 1, 1)
+    def distance(x, y):
+        dist = (x - y).reshape(local_batch, context, -1)
+        dist_sq = lax.pmean(lax.square(dist).mean((0, 2)), "batch")
+        dist_abs = lax.pmean(lax.abs(dist).mean((0, 2)), "batch")
+        return dist_sq, dist_abs
 
     def train_step(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
                    batch: Dict[str, Union[np.ndarray, int]]):
         def compute_loss(params):
             unet_params, vae_params = params
-            global _RESHAPE
             gaussian, dropout, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 5)
 
             img = batch["pixel_values"].astype(jnp.float32) / 255
             inp = jnp.transpose(img, (0, 3, 1, 2))
-            _RESHAPE = True
-            vae_outputs = vae.apply({"params": vae_params}, inp, deterministic=True, method=vae.encode)
-            _RESHAPE = False
+            vae_outputs = vae_apply({"params": vae_params}, inp, deterministic=True, method=vae.encode)
             latents = vae_outputs.latent_dist.sample(sample_rng)
             latents = jnp.transpose(latents, (0, 3, 1, 2))
             latents = lax.stop_gradient(latents * 0.18215)
@@ -258,33 +263,16 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             timesteps = jax.random.randint(step_rng, (latents.shape[0],), 0, noise_scheduler.config.num_train_timesteps)
             noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
-            encoded = text_encoder(batch["input_ids"], batch["attention_mask"], params=text_encoder.params)[0]
-            encoded = encoded.reshape(local_batch, 1, *encoded.shape[1:])
-            encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[2:]), (0, 1, 2, 3))
-            encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
-            latents = latents.reshape(local_batch, context, 1, *latents.shape[1:])
-            latents = lax.broadcast_in_dim(latents, (local_batch, context, context, *latents.shape[3:]),
-                                           (0, 1, 2, 3, 4, 5))
-            latents = latents * mask
-            latents = latents.reshape(local_batch * context, -1, encoded.shape[2])
-            encoded = jnp.concatenate([encoded, latents], 1)
+            encoded = get_encoded(latents, batch)
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoded).sample
 
-            _RESHAPE = True
-            vae_pred = vae.apply({"params": vae_params}, inp, rngs={"gaussian": gaussian, "dropout": dropout},
+            vae_pred = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gaussian, "dropout": dropout},
                                  sample_posterior=True, deterministic=False).sample
-            _RESHAPE = False
             vae_pred = jnp.transpose(vae_pred, (0, 2, 3, 1))
 
             # TODO: use perceptual loss
-            unet_dist = (unet_pred - noise).reshape(local_batch, context, -1)
-            vae_dist = (vae_pred - img).reshape(local_batch, context, -1)
-
-            unet_dist_sq = lax.pmean(lax.square(unet_dist).mean((0, 2)), "batch")
-            unet_dist_abs = lax.pmean(lax.abs(unet_dist).mean((0, 2)), "batch")
-            vae_dist_sq = lax.pmean(lax.square(vae_dist).mean((0, 2)), "batch")
-            vae_dist_abs = lax.pmean(lax.abs(vae_dist).mean((0, 2)), "batch")
-
+            unet_dist_sq, unet_dist_abs = distance(unet_pred, noise)
+            vae_dist_sq, vae_dist_abs = distance(vae_pred, img)
             return unet_dist_sq.mean() + vae_dist_sq.mean(), (unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs)
 
         grad_fn = jax.value_and_grad(compute_loss, has_aux=True)
