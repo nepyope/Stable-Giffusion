@@ -199,11 +199,14 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         encoded = text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
         encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 2, 3))
         encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
-        latents = latents.reshape(local_batch, context, 1, *latents.shape[1:])
-        latents = lax.broadcast_in_dim(latents, (local_batch, context, context, *latents.shape[3:]),
+        latents = latents.reshape(-1, context, 1, *latents.shape[1:])
+        if latents.shape[0] > local_batch:
+            encoded = lax.broadcast_in_dim(encoded, (latents.shape[0] // local_batch, *encoded.shape),
+                                           tuple(range(1, 1 + encoded.shape))).reshape(-1, *encoded.shape[1:])
+        latents = lax.broadcast_in_dim(latents, (latents.shape[0], context, context, *latents.shape[3:]),
                                        (0, 1, 2, 3, 4, 5))
         latents = latents * mask
-        latents = latents.reshape(local_batch * context, -1, encoded.shape[2])
+        latents = latents.reshape(latents.shape[0] * context, -1, encoded.shape[2])
         return jnp.concatenate([encoded, latents], 1)
 
     def vae_apply(*args, method=vae.__call__, **kwargs):
@@ -276,8 +279,6 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, timesteps)
 
             encoded = get_encoded(latents, batch["input_ids"], batch["attention_mask"])
-            encoded = lax.broadcast_in_dim(encoded, (unet_batch_factor, *encoded.shape),
-                                           tuple(range(1, 1 + encoded.shape))).reshape(-1, *encoded.shape[1:])
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoded).sample
 
             vae_pred = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gaussian, "dropout": dropout},
