@@ -20,6 +20,7 @@ from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
 from transformers import CLIPTokenizer, FlaxCLIPTextModel
+
 from data import DataLoader
 
 app = typer.Typer(pretty_exceptions_enable=False)
@@ -159,7 +160,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          sample_interval: int = 64, parallel_videos: int = 128,
          tracing_start_step: int = 128, tracing_stop_step: int = 196,
          schedule_length: int = 1024,
-         text_guidance: float = 1, frame_guidance: float = 2, pure_guidance: float = 7):
+         guidance: float = 7.5):
     global _KERNEL, _CONTEXT, _RESHAPE
     _CONTEXT, _KERNEL = context, kernel
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
@@ -213,6 +214,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     def sample_vae(params: Any, inp: jax.Array):
         return jnp.transpose(vae_apply({"params": params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
 
+    def guide(x, y):
+        return x + guidance * (y - x)
+
     def sample(unet_params, vae_params, batch: Dict[str, Union[np.ndarray, int]]):
         latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 4)
 
@@ -227,19 +231,20 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         vid_no_text = get_encoded(latents, unconditioned_tokens, jnp.ones_like(unconditioned_tokens))
         no_vid_text = get_encoded(jnp.zeros_like(latents), batch["input_ids"], batch["attention_mask"])
         no_vid_no_text = get_encoded(jnp.zeros_like(latents), unconditioned_tokens, jnp.ones_like(unconditioned_tokens))
-        encoded = jnp.concatenate([vid_text, vid_no_text, no_vid_text, no_vid_no_text])
+        encoded = jnp.concatenate([no_vid_no_text, no_vid_no_text, no_vid_no_text, vid_no_text, no_vid_text, vid_text])
 
         def _step(state, i):
             latents, state = state
-            state = jax.random.normal(latent_rng, state.shape, state.dtype)
-            state = lax.broadcast_in_dim(state, (4, *state.shape), (1, 2, 3, 4)).reshape(-1, *state.shape[1:])
+            new = lax.broadcast_in_dim(latents, (2, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
 
-            unet_pred = unet.apply({"params": unet_params}, state, i, encoded).sample
-            vt, vnt, nvt, nvnt = jnp.split(unet_pred, 4, 0)
-            pred = nvnt + text_guidance * (nvt - nvnt) + frame_guidance * (vnt - nvnt) + pure_guidance * (vt - nvnt)
+            unet_pred = unet.apply({"params": unet_params}, new, i, encoded).sample
+            uncond, cond = jnp.split(unet_pred, 2, 0)
+            pred = uncond + guidance * (cond - uncond)
             return noise_scheduler.step(state, pred, i, latents).to_tuple(), None
 
         state = noise_scheduler.set_timesteps(sched_state, num_inference_steps=schedule_length, shape=latents.shape)
+        latents = jax.random.normal(latent_rng, latents.shape, latents.dtype) * noise_scheduler.init_noise_sigma
+        latents = lax.broadcast_in_dim(latents, (3, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
         (out, _), _ = lax.scan(_step, (latents, state), jnp.arange(schedule_length)[::-1])
         out = jnp.transpose(out, (0, 2, 3, 1)) / 0.18215
 
@@ -311,9 +316,12 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             extra = {}
             if i % sample_interval == 0:
                 s_rng, s_mode, s_unet = to_host(p_sample(unet_state.params, vae_state.params, batch))
+                s_vnt, s_nvt, s_vt = s_unet.split(s_unet, 3)
                 extra["Samples/Reconstruction (RNG)"] = wandb.Image(s_rng.reshape(-1, resolution, 3))
                 extra["Samples/Reconstruction (Mode)"] = wandb.Image(s_mode.reshape(-1, resolution, 3))
-                extra["Samples/Reconstruction (U-Net)"] = wandb.Image(s_unet.reshape(-1, resolution, 3))
+                extra["Samples/Reconstruction (U-Net, Text Guided)"] = wandb.Image(s_vnt.reshape(-1, resolution, 3))
+                extra["Samples/Reconstruction (U-Net, Video Guided)"] = wandb.Image(s_nvt.reshape(-1, resolution, 3))
+                extra["Samples/Reconstruction (U-Net, Full Guidance)"] = wandb.Image(s_vt.reshape(-1, resolution, 3))
                 extra["Samples/Ground Truth"] = wandb.Image(batch["pixel_values"][0].reshape(-1, resolution, 3) / 255)
 
             unet_state, vae_state, scalars = p_train_step(unet_state, vae_state, batch)
