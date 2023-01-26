@@ -274,7 +274,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             timesteps = jax.random.randint(step_rng, (latents.shape[0],), 0, noise_scheduler.config.num_train_timesteps)
             noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
-            encoded = get_encoded(latents, batch)
+            encoded = get_encoded(latents, batch["input_ids"], batch["attention_mask"])
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoded).sample
 
             vae_pred = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gaussian, "dropout": dropout},
