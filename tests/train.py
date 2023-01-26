@@ -273,7 +273,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
             noise = jax.random.normal(noise_rng, latents.shape)
             timesteps = jax.random.randint(step_rng, (latents.shape[0],), 0, noise_scheduler.config.num_train_timesteps)
-            noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
+            noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, timesteps)
 
             encoded = get_encoded(latents, batch["input_ids"], batch["attention_mask"])
             encoded = lax.broadcast_in_dim(encoded, (unet_batch_factor, *encoded.shape),
