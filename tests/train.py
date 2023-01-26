@@ -10,6 +10,7 @@ import tqdm
 import typer
 import wandb
 from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel, FlaxPNDMScheduler
+from diffusers.models.vae_flax import FlaxResnetBlock2D, FlaxAttentionBlock
 from diffusers.utils import check_min_version
 from flax import jax_utils
 from flax import linen as nn
@@ -98,6 +99,9 @@ def conv_call(self, inputs: jax.Array) -> jax.Array:
 
 
 nn.Conv.__call__ = conv_call
+
+FlaxResnetBlock2D.__call__ = jax.remat(FlaxResnetBlock2D.__call__)
+FlaxAttentionBlock.__call__ = jax.remat(FlaxAttentionBlock.__call__)
 
 
 def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
