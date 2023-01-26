@@ -229,7 +229,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             return noise_scheduler.add_noise(state, -unet_pred, i), None
 
         out, _ = lax.scan(_step, jax.random.normal(latent_rng, latents.shape, latents.dtype),
-                          jnp.arange(schedule_length))
+                          jnp.arange(schedule_length - 1, -1, -1))
         out = jnp.transpose(out, (0, 2, 3, 1)) / 0.18215
 
         sample_rng = sample_vae(vae_params, hidden_states_rng)
