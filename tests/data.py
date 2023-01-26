@@ -118,8 +118,8 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
         proxies.extend(get_proxies())
 
 
-def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps: int, proxy: str
-                     ) -> Tuple[np.ndarray, str]:
+def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps: int,
+                     ) -> np.ndarray:
     filename = uuid.uuid4()
     path = str(filename)
     for video_url in video_urls:
@@ -149,7 +149,7 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
         if os.path.exists(path):
             os.remove(path)
 
-        return np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3)), subs
+        return np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3))
 
 
 def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_image_size: int, target_fps: int,
@@ -170,7 +170,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
         if not video_urls:
             continue
 
-        frames = get_video_frames(video_urls, target_image_size, target_fps, rng.choice(ip_addresses))
+        frames = get_video_frames(video_urls, target_image_size, target_fps)
 
         if frames is None or not frames.size or frames.shape[0] < context_size:
             continue
