@@ -202,7 +202,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         latents = latents.reshape(-1, context, 1, *latents.shape[1:])
         if latents.shape[0] > local_batch:
             encoded = lax.broadcast_in_dim(encoded, (latents.shape[0] // local_batch, *encoded.shape),
-                                           tuple(range(1, 1 + encoded.shape))).reshape(-1, *encoded.shape[1:])
+                                           tuple(range(1, 1 + encoded.ndim))).reshape(-1, *encoded.shape[1:])
         latents = lax.broadcast_in_dim(latents, (latents.shape[0], context, context, *latents.shape[3:]),
                                        (0, 1, 2, 3, 4, 5))
         latents = latents * mask
