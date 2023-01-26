@@ -248,11 +248,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         (out, _), _ = lax.scan(_step, (latents, state), jnp.arange(schedule_length)[::-1])
         out = jnp.transpose(out, (0, 2, 3, 1)) / 0.18215
 
-        sample_rng = sample_vae(vae_params, hidden_states_rng)
-        sample_mode = sample_vae(vae_params, hidden_states_mode)
-        sample_out = sample_vae(vae_params, out)
-
-        return sample_rng, sample_mode, sample_out
+        return sample_vae(vae_params, jnp.concatenate([hidden_states_rng, hidden_states_mode, out]))
 
     p_sample = jax.pmap(sample, "batch")
 
@@ -315,8 +311,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                      "attention_mask": attention_mask.reshape(jax.local_device_count(), -1, *attention_mask.shape[1:])}
             extra = {}
             if i % sample_interval == 0:
-                s_rng, s_mode, s_unet = to_host(p_sample(unet_state.params, vae_state.params, batch))
-                s_vnt, s_nvt, s_vt = s_unet.split(s_unet, 3)
+                generated = to_host(p_sample(unet_state.params, vae_state.params, batch))
+                s_rng, s_mode, s_vnt, s_nvt, s_vt = np.split(generated, 5)
                 extra["Samples/Reconstruction (RNG)"] = wandb.Image(s_rng.reshape(-1, resolution, 3))
                 extra["Samples/Reconstruction (Mode)"] = wandb.Image(s_mode.reshape(-1, resolution, 3))
                 extra["Samples/Reconstruction (U-Net, Text Guided)"] = wandb.Image(s_vnt.reshape(-1, resolution, 3))
