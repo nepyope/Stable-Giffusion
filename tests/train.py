@@ -181,11 +181,11 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
-    t5_conv = nn.Sequential(nn.Conv(features=1024, kernel_size=(24,), strides=(8,), padding="VALID"),
+    t5_conv = nn.Sequential([nn.Conv(features=1024, kernel_size=(24,), strides=(8,), padding="VALID"),
                             nn.LayerNorm(epsilon=1e-10),
                             nn.relu,
                             nn.Conv(features=1024, kernel_size=(24,), strides=(8,), padding="VALID"),
-                            )
+                            ])
     inp_shape = jax.random.normal(jax.random.PRNGKey(0), (jax.device_count(), t5_tokens, 768))
     t5_conv_params = t5_conv.init(jax.random.PRNGKey(0), inp_shape)
 
