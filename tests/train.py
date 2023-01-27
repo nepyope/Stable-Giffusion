@@ -19,7 +19,7 @@ from jax.experimental.compilation_cache import compilation_cache
 from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
-from transformers import AutoTokenizer, FlaxLongt5ForConditionalGeneration
+from transformers import AutoTokenizer, FlaxLongT5Model
 
 from data import DataLoader
 
@@ -185,13 +185,13 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     t5_conv_params = t5_conv.init(jax.random.PRNGKey(0),inp_shape)
 
     tokenizer = AutoTokenizer.from_pretrained("google/long-t5-tglobal-base")
-    text_encoder = FlaxLongt5ForConditionalGeneration.from_pretrained("google/long-t5-tglobal-base",dtype=jnp.float32)
+    text_encoder = FlaxLongT5Model.from_pretrained("google/long-t5-tglobal-base", dtype=jnp.float32)
     vae_params = patch_weights(vae_params)
 
     vae: FlaxAutoencoderKL = vae
     unet: FlaxUNet2DConditionModel = unet
     tokenizer: AutoTokenizer = tokenizer
-    text_encoder: FlaxLongt5ForConditionalGeneration = text_encoder
+    text_encoder: FlaxLongT5Model = text_encoder
 
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
 
