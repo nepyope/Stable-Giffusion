@@ -19,7 +19,7 @@ from jax.experimental.compilation_cache import compilation_cache
 from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
-from transformers import CLIPTokenizer, FlaxCLIPTextModel
+from transformers import AutoTokenizer, FlaxLongT5ForConditionalGeneration
 
 from data import DataLoader
 
@@ -179,14 +179,19 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     _CONTEXT, _KERNEL = context, kernel
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
-    tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
-    text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
+
+    T5_conv = nn.Conv(features=1024, kernel_size=(32,), strides=(16,))
+    inp_shape = jax.random.normal(jax.random.PRNGKey(0), (jax.device_count(), 16384, 768))
+    T5_conv_params = T5_conv.init(jax.random.PRNGKey(0),inp_shape)
+
+    tokenizer = AutoTokenizer.from_pretrained("google/long-t5-tglobal-base")
+    text_encoder = FlaxLongT5ForConditionalGeneration.from_pretrained("google/long-t5-tglobal-base",dtype=jnp.float32)
     vae_params = patch_weights(vae_params)
 
     vae: FlaxAutoencoderKL = vae
     unet: FlaxUNet2DConditionModel = unet
-    tokenizer: CLIPTokenizer = tokenizer
-    text_encoder: FlaxCLIPTextModel = text_encoder
+    tokenizer: AutoTokenizer = tokenizer
+    text_encoder: FlaxLongT5ForConditionalGeneration = text_encoder
 
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
 
@@ -198,6 +203,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     vae_state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
     unet_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
+    T5_conv_state = train_state.TrainState.create(apply_fn=T5_conv.__call__, params=T5_conv_params, tx=optimizer)
 
     noise_scheduler = FlaxPNDMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear",
                                         num_train_timesteps=schedule_length)
@@ -207,18 +213,23 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     mask = jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) > jnp.arange(context).reshape(1, 1, -1, 1, 1, 1)
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np").input_ids
 
-    def get_encoded(latents: jax.Array, input_ids: jax.Array, attention_mask: Optional[jax.Array]):
-        encoded = text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
+    def get_encoded(latents: jax.Array, T5_conv_params, input_ids: jax.Array, attention_mask: Optional[jax.Array]):
+        encoded = text_encoder.encode(input_ids, attention_mask, params=text_encoder.params)[0]#this must become 77x1024
+        encoded = T5_conv.apply(T5_conv_params, encoded)
+
         encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 2, 3))
         encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
+
         latents = latents.reshape(-1, context, 1, *latents.shape[1:])
         if latents.shape[0] > local_batch:
             encoded = lax.broadcast_in_dim(encoded, (latents.shape[0] // local_batch, *encoded.shape),
                                            tuple(range(1, 1 + encoded.ndim))).reshape(-1, *encoded.shape[1:])
+
         latents = lax.broadcast_in_dim(latents, (latents.shape[0], context, context, *latents.shape[3:]),
                                        (0, 1, 2, 3, 4, 5))
         latents = latents * mask
         latents = latents.reshape(latents.shape[0] * context, -1, encoded.shape[2])
+
         return jnp.concatenate([encoded, latents], 1)
 
     def vae_apply(*args, method=vae.__call__, **kwargs):
@@ -231,7 +242,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     def sample_vae(params: Any, inp: jax.Array):
         return jnp.transpose(vae_apply({"params": params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
 
-    def sample(unet_params, vae_params, batch: Dict[str, Union[np.ndarray, int]]):
+    def sample(unet_params, vae_params, T5_conv_state,batch: Dict[str, Union[np.ndarray, int]]):
         latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 4)
 
         inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
@@ -241,10 +252,10 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         hidden_states_mode = posterior.latent_dist.mode()
 
         latents = jnp.transpose(hidden_states_rng, (0, 3, 1, 2)) * 0.18215
-        vid_text = get_encoded(latents, batch["input_ids"], batch["attention_mask"])
-        vid_no_text = get_encoded(latents, unconditioned_tokens, jnp.ones_like(unconditioned_tokens))
-        no_vid_text = get_encoded(jnp.zeros_like(latents), batch["input_ids"], batch["attention_mask"])
-        no_vid_no_text = get_encoded(jnp.zeros_like(latents), unconditioned_tokens, jnp.ones_like(unconditioned_tokens))
+        vid_text = get_encoded(latents,T5_conv_state, batch["input_ids"], batch["attention_mask"])
+        vid_no_text = get_encoded(latents,T5_conv_state, unconditioned_tokens, jnp.ones_like(unconditioned_tokens))
+        no_vid_text = get_encoded(jnp.zeros_like(latents),T5_conv_state, batch["input_ids"], batch["attention_mask"])
+        no_vid_no_text = get_encoded(jnp.zeros_like(latents),T5_conv_state, unconditioned_tokens, jnp.ones_like(unconditioned_tokens))
         encoded = jnp.concatenate([no_vid_no_text, no_vid_no_text, no_vid_no_text, vid_no_text, no_vid_text, vid_text])
 
         def _step(state, i):
@@ -272,10 +283,10 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         dist_abs = lax.pmean(lax.abs(dist).mean((0, 2)), "batch")
         return dist_sq, dist_abs
 
-    def train_step(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
+    def train_step(unet_state: train_state.TrainState, vae_state: train_state.TrainState,T5_conv_state: train_state.TrainState,
                    batch: Dict[str, Union[np.ndarray, int]]):
         def compute_loss(params):
-            unet_params, vae_params = params
+            unet_params, vae_params, T5_conv_params = params
             gaussian, dropout, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 5)
 
             img = batch["pixel_values"].astype(jnp.float32) / 255
@@ -290,9 +301,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             timesteps = jax.random.randint(step_rng, (latents.shape[0],), 0, noise_scheduler.config.num_train_timesteps)
             noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, timesteps)
 
-            encoded = get_encoded(latents, batch["input_ids"], batch["attention_mask"])
+            encoded = get_encoded(latents, T5_conv_params, batch["input_ids"], batch["attention_mask"])
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoded).sample
-
+            
             vae_pred = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gaussian, "dropout": dropout},
                                  sample_posterior=True, deterministic=False).sample
             vae_pred = jnp.transpose(vae_pred, (0, 2, 3, 1))
@@ -304,17 +315,20 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
         compute_loss = jax.remat(compute_loss, policy=jax.checkpoint_policies.checkpoint_dots_with_no_batch_dims)
         grad_fn = jax.value_and_grad(compute_loss, has_aux=True)
-        (loss, scalars), (unet_grad, vae_grad) = grad_fn((unet_state.params, vae_state.params))
+        (loss, scalars), (unet_grad, vae_grad, T5_conv_grad) = grad_fn((unet_state.params, vae_state.params, T5_conv_state.params))
         unet_grad = lax.pmean(unet_grad, "batch")
         vae_grad = lax.pmean(vae_grad, "batch")
+        T5_conv_grad = lax.pmean(T5_conv_grad, "batch")
         new_unet_state = unet_state.apply_gradients(grads=unet_grad)
         new_vae_state = vae_state.apply_gradients(grads=vae_grad)
-        return new_unet_state, new_vae_state, scalars
+        new_T5_conv_state = T5_conv_state.apply_gradients(grads=T5_conv_grad)
+        return new_unet_state, new_vae_state, new_T5_conv_state, scalars
 
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
 
     vae_state = jax_utils.replicate(vae_state)
     unet_state = jax_utils.replicate(unet_state)
+    T5_conv_state = jax_utils.replicate(T5_conv_state)
 
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, batch_size, prefetch, parallel_videos,
                       tokenizer)
@@ -327,7 +341,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                      "attention_mask": attention_mask.reshape(jax.local_device_count(), -1, *attention_mask.shape[1:])}
             extra = {}
             if i % sample_interval == 0:
-                generated = to_host(p_sample(unet_state.params, vae_state.params, batch))
+                generated = to_host(p_sample(unet_state.params,vae_state.params, T5_conv_state.params, batch))
                 s_rng, s_mode, s_vnt, s_nvt, s_vt = np.split(generated, 5)
                 extra["Samples/Reconstruction (RNG)"] = wandb.Image(s_rng.reshape(-1, resolution, 3))
                 extra["Samples/Reconstruction (Mode)"] = wandb.Image(s_mode.reshape(-1, resolution, 3))
@@ -336,7 +350,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                 extra["Samples/Reconstruction (U-Net, Full Guidance)"] = wandb.Image(s_vt.reshape(-1, resolution, 3))
                 extra["Samples/Ground Truth"] = wandb.Image(batch["pixel_values"][0].reshape(-1, resolution, 3) / 255)
 
-            unet_state, vae_state, scalars = p_train_step(unet_state, vae_state, batch)
+            unet_state, vae_state, scalars = p_train_step(unet_state, vae_state, T5_conv_state, batch)
             unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs = to_host(scalars)
             timediff = time.time() - start_time
             run.log({"U-Net MSE/Total": float(np.mean(unet_dist_sq)), "U-Net MAE/Total": float(np.mean(unet_dist_abs)),

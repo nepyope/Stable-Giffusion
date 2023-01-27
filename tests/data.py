@@ -23,7 +23,7 @@ import urllib3.exceptions
 import youtube_dl
 
 _DONE = "DONE"
-
+os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
 @dataclasses.dataclass
 class Share:
@@ -250,7 +250,7 @@ class DataLoader:
                         subtitles.append(samples[idx][1])
                     if len(np_batch) == self.batch_size:
                         tokens = self.tokenizer(subtitles, return_tensors="np", padding="max_length", truncation=True,
-                                                max_length=77)
+                                                max_length=16384)
                         yield np.concatenate(np_batch, axis=0), tokens["input_ids"], tokens["attention_mask"]
             for w in workers:
                 w.join()
