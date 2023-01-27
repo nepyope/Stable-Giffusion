@@ -216,7 +216,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     local_batch = batch_size // jax.local_device_count()
     mask = jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) > jnp.arange(context).reshape(1, 1, -1, 1, 1, 1)
-    unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np").input_ids
+    unconditioned_tokens = tokenizer([""], padding="max_length", max_length=t5_tokens, return_tensors="np").input_ids
 
     def get_encoded(latents: jax.Array, t5_conv_params, input_ids: jax.Array, attention_mask: Optional[jax.Array]):
         encoded = text_encoder.encode(input_ids, attention_mask, params=text_encoder.params)[0]
