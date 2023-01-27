@@ -191,7 +191,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
 
     lr_sched = optax.warmup_exponential_decay_schedule(0, lr, warmup_steps, lr_halving_every_n_steps, 0.5)
-    optimizer = optax.chain(optax.global_norm(max_grad_norm),
+    optimizer = optax.chain(optax.clip_by_global_norm(max_grad_norm),
                             scale_by_laprop(beta1, beta2, eps, lr_sched),
                             # optax.transform.add_decayed_weights(weight_decay, mask),  # TODO: mask normalization
                             )
