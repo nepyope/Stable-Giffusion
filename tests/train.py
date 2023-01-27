@@ -153,7 +153,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule) -> Gra
         nu_hat = bias_correction(nu, b2, count_inc)
         updates = jax.tree_map(lambda m, v: m / lax.max(lax.sqrt(v), eps), updates, nu_hat)
         mu = update_moment(updates, mu, b1, 1)
-        scale = lr(count_inc)
+        scale = -lr(count_inc)
         mu_hat = bias_correction(mu, b1, count_inc)
         mu_hat = jax.tree_map(lambda x: x * scale, mu_hat)
         mu = jax.tree_map(lambda x, o: x.astype(o.dtype), mu, state.mu)
