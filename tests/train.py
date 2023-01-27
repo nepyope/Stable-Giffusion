@@ -153,6 +153,8 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule) -> Gra
         updates = jax.tree_map(lambda m, v: m / lax.max(lax.sqrt(v), eps), updates, nu_hat)
         mu = update_moment(updates, promote_to(state.mu, jnp.float64), b1, 1)
         mu_hat = bias_correction(mu, b1, count_inc) * lr(count_inc)
+        mu = jax.tree_map(lambda x, o: x.astype(o.dtype), mu, state.mu)
+        nu = jax.tree_map(lambda x, o: x.astype(o.dtype), nu, state.nu)
         return mu_hat, ScaleByAdamState(count=count_inc, mu=mu.astype(dtype), nu=nu.astype(dtype))
 
     return GradientTransformation(init_fn, update_fn)
