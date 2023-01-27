@@ -14,5 +14,6 @@ export WANDB_START_METHOD="thread"
 export XLA_FLAGS="--xla_force_host_platform_device_count=1"  # We don't use TPU-CPU for ML
 # export XLA_FLAGS="--xla_step_marker_location=1 $XLA_FLAGS"  # 0 = entry; 1 = outer while
 
-/usr/bin/env python3 tests/train.py "$@"
+cd tests
+/usr/bin/env python3 train.py "$@"
 
