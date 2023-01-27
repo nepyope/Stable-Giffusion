@@ -163,7 +163,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule) -> Gra
 
 @app.command()
 def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-16,
-         max_grad_norm: float = 0.01, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
+         max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
          workers: int = os.cpu_count() // 2, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
          kernel: int = 3, data_path: str = "./urls", batch_size: int = jax.local_device_count(),
          sample_interval: int = 64, parallel_videos: int = 128,
@@ -189,7 +189,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
 
     lr_sched = optax.warmup_exponential_decay_schedule(0, lr, warmup_steps, lr_halving_every_n_steps, 0.5)
-    optimizer = optax.chain(optax.adaptive_grad_clip(max_grad_norm),
+    optimizer = optax.chain(optax.global_norm(max_grad_norm),
                             scale_by_laprop(beta1, beta2, eps, lr_sched),
                             # optax.transform.add_decayed_weights(weight_decay, mask),  # TODO: mask normalization
                             )
