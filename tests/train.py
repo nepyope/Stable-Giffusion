@@ -162,7 +162,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          tracing_start_step: int = 128, tracing_stop_step: int = 196,
          schedule_length: int = 1024,
          guidance: float = 7.5,
-         unet_batch_factor: int = 16):
+         unet_batch_factor: int = 16,
+         warmup_steps: int = 2048,
+         lr_halving_every_n_steps: int = 8192):
     global _KERNEL, _CONTEXT, _RESHAPE
     _CONTEXT, _KERNEL = context, kernel
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
@@ -178,10 +180,11 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
 
+    lr_sched = optax.warmup_exponential_decay_schedule(0, lr, warmup_steps, lr_halving_every_n_steps, 0.5)
     optimizer = optax.chain(optax.clip_by_global_norm(max_grad_norm),
                             scale_by_laprop(beta1, beta2, eps),
                             # optax.transform.add_decayed_weights(weight_decay, mask),  # TODO: mask normalization
-                            optax.sgd(lr),
+                            optax.sgd(lr_sched),
                             )
 
     vae_state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
