@@ -182,10 +182,10 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
     t5_conv = nn.Sequential([nn.Conv(features=1024, kernel_size=(24,), strides=(8,), padding="VALID"),
-                            nn.LayerNorm(epsilon=1e-10),
-                            nn.relu,
-                            nn.Conv(features=1024, kernel_size=(24,), strides=(8,), padding="VALID"),
-                            ])
+                             nn.LayerNorm(epsilon=1e-10),
+                             nn.relu,
+                             nn.Conv(features=1024, kernel_size=(24,), strides=(8,), padding="VALID"),
+                             ])
     inp_shape = jax.random.normal(jax.random.PRNGKey(0), (jax.device_count(), t5_tokens, 768))
     t5_conv_params = t5_conv.init(jax.random.PRNGKey(0), inp_shape)
 
@@ -341,7 +341,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, batch_size, prefetch, parallel_videos,
                       tokenizer, t5_tokens)
     start_time = time.time()
-    for epoch in range(100):
+    for epoch in range(10 ** 9):
         for i, (video, input_ids, attention_mask) in tqdm.tqdm(enumerate(data, 1)):
             batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32),
@@ -370,7 +370,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                      **extra,
                      "Step": i, "Runtime": timediff,
                      "Speed/Videos per Day": i * batch_size / timediff * 24 * 3600,
-                     "Speed/Frames per Day": i * batch_size * context / timediff * 24 * 3600})
+                     "Speed/Frames per Day": i * batch_size * context / timediff * 24 * 3600,
+                     "Epoch": epoch})
 
             if i == tracing_start_step:
                 jax.profiler.start_trace("trace")
