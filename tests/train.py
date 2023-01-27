@@ -174,15 +174,20 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          guidance: float = 7.5,
          unet_batch_factor: int = 16,
          warmup_steps: int = 2048,
-         lr_halving_every_n_steps: int = 8192):
+         lr_halving_every_n_steps: int = 8192,
+         t5_tokens: int = 16384):
     global _KERNEL, _CONTEXT, _RESHAPE
     _CONTEXT, _KERNEL = context, kernel
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
-    t5_conv = nn.Conv(features=1024, kernel_size=(32,), strides=(16,))
-    inp_shape = jax.random.normal(jax.random.PRNGKey(0), (jax.device_count(), 16384, 768))
-    t5_conv_params = t5_conv.init(jax.random.PRNGKey(0),inp_shape)
+    t5_conv = nn.Sequential(nn.Conv(features=1024, kernel_size=(24,), strides=(8,), padding="VALID"),
+                            nn.LayerNorm(epsilon=1e-10),
+                            nn.relu,
+                            nn.Conv(features=1024, kernel_size=(24,), strides=(8,), padding="VALID"),
+                            )
+    inp_shape = jax.random.normal(jax.random.PRNGKey(0), (jax.device_count(), t5_tokens, 768))
+    t5_conv_params = t5_conv.init(jax.random.PRNGKey(0), inp_shape)
 
     tokenizer = AutoTokenizer.from_pretrained("google/long-t5-tglobal-base")
     text_encoder = FlaxLongT5Model.from_pretrained("google/long-t5-tglobal-base", dtype=jnp.float32)
@@ -243,7 +248,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     def sample_vae(params: Any, inp: jax.Array):
         return jnp.transpose(vae_apply({"params": params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
 
-    def sample(unet_params, vae_params, t5_conv_state,batch: Dict[str, Union[np.ndarray, int]]):
+    def sample(unet_params, vae_params, t5_conv_state, batch: Dict[str, Union[np.ndarray, int]]):
         latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 4)
 
         inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
@@ -253,10 +258,11 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         hidden_states_mode = posterior.latent_dist.mode()
 
         latents = jnp.transpose(hidden_states_rng, (0, 3, 1, 2)) * 0.18215
-        vid_text = get_encoded(latents,t5_conv_state, batch["input_ids"], batch["attention_mask"])
-        vid_no_text = get_encoded(latents,t5_conv_state, unconditioned_tokens, jnp.ones_like(unconditioned_tokens))
-        no_vid_text = get_encoded(jnp.zeros_like(latents),t5_conv_state, batch["input_ids"], batch["attention_mask"])
-        no_vid_no_text = get_encoded(jnp.zeros_like(latents),t5_conv_state, unconditioned_tokens, jnp.ones_like(unconditioned_tokens))
+        vid_text = get_encoded(latents, t5_conv_state, batch["input_ids"], batch["attention_mask"])
+        vid_no_text = get_encoded(latents, t5_conv_state, unconditioned_tokens, jnp.ones_like(unconditioned_tokens))
+        no_vid_text = get_encoded(jnp.zeros_like(latents), t5_conv_state, batch["input_ids"], batch["attention_mask"])
+        no_vid_no_text = get_encoded(jnp.zeros_like(latents), t5_conv_state, unconditioned_tokens,
+                                     jnp.ones_like(unconditioned_tokens))
         encoded = jnp.concatenate([no_vid_no_text, no_vid_no_text, no_vid_no_text, vid_no_text, no_vid_text, vid_text])
 
         def _step(state, i):
@@ -284,7 +290,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         dist_abs = lax.pmean(lax.abs(dist).mean((0, 2)), "batch")
         return dist_sq, dist_abs
 
-    def train_step(unet_state: train_state.TrainState, vae_state: train_state.TrainState,t5_conv_state: train_state.TrainState,
+    def train_step(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
+                   t5_conv_state: train_state.TrainState,
                    batch: Dict[str, Union[np.ndarray, int]]):
         def compute_loss(params):
             unet_params, vae_params, t5_conv_params = params
@@ -304,7 +311,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
             encoded = get_encoded(latents, t5_conv_params, batch["input_ids"], batch["attention_mask"])
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoded).sample
-            
+
             vae_pred = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gaussian, "dropout": dropout},
                                  sample_posterior=True, deterministic=False).sample
             vae_pred = jnp.transpose(vae_pred, (0, 2, 3, 1))
@@ -316,7 +323,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
         compute_loss = jax.remat(compute_loss, policy=jax.checkpoint_policies.checkpoint_dots_with_no_batch_dims)
         grad_fn = jax.value_and_grad(compute_loss, has_aux=True)
-        (loss, scalars), (unet_grad, vae_grad, t5_conv_grad) = grad_fn((unet_state.params, vae_state.params, t5_conv_state.params))
+        (loss, scalars), (unet_grad, vae_grad, t5_conv_grad) = grad_fn(
+            (unet_state.params, vae_state.params, t5_conv_state.params))
         unet_grad = lax.pmean(unet_grad, "batch")
         vae_grad = lax.pmean(vae_grad, "batch")
         t5_conv_grad = lax.pmean(t5_conv_grad, "batch")
@@ -332,7 +340,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     t5_conv_state = jax_utils.replicate(t5_conv_state)
 
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, batch_size, prefetch, parallel_videos,
-                      tokenizer)
+                      tokenizer, t5_tokens)
     start_time = time.time()
     for epoch in range(100):
         for i, (video, input_ids, attention_mask) in tqdm.tqdm(enumerate(data, 1)):
@@ -342,7 +350,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                      "attention_mask": attention_mask.reshape(jax.local_device_count(), -1, *attention_mask.shape[1:])}
             extra = {}
             if i % sample_interval == 0:
-                generated = to_host(p_sample(unet_state.params,vae_state.params, t5_conv_state.params, batch))
+                generated = to_host(p_sample(unet_state.params, vae_state.params, t5_conv_state.params, batch))
                 s_rng, s_mode, s_vnt, s_nvt, s_vt = np.split(generated, 5)
                 extra["Samples/Reconstruction (RNG)"] = wandb.Image(s_rng.reshape(-1, resolution, 3))
                 extra["Samples/Reconstruction (Mode)"] = wandb.Image(s_mode.reshape(-1, resolution, 3))

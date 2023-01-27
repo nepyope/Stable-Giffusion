@@ -187,7 +187,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 class DataLoader:
     def __init__(self, workers: int, url_dir: str, video_downloaders: int, resolution: int, fps: int, context: int,
                  batch_size: int, prefetch: int, parallel_videos: int, tokenizer: transformers.BertTokenizer,
-                 seed: int = 0):
+                 t5_tokens: int, seed: int = 0):
         self.workers = workers
         self.video_downloaders = video_downloaders
         self.resolution = resolution
@@ -199,6 +199,7 @@ class DataLoader:
         self.parallel_videos = parallel_videos
         self.tokenizer = tokenizer
         self.ids = ids = []
+        self.t5_tokens = t5_tokens
         for path in os.listdir(url_dir):
             with open(f'{url_dir}/{path}', 'rb') as f:
                 vals = json.load(f)
@@ -250,7 +251,7 @@ class DataLoader:
                         subtitles.append(samples[idx][1])
                     if len(np_batch) == self.batch_size:
                         tokens = self.tokenizer(subtitles, return_tensors="np", padding="max_length", truncation=True,
-                                                max_length=16384)
+                                                max_length=self.t5_tokens)
                         yield np.concatenate(np_batch, axis=0), tokens["input_ids"], tokens["attention_mask"]
             for w in workers:
                 w.join()
