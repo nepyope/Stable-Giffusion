@@ -2,7 +2,6 @@ import os
 import time
 from typing import Union, Dict, Any, Optional
 
-import flax.linen
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -134,7 +133,11 @@ def bias_correction(moment, decay, count):
     return jax.tree_map(lambda t: t / bias_correction.astype(t.dtype), moment)
 
 
-def scale_by_laprop(b1: float = 0.9, b2: float = 0.999, eps: float = 1e-8) -> GradientTransformation:
+def promote_to(inp: jax.Array, dtype: jnp.dtype) -> jax.Array:
+    return jnp.asarray(inp, jnp.promote_types(dtype, jnp.result_type(inp)))
+
+
+def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule) -> GradientTransformation:
     def init_fn(params):
         mu = jax.tree_map(jnp.zeros_like, params)  # First moment
         nu = jax.tree_map(jnp.zeros_like, params)  # Second moment
@@ -142,20 +145,22 @@ def scale_by_laprop(b1: float = 0.9, b2: float = 0.999, eps: float = 1e-8) -> Gr
 
     def update_fn(updates, state, params=None):
         del params
-        nu = update_moment(updates, state.nu, b2, 2)
+        dtype = state.nu.dtype
+        updates = promote_to(updates, jnp.float64)
+        nu = update_moment(updates, promote_to(state.nu, jnp.float64), b2, 2)
         count_inc = safe_int32_increment(state.count)
         nu_hat = bias_correction(nu, b2, count_inc)
-        updates = jax.tree_map(lambda m, v: m / lax.max(jnp.sqrt(v), eps), updates, nu_hat)
-        mu = update_moment(updates, state.mu, b1, 1)
-        mu_hat = bias_correction(mu, b1, count_inc)
-        return mu_hat, ScaleByAdamState(count=count_inc, mu=mu, nu=nu)
+        updates = jax.tree_map(lambda m, v: m / lax.max(lax.sqrt(v), eps), updates, nu_hat)
+        mu = update_moment(updates, promote_to(state.mu, jnp.float64), b1, 1)
+        mu_hat = bias_correction(mu, b1, count_inc) * lr(count_inc)
+        return mu_hat, ScaleByAdamState(count=count_inc, mu=mu.astype(dtype), nu=nu.astype(dtype))
 
     return GradientTransformation(init_fn, update_fn)
 
 
 @app.command()
-def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-12,
-         max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
+def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-16,
+         max_grad_norm: float = 0.01, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
          workers: int = os.cpu_count() // 2, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
          kernel: int = 3, data_path: str = "./urls", batch_size: int = jax.local_device_count(),
          sample_interval: int = 64, parallel_videos: int = 128,
@@ -181,10 +186,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
 
     lr_sched = optax.warmup_exponential_decay_schedule(0, lr, warmup_steps, lr_halving_every_n_steps, 0.5)
-    optimizer = optax.chain(optax.clip_by_global_norm(max_grad_norm),
-                            scale_by_laprop(beta1, beta2, eps),
+    optimizer = optax.chain(optax.adaptive_grad_clip(max_grad_norm),
+                            scale_by_laprop(beta1, beta2, eps, lr_sched),
                             # optax.transform.add_decayed_weights(weight_decay, mask),  # TODO: mask normalization
-                            optax.sgd(lr_sched),
                             )
 
     vae_state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
