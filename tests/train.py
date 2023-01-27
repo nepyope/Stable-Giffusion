@@ -291,8 +291,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         return dist_sq, dist_abs
 
     def train_step(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
-                   t5_conv_state: train_state.TrainState,
-                   batch: Dict[str, Union[np.ndarray, int]]):
+                   t5_conv_state: train_state.TrainState, batch: Dict[str, Union[np.ndarray, int]]):
         def compute_loss(params):
             unet_params, vae_params, t5_conv_params = params
             gaussian, dropout, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 5)
@@ -359,7 +358,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                 extra["Samples/Reconstruction (U-Net, Full Guidance)"] = wandb.Image(s_vt.reshape(-1, resolution, 3))
                 extra["Samples/Ground Truth"] = wandb.Image(batch["pixel_values"][0].reshape(-1, resolution, 3) / 255)
 
-            unet_state, vae_state, scalars = p_train_step(unet_state, vae_state, t5_conv_state, batch)
+            unet_state, vae_state, t5_conv_state, scalars = p_train_step(unet_state, vae_state, t5_conv_state, batch)
             unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs = to_host(scalars)
             timediff = time.time() - start_time
             run.log({"U-Net MSE/Total": float(np.mean(unet_dist_sq)), "U-Net MAE/Total": float(np.mean(unet_dist_abs)),
