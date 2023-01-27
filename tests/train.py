@@ -133,7 +133,7 @@ def bias_correction(moment, decay, count):
     return jax.tree_map(lambda t: t / bias_correction.astype(t.dtype), moment)
 
 
-def promote(inp: jax.Array, dtype: jnp.dtype) -> jax.Array:
+def promote(inp: jax.Array) -> jax.Array:
     return jnp.asarray(inp, jnp.promote_types(jnp.float64, jnp.result_type(inp)))
 
 
