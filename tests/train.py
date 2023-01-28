@@ -176,8 +176,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule) -> Gra
 def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-16,
          max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
          workers: int = os.cpu_count() // 2, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
-         data_path: str = "./urls", batch_size: int = jax.local_device_count(),
-         sample_interval: int = 64, parallel_videos: int = 128,
+         data_path: str = "./urls", sample_interval: int = 64, parallel_videos: int = 128,
          tracing_start_step: int = 128, tracing_stop_step: int = 196,
          schedule_length: int = 1024,
          guidance: float = 7.5,
@@ -186,7 +185,6 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          lr_halving_every_n_steps: int = 8192,
          t5_tokens: int = 16384):
     global _CONTEXT, _RESHAPE
-    _CONTEXT = context
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
@@ -223,7 +221,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                                         num_train_timesteps=schedule_length)
     sched_state = noise_scheduler.create_state()
 
-    local_batch = batch_size // jax.local_device_count()
+    local_batch = 1
     mask = jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) > jnp.arange(context).reshape(1, 1, -1, 1, 1, 1)
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=t5_tokens, return_tensors="np").input_ids
 
@@ -232,6 +230,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         encoded = lax.stop_gradient(encoded)  # [8*batch, t5_tokens//8, features] avoids padding batch to multiple of 8
         encoded = encoded.reshape(local_batch, t5_tokens, -1)  # [batch,  t5_tokens, features]
         encoded = t5_conv.apply(t5_conv_params, encoded)
+        encoded = jax.lax.pmean(encoded)
 
         encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 2, 3))
         encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
@@ -300,8 +299,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         dist_abs = lax.pmean(lax.abs(dist).mean((0, 2)), "batch")
         return dist_sq, dist_abs
 
-    def train_step(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
-                   t5_conv_state: train_state.TrainState, batch: Dict[str, Union[np.ndarray, int]]):
+    def train_step(all_states, batch: Dict[str, Union[np.ndarray, int]]):
+        unet_state, vae_state, t5_conv_state = all_states
+
         def compute_loss(params):
             unet_params, vae_params, t5_conv_params = params
             gaussian, dropout, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 5)
@@ -340,19 +340,31 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         new_unet_state = unet_state.apply_gradients(grads=unet_grad)
         new_vae_state = vae_state.apply_gradients(grads=vae_grad)
         new_t5_conv_state = t5_conv_state.apply_gradients(grads=t5_conv_grad)
-        return new_unet_state, new_vae_state, new_t5_conv_state, scalars
+        return (new_unet_state, new_vae_state, new_t5_conv_state), scalars
 
-    p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
+    def all_to_all(x):
+        return lax.all_to_all(x, "batch", 1, 0, tiled=True)
+
+    def train_loop(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
+                   t5_conv_state: train_state.TrainState, batch: Dict[str, Union[np.ndarray, int]]):
+        batch = {"input_ids": all_to_all(batch["input_ids"]),
+                 "attention_mask": all_to_all(batch["attention_mask"]),
+                 "pixel_values": all_to_all(batch["pixel_values"]),
+                 "idx": batch["idx"] + jnp.arange(jax.process_count())}
+        return lax.scan(train_state, (unet_state, vae_state, t5_conv_state), batch)
+
+    p_train_step = jax.pmap(train_loop, "batch", donate_argnums=(0, 1))
 
     vae_state = jax_utils.replicate(vae_state)
     unet_state = jax_utils.replicate(unet_state)
     t5_conv_state = jax_utils.replicate(t5_conv_state)
 
-    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, batch_size, prefetch, parallel_videos,
-                      tokenizer, t5_tokens)
+    data = DataLoader(workers, data_path, downloaders, resolution, fps, context * jax.process_count(), 1, prefetch,
+                      parallel_videos, tokenizer, t5_tokens)
     start_time = time.time()
     for epoch in range(10 ** 9):
         for i, (video, input_ids, attention_mask) in tqdm.tqdm(enumerate(data, 1)):
+            i *= jax.process_count()
             batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32),
                      "input_ids": input_ids.reshape(jax.local_device_count(), -1, *input_ids.shape[1:]),
@@ -368,20 +380,21 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                 extra["Samples/Reconstruction (U-Net, Full Guidance)"] = wandb.Image(s_vt.reshape(-1, resolution, 3))
                 extra["Samples/Ground Truth"] = wandb.Image(batch["pixel_values"][0].reshape(-1, resolution, 3) / 255)
 
-            unet_state, vae_state, t5_conv_state, scalars = p_train_step(unet_state, vae_state, t5_conv_state, batch)
-            unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs = to_host(scalars)
+            (unet_state, vae_state, t5_conv_state), scalars = p_train_step(unet_state, vae_state, t5_conv_state, batch)
             timediff = time.time() - start_time
-            run.log({"U-Net MSE/Total": float(np.mean(unet_dist_sq)), "U-Net MAE/Total": float(np.mean(unet_dist_abs)),
-                     "VAE MSE/Total": float(np.mean(vae_dist_sq)), "VAE MAE/Total": float(np.mean(vae_dist_abs)),
-                     **{f"U-Net MSE/Frame {k}": float(loss) for k, loss in enumerate(unet_dist_sq)},
-                     **{f"U-Net MAE/Frame {k}": float(loss) for k, loss in enumerate(unet_dist_abs)},
-                     **{f"VAE MSE/Frame {k}": float(loss) for k, loss in enumerate(vae_dist_sq)},
-                     **{f"VAE MAE/Frame {k}": float(loss) for k, loss in enumerate(vae_dist_abs)},
-                     **extra,
-                     "Step": i, "Runtime": timediff,
-                     "Speed/Videos per Day": i * batch_size / timediff * 24 * 3600,
-                     "Speed/Frames per Day": i * batch_size * context / timediff * 24 * 3600,
-                     "Epoch": epoch})
+            for offset, (unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs) in zip(*to_host(scalars)):
+                run.log({"U-Net MSE/Total": float(np.mean(unet_dist_sq)), "U-Net MAE/Total": float(np.mean(unet_dist_abs)),
+                         "VAE MSE/Total": float(np.mean(vae_dist_sq)), "VAE MAE/Total": float(np.mean(vae_dist_abs)),
+                         **{f"U-Net MSE/Frame {k}": float(loss) for k, loss in enumerate(unet_dist_sq)},
+                         **{f"U-Net MAE/Frame {k}": float(loss) for k, loss in enumerate(unet_dist_abs)},
+                         **{f"VAE MSE/Frame {k}": float(loss) for k, loss in enumerate(vae_dist_sq)},
+                         **{f"VAE MAE/Frame {k}": float(loss) for k, loss in enumerate(vae_dist_abs)},
+                         **extra,
+                         "Step": offset, "Runtime": timediff,
+                         "Speed/Videos per Day": (i + jax.process_count()) / timediff * 24 * 3600,
+                         "Speed/Frames per Day": (i + jax.process_count()) * context * jax.process_count() / timediff *
+                                                 24 * 3600,
+                         "Epoch": epoch})
 
             if i == tracing_start_step:
                 jax.profiler.start_trace("trace")
