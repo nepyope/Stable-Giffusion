@@ -108,7 +108,7 @@ def get_proxies():
 
 def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
     while True:
-        for i in range(len(proxies)):
+        for _ in range(len(proxies)):
             p = proxies.pop(0)
             try:
                 subs = requests.get(video_urls[0]["sub_url"],
