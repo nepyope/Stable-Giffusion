@@ -279,7 +279,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         hidden_states_mode = posterior.latent_dist.mode()
         latents = jnp.transpose(hidden_states_rng, (0, 3, 1, 2)) * 0.18215
         tokens = batch["input_ids"].size
-        unc_tok = lax.select_n(device_id() == 0, jnp.zeros_like((tokens,)),
+        unc_tok = lax.select_n(device_id() == 0, jnp.zeros((tokens,)),
                                jnp.concatenate([jnp.ones((1,)), jnp.zeros((tokens - 1,))]))
         unc_tok = unc_tok.reshape(batch["input_ids"].shape)
         vid_text = get_encoded(latents, t5_conv_state, batch["input_ids"], batch["attention_mask"])
