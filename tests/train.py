@@ -387,7 +387,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
             (unet_state, vae_state, t5_conv_state), scalars = p_train_step(unet_state, vae_state, t5_conv_state, batch)
             timediff = time.time() - start_time
-            for offset, (unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs) in zip(*to_host(scalars)):
+            for offset, (unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs) in enumerate(zip(*to_host(scalars))):
                 run.log(
                     {"U-Net MSE/Total": float(np.mean(unet_dist_sq)), "U-Net MAE/Total": float(np.mean(unet_dist_abs)),
                      "VAE MSE/Total": float(np.mean(vae_dist_sq)), "VAE MAE/Total": float(np.mean(vae_dist_abs)),
