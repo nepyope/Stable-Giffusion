@@ -118,7 +118,7 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                 if "but your computer or network may be sending automated queries. To protect our users, we can't process your request right now." in subs:
                     continue
                 return subs
-            except urllib3.exceptions.MaxRetryError:
+            except urllib3.exceptions.HTTPError:
                 pass
         proxies.clear()
         proxies.extend(get_proxies())

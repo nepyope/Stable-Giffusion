@@ -206,7 +206,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     tokenizer: T5Tokenizer = tokenizer
     text_encoder: FlaxLongT5Model = text_encoder
 
-    run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
+    if jax.process_index() == 0:
+        run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
 
     lr_sched = optax.warmup_exponential_decay_schedule(0, lr, warmup_steps, lr_halving_every_n_steps, 0.5)
     optimizer = optax.chain(optax.clip_by_global_norm(max_grad_norm),
@@ -224,7 +225,6 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     local_batch = 1
     mask = jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) > jnp.arange(context).reshape(1, 1, -1, 1, 1, 1)
-    unconditioned_tokens = tokenizer([""], padding="max_length", max_length=t5_tokens, return_tensors="np").input_ids
 
     def get_encoded(latents: jax.Array, t5_conv_params, input_ids: jax.Array, attention_mask: Optional[jax.Array]):
         encoded = text_encoder.encode(input_ids, attention_mask, params=text_encoder.params).last_hidden_state
