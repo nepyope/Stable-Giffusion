@@ -230,7 +230,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         encoded = lax.stop_gradient(encoded)  # [8*batch, t5_tokens//8, features] avoids padding batch to multiple of 8
         encoded = encoded.reshape(local_batch, -1, 768)  # [batch,  t5_tokens, features]
         encoded = t5_conv.apply(t5_conv_params, encoded)
-        encoded = jax.lax.pmean(encoded)
+        encoded = jax.lax.pmean(encoded, "batch")
 
         encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 2, 3))
         encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
