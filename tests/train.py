@@ -1,6 +1,6 @@
 import os
 import time
-from typing import Union, Dict, Any, Optional
+from typing import Union, Dict, Any, Optional, Callable
 
 import jax
 import jax.numpy as jnp
@@ -127,8 +127,12 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
     return new_weights
 
 
-def to_host(k):
-    return jax.device_get(jax.tree_util.tree_map(lambda x: x[0], k))
+def _take_0th(x):
+    return x[0]
+
+
+def to_host(k, index_fn: Callable[[jax.Array], jax.Array] = _take_0th):
+    return jax.device_get(jax.tree_util.tree_map(index_fn, k))
 
 
 def update_moment(updates, moments, decay, order):
@@ -206,8 +210,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     tokenizer: T5Tokenizer = tokenizer
     text_encoder: FlaxLongT5Model = text_encoder
 
-    if jax.process_index() == 0:
-        run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
+    run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
 
     lr_sched = optax.warmup_exponential_decay_schedule(0, lr, warmup_steps, lr_halving_every_n_steps, 0.5)
     optimizer = optax.chain(optax.clip_by_global_norm(max_grad_norm),
@@ -369,6 +372,10 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context * jax.device_count(),
                       jax.local_device_count(), prefetch, parallel_videos, tokenizer, t5_tokens)
     start_time = time.time()
+
+    def to_img(x: jax.Array) -> wandb.Image:
+        return wandb.Image(x.reshape(-1, resolution, 3))
+
     for epoch in range(10 ** 9):
         for i, (video, input_ids, attention_mask) in tqdm.tqdm(enumerate(data, 1)):
             i *= jax.process_count()
@@ -377,32 +384,33 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                      "input_ids": input_ids.reshape(jax.local_device_count(), 8, -1),
                      "attention_mask": attention_mask.reshape(jax.local_device_count(), 8, -1)}
             extra = {}
+            pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count()}'
             if i % sample_interval == 0:
-                generated = to_host(p_sample(unet_state.params, vae_state.params, t5_conv_state.params, batch))
-                s_rng, s_mode, s_vnt, s_nvt, s_vt = np.split(generated, 5)
-                extra["Samples/Reconstruction (RNG)"] = wandb.Image(s_rng.reshape(-1, resolution, 3))
-                extra["Samples/Reconstruction (Mode)"] = wandb.Image(s_mode.reshape(-1, resolution, 3))
-                extra["Samples/Reconstruction (U-Net, Text Guided)"] = wandb.Image(s_vnt.reshape(-1, resolution, 3))
-                extra["Samples/Reconstruction (U-Net, Video Guided)"] = wandb.Image(s_nvt.reshape(-1, resolution, 3))
-                extra["Samples/Reconstruction (U-Net, Full Guidance)"] = wandb.Image(s_vt.reshape(-1, resolution, 3))
-                extra["Samples/Ground Truth"] = wandb.Image(batch["pixel_values"][0].reshape(-1, resolution, 3) / 255)
+                sample_out = p_sample(unet_state.params, vae_state.params, t5_conv_state.params, batch)
+                s_rng, s_mode, s_vnt, s_nvt, s_vt = np.split(to_host(sample_out, lambda x: x), 5, 1)
+                extra[f"Samples/Reconstruction (RNG) {pid}"] = to_img(s_rng)
+                extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
+                extra[f"Samples/Reconstruction (U-Net, Text Guided) {pid}"] = to_img(s_vnt)
+                extra[f"Samples/Reconstruction (U-Net, Video Guided) {pid}"] = to_img(s_nvt)
+                extra[f"Samples/Reconstruction (U-Net, Full Guidance) {pid}"] = to_img(s_vt)
+                extra[f"Samples/Ground Truth {pid}"] = to_img(batch["pixel_values"][0] / 255)
 
             (unet_state, vae_state, t5_conv_state), scalars = p_train_step(unet_state, vae_state, t5_conv_state, batch)
             timediff = time.time() - start_time
-            if jax.process_index() == 0:
-                for offset, (unet_sq, unet_abs, vae_sq, vae_abs) in enumerate(zip(*to_host(scalars))):
-                    vid_per_day = (i + jax.process_count()) / timediff * 24 * 3600
-                    run.log({"U-Net MSE/Total": float(unet_sq), "U-Net MAE/Total": float(unet_abs),
-                             "VAE MSE/Total": float(vae_sq), "VAE MAE/Total": float(vae_abs),
-                             **extra,
-                             "Step": i + offset, "Runtime": timediff,
-                             "Speed/Videos per Day": vid_per_day,
-                             "Speed/Frames per Day": vid_per_day * context * jax.process_count(),
-                             "Epoch": epoch})
-                if i == tracing_start_step:
-                    jax.profiler.start_trace("trace")
-                if i == tracing_stop_step:
-                    jax.profiler.stop_trace()
+            for offset, (unet_sq, unet_abs, vae_sq, vae_abs) in enumerate(zip(*to_host(scalars))):
+                vid_per_day = (i + jax.process_count()) / timediff * 24 * 3600
+                log = {"U-Net MSE/Total": float(unet_sq), "U-Net MAE/Total": float(unet_abs),
+                       "VAE MSE/Total": float(vae_sq), "VAE MAE/Total": float(vae_abs),
+                       "Step": i + offset, "Epoch": epoch}
+                if offset == jax.device_count() - 1:
+                    log.update(extra)
+                    log.update({"Runtime": timediff, "Speed/Videos per Day": vid_per_day,
+                                "Speed/Frames per Day": vid_per_day * context * jax.process_count()})
+                run.log(log, step=i + offset)
+            if i == tracing_start_step:
+                jax.profiler.start_trace("trace")
+            if i == tracing_stop_step:
+                jax.profiler.stop_trace()
         with open("out.np", "wb") as f:
             np.savez(f, **to_host(vae_state.params))
 
