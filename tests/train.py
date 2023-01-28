@@ -228,7 +228,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     def get_encoded(latents: jax.Array, t5_conv_params, input_ids: jax.Array, attention_mask: Optional[jax.Array]):
         encoded = text_encoder.encode(input_ids, attention_mask, params=text_encoder.params).last_hidden_state
         encoded = lax.stop_gradient(encoded)  # [8*batch, t5_tokens//8, features] avoids padding batch to multiple of 8
-        encoded = encoded.reshape(local_batch, t5_tokens, -1)  # [batch,  t5_tokens, features]
+        encoded = encoded.reshape(local_batch, -1, 768)  # [batch,  t5_tokens, features]
         encoded = t5_conv.apply(t5_conv_params, encoded)
         encoded = jax.lax.pmean(encoded)
 
