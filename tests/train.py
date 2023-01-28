@@ -192,10 +192,10 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
-    t5_conv = nn.Sequential([nn.Conv(features=1024, kernel_size=(25,), strides=(8,)),
+    t5_conv = nn.Sequential([nn.Conv(features=1024, kernel_size=(25,), strides=(4,)),
                              nn.LayerNorm(epsilon=1e-10),
                              nn.relu,
-                             nn.Conv(features=1024, kernel_size=(25,), strides=(8,)),
+                             nn.Conv(features=1024, kernel_size=(25,), strides=(4,)),
                              ])
 
     inp_shape = jax.random.normal(jax.random.PRNGKey(0), (jax.local_device_count(), t5_tokens, 768))
@@ -227,7 +227,6 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     sched_state = noise_scheduler.create_state()
 
     local_batch = 1
-    mask = jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) > jnp.arange(context).reshape(1, 1, -1, 1, 1, 1)
 
     def get_encoded(latents: jax.Array, t5_conv_params, input_ids: jax.Array, attention_mask: Optional[jax.Array]):
         encoded = text_encoder.encode(input_ids, attention_mask, params=text_encoder.params).last_hidden_state
@@ -239,13 +238,17 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 2, 3))
         encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
 
-        latents = latents.reshape(-1, context, 1, *latents.shape[1:])
+        latents = latents.reshape(-1, 1, context, *latents.shape[1:])
+        latents = lax.all_gather(latents, "batch", axis=2, tiled=True)
+
         if latents.shape[0] > local_batch:
             encoded = lax.broadcast_in_dim(encoded, (latents.shape[0] // local_batch, *encoded.shape),
                                            tuple(range(1, 1 + encoded.ndim))).reshape(-1, *encoded.shape[1:])
 
-        latents = lax.broadcast_in_dim(latents, (latents.shape[0], context, context, *latents.shape[3:]),
+        latents = lax.broadcast_in_dim(latents, (latents.shape[0], context, *latents.shape[2:]),
                                        (0, 1, 2, 3, 4, 5))
+        mask = jnp.arange(context * jax.device_count()).reshape(1, 1, -1, 1, 1, 1)
+        mask = (jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) + device_id() * context) > mask
         latents = latents * mask
         latents = latents.reshape(latents.shape[0] * context, -1, encoded.shape[2])
 
