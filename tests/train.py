@@ -28,7 +28,6 @@ check_min_version("0.10.0.dev0")
 compilation_cache.initialize_cache("compilation_cache")
 
 _CONTEXT = 0
-_KERNEL = 3
 _RESHAPE = False
 
 
@@ -39,10 +38,27 @@ def _conv_dimension_numbers(input_shape):
 _original_call = nn.Conv.__call__
 
 
-def conv_call(self, inputs: jax.Array) -> jax.Array:
-    shape = inputs.shape
+def _conv_dimension_numbers(input_shape):
+    """Computes the dimension numbers based on the input shape."""
+    ndim = len(input_shape)
+    lhs_spec = (0, ndim - 1) + tuple(range(1, ndim - 1))
+    rhs_spec = (ndim - 1, ndim - 2) + tuple(range(0, ndim - 2))
+    out_spec = lhs_spec
+    return lax.ConvDimensionNumbers(lhs_spec, rhs_spec, out_spec)
 
+
+def device_id():
+    return (lax.psum_scatter(jnp.arange(jax.device_count()), "batch") / jax.device_count()).astype(jnp.int32)
+
+
+def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     inputs = jnp.asarray(inputs, self.dtype)
+    quant_reshape = _RESHAPE and "quant" not in self.scope.name
+
+    y = _original_call(self, inputs)
+    if not quant_reshape:
+        return y
+
     kernel_size = tuple(self.kernel_size)
 
     def maybe_broadcast(x):
@@ -58,11 +74,6 @@ def conv_call(self, inputs: jax.Array) -> jax.Array:
     strides = maybe_broadcast(self.strides)  # self.strides or (1,) * (inputs.ndim - 2)
     input_dilation = maybe_broadcast(self.input_dilation)
     kernel_dilation = maybe_broadcast(self.kernel_dilation)
-
-    quant_reshape = _RESHAPE and "quant" not in self.scope.name
-
-    if quant_reshape:
-        inputs = inputs.reshape(-1, _CONTEXT, *shape[1:])
 
     padding = self.padding
     if self.padding == 'CIRCULAR':
@@ -80,21 +91,19 @@ def conv_call(self, inputs: jax.Array) -> jax.Array:
         effective_rhs_shape = [(k - 1) * r + 1 for k, r in zip(rhs_shape, kernel_dilation)]
         padding = lax.padtype_to_pads(np.take(pad_shape, lhs_perm)[2:], effective_rhs_shape, strides, padding)
 
-    if quant_reshape and "values_added" not in self.__dict__:
-        # We need to change self.strides while keeping the rest of self intact, so that _original_call can use
-        # both the new values (such as the patched strides) and the old values (scope).
-        # Unfortunately, Flax overwrites __setattr_, so we can't set self.strides manually. instead, we have to
-        # circumvent their __setattr__ assertions (which are sensible in almost all cases!) by manually updating the
-        # object's __dict__. After the update, self.strides will have the new value, so that _original_call can use it.
-        self.__dict__.update({"values_added": True, "padding": ((_KERNEL - 1, 0),) + tuple(padding),
-                              "strides": (1,) + tuple(strides), "input_dilation": (1,) + tuple(input_dilation),
-                              "kernel_size": (3,) + tuple(kernel_size)})
+    in_features = jnp.shape(inputs)[-1]
+    kernel_shape = kernel_size + (in_features // self.feature_group_count, self.features)
+    kernel = self.param('kernel2', self.kernel_init, kernel_shape, self.param_dtype)
+    dimension_numbers = _conv_dimension_numbers(inputs.shape)
 
-    y = _original_call(self, inputs)
-
-    if quant_reshape:
-        return y.reshape(shape[0], *y.shape[2:])
-    return y
+    y2 = lax.conv_general_dilated(inputs, kernel, strides, padding, lhs_dilation=input_dilation,
+                                  rhs_dilation=kernel_dilation, dimension_numbers=dimension_numbers,
+                                  feature_group_count=self.feature_group_count, precision=self.precision)
+    y1 = y2[:-1]  # [0, 1, 2]; [3, 4, 5]  -->  [0, 1]; [3, 4]
+    # [0, 1, 2]; [3, 4, 5]; [6, 7, 8]  -->  [2]; [5]; [8]  -->  [8]; [2]; [5]
+    y0 = lax.ppermute(y2[-1], "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
+    y0 = lax.select_n(device_id() == 0, y0, 0)  # [8]; [2]; [5]  -->  [-]; [2]; [5]
+    return y + jnp.concatenate([y0, y1])  # [-]; [2]; [5] + [0, 1]; [3, 4]; [6, 7]  -->  [-, 0, 1]; [2, 3, 4]; [5, 6, 7]
 
 
 nn.Conv.__call__ = conv_call
@@ -102,14 +111,14 @@ nn.Conv.__call__ = conv_call
 
 def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
     new_weights = {}
-    scale = jnp.where(jnp.arange(_KERNEL) == (_KERNEL - 1), 1, 1e-3)
     for k, v in weights.items():
         if isinstance(v, dict):
             new_weights[k] = patch_weights(v, ("conv" in k and "quant" not in k) or do_patch)
         elif isinstance(v, (list, tuple)):
             new_weights[k] = list(zip(*sorted(patch_weights(dict(enumerate(v)), "conv" in k or do_patch).items()))[1])
         elif isinstance(v, jax.Array) and do_patch and k == "kernel":
-            new_weights[k] = jnp.stack([v] * _KERNEL, 0) * scale.reshape(-1, *(1,) * v.ndim)
+            new_weights[k] = v
+            new_weights[k + "2"] = v * 1e-3
         elif isinstance(v, jax.Array):
             new_weights[k] = v
         else:
@@ -167,7 +176,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule) -> Gra
 def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-16,
          max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
          workers: int = os.cpu_count() // 2, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
-         kernel: int = 3, data_path: str = "./urls", batch_size: int = jax.local_device_count(),
+         data_path: str = "./urls", batch_size: int = jax.local_device_count(),
          sample_interval: int = 64, parallel_videos: int = 128,
          tracing_start_step: int = 128, tracing_stop_step: int = 196,
          schedule_length: int = 1024,
@@ -176,8 +185,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          warmup_steps: int = 2048,
          lr_halving_every_n_steps: int = 8192,
          t5_tokens: int = 16384):
-    global _KERNEL, _CONTEXT, _RESHAPE
-    _CONTEXT, _KERNEL = context, kernel
+    global _CONTEXT, _RESHAPE
+    _CONTEXT = context
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
@@ -219,8 +228,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=t5_tokens, return_tensors="np").input_ids
 
     def get_encoded(latents: jax.Array, t5_conv_params, input_ids: jax.Array, attention_mask: Optional[jax.Array]):
-        encoded = text_encoder.encode(input_ids, attention_mask, params=text_encoder.params)[0]
-        encoded = lax.stop_gradient(encoded)
+        encoded = text_encoder.encode(input_ids, attention_mask, params=text_encoder.params).last_hidden_state
+        encoded = lax.stop_gradient(encoded)  # [8*batch, t5_tokens//8, features] avoids padding batch to multiple of 8
+        encoded = encoded.reshape(local_batch, t5_tokens, -1)  # [batch,  t5_tokens, features]
         encoded = t5_conv.apply(t5_conv_params, encoded)
 
         encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 2, 3))
