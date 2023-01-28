@@ -24,7 +24,7 @@ import transformers
 import urllib3.exceptions
 import youtube_dl
 
-_DEBUG = True
+_DEBUG = False
 _DONE = "DONE"
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
