@@ -116,7 +116,6 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                 subs = subs[subs.find('>') + 1:]
                 subs = ftfy.ftfy(subs)
                 if "but your computer or network may be sending automated queries. To protect our users, we can't process your request right now." in subs:
-                    print("Skipping", p)
                     continue
                 return subs
             except urllib3.exceptions.MaxRetryError:
@@ -182,7 +181,6 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
         rng.shuffle(ip_addresses)
         subs = get_subs(video_urls, ip_addresses)
 
-        print(3, i, wor, subs)
         frames = frames[:frames.shape[0] // context_size * context_size]
         frames = frames.reshape(-1, context_size, *frames.shape[1:])
         queue.put((to_share(frames, smm), subs))
@@ -251,7 +249,6 @@ class DataLoader:
                             del samples[idx]
                         if len(samples) <= idx:
                             break
-                        print(idx, len(samples[idx][0]), len(samples[idx][1]))
                         np_batch.append(samples[idx][0].pop(0))
                         subtitles.append(samples[idx][1])
                         idx = (idx + 1) % self.parallel_videos
