@@ -1,5 +1,7 @@
+import collections
 import dataclasses
 import datetime
+import hashlib
 import json
 import multiprocessing
 import os
@@ -22,6 +24,7 @@ import transformers
 import urllib3.exceptions
 import youtube_dl
 
+_DEBUG = True
 _DONE = "DONE"
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
@@ -228,7 +231,7 @@ class DataLoader:
             while True:
                 if done == self.workers:
                     break
-                if len(samples) < self.parallel_videos:
+                if len(samples) < idx + self.batch_size and len(samples) < self.parallel_videos:
                     try:
                         out = queue.get(timeout=120)
                     except Empty:
@@ -250,6 +253,9 @@ class DataLoader:
                         np_batch.append(samples[idx][0].pop(0))
                         subtitles.append(samples[idx][1])
                     if len(np_batch) == self.batch_size:
+                        if _DEBUG:
+                            yield [hashlib.sha3_512(s.encode()).hexdigest() for s in subtitles]
+                            continue
                         tokens = self.tokenizer(subtitles, return_tensors="np", padding="max_length", truncation=True,
                                                 max_length=self.t5_tokens)
                         input_ids = tokens["input_ids"].reshape(8 * self.batch_size, -1)
@@ -261,5 +267,8 @@ class DataLoader:
 
 
 if __name__ == '__main__':
-    for i in DataLoader(1, "/home/ubuntu/urls/", 1, 64, 1, 1, 1, 1, 1):
-        print(i.shape)
+    sub_hashes = collections.defaultdict(int)
+    for i in DataLoader(1, "/home/ubuntu/urls/", 1, 8, 1, 1, 1, 1, 128, None, 1):
+        for h in i:
+            sub_hashes[h] += 1
+        print({h[:6]: sub_hashes[h] for h in i})
