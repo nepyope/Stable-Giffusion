@@ -53,10 +53,9 @@ def device_id():
 
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     inputs = jnp.asarray(inputs, self.dtype)
-    quant_reshape = _RESHAPE and "quant" not in self.scope.name
 
     y = _original_call(self, inputs)
-    if not quant_reshape:
+    if not _RESHAPE or "quant" in self.scope.name:
         return y
 
     kernel_size = tuple(self.kernel_size)
@@ -83,7 +82,7 @@ def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
         padding = 'VALID'
 
     if isinstance(self.padding, str):
-        pad_shape = inputs.shape[int(quant_reshape):]
+        pad_shape = inputs.shape
         ndim = len(pad_shape)
         lhs_perm = (0, ndim - 1) + tuple(range(1, ndim - 1))
         rhs_perm = (ndim - 1, ndim - 2) + tuple(range(0, ndim - 2))
@@ -93,7 +92,7 @@ def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
 
     in_features = jnp.shape(inputs)[-1]
     kernel_shape = kernel_size + (in_features // self.feature_group_count, self.features)
-    kernel = self.param('kernel2', self.kernel_init, kernel_shape, self.param_dtype)
+    kernel = self.scope.param('kernel2', self.kernel_init, kernel_shape, self.param_dtype)
     dimension_numbers = _conv_dimension_numbers(inputs.shape)
 
     y2 = lax.conv_general_dilated(inputs, kernel, strides, padding, lhs_dilation=input_dilation,
