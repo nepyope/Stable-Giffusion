@@ -194,7 +194,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                              nn.Conv(features=1024, kernel_size=(25,), strides=(8,)),
                              ])
 
-    inp_shape = jax.random.normal(jax.random.PRNGKey(0), (jax.device_count(), t5_tokens, 768))
+    inp_shape = jax.random.normal(jax.random.PRNGKey(0), (jax.local_device_count(), t5_tokens, 768))
     t5_conv_params = t5_conv.init(jax.random.PRNGKey(0), inp_shape)
 
     tokenizer = AutoTokenizer.from_pretrained("google/long-t5-tglobal-base")
