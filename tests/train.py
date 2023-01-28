@@ -351,7 +351,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                  "attention_mask": all_to_all(batch["attention_mask"]),
                  "pixel_values": all_to_all(batch["pixel_values"]),
                  "idx": batch["idx"] + jnp.arange(jax.process_count())}
-        return lax.scan(train_state, (unet_state, vae_state, t5_conv_state), batch)
+        return lax.scan(train_step, (unet_state, vae_state, t5_conv_state), batch)
 
     p_train_step = jax.pmap(train_loop, "batch", donate_argnums=(0, 1))
 
