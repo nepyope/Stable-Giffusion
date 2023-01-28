@@ -280,7 +280,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         latents = jnp.transpose(hidden_states_rng, (0, 3, 1, 2)) * 0.18215
         tokens = batch["input_ids"].size
         unc_tok = lax.select_n(device_id() == 0, jnp.zeros_like((tokens,)),
-                               jnp.concatenate([jnp.ones((1,)), jnp.zeros((tokens-1,))]))
+                               jnp.concatenate([jnp.ones((1,)), jnp.zeros((tokens - 1,))]))
         unc_tok = unc_tok.reshape(batch["input_ids"].shape)
         vid_text = get_encoded(latents, t5_conv_state, batch["input_ids"], batch["attention_mask"])
         vid_no_text = get_encoded(latents, t5_conv_state, unc_tok, unc_tok)  # input_ids == attention_mask for t5
@@ -309,8 +309,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     def distance(x, y):
         dist = (x - y).reshape(local_batch, context, -1)
-        dist_sq = lax.pmean(lax.square(dist).mean((0, 2)), "batch")
-        dist_abs = lax.pmean(lax.abs(dist).mean((0, 2)), "batch")
+        dist_sq = lax.square(dist).mean()
+        dist_abs = lax.abs(dist).mean()
         return dist_sq, dist_abs
 
     def train_step(all_states, batch: Dict[str, Union[np.ndarray, int]]):
@@ -354,7 +354,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         new_unet_state = unet_state.apply_gradients(grads=unet_grad)
         new_vae_state = vae_state.apply_gradients(grads=vae_grad)
         new_t5_conv_state = t5_conv_state.apply_gradients(grads=t5_conv_grad)
-        return (new_unet_state, new_vae_state, new_t5_conv_state), scalars
+        return (new_unet_state, new_vae_state, new_t5_conv_state), lax.pmean(scalars, "batch")
 
     def train_loop(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
                    t5_conv_state: train_state.TrainState, batch: Dict[str, Union[np.ndarray, int]]):
@@ -389,25 +389,20 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
             (unet_state, vae_state, t5_conv_state), scalars = p_train_step(unet_state, vae_state, t5_conv_state, batch)
             timediff = time.time() - start_time
-            for offset, (unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs) in enumerate(zip(*to_host(scalars))):
-                run.log(
-                    {"U-Net MSE/Total": float(np.mean(unet_dist_sq)), "U-Net MAE/Total": float(np.mean(unet_dist_abs)),
-                     "VAE MSE/Total": float(np.mean(vae_dist_sq)), "VAE MAE/Total": float(np.mean(vae_dist_abs)),
-                     **{f"U-Net MSE/Frame {k}": float(loss) for k, loss in enumerate(unet_dist_sq)},
-                     **{f"U-Net MAE/Frame {k}": float(loss) for k, loss in enumerate(unet_dist_abs)},
-                     **{f"VAE MSE/Frame {k}": float(loss) for k, loss in enumerate(vae_dist_sq)},
-                     **{f"VAE MAE/Frame {k}": float(loss) for k, loss in enumerate(vae_dist_abs)},
-                     **extra,
-                     "Step": offset, "Runtime": timediff,
-                     "Speed/Videos per Day": (i + jax.process_count()) / timediff * 24 * 3600,
-                     "Speed/Frames per Day": (i + jax.process_count()) * context * jax.process_count() / timediff *
-                                             24 * 3600,
-                     "Epoch": epoch})
-
-            if i == tracing_start_step:
-                jax.profiler.start_trace("trace")
-            if i == tracing_stop_step:
-                jax.profiler.stop_trace()
+            if jax.process_index() == 0:
+                for offset, (unet_sq, unet_abs, vae_sq, vae_abs) in enumerate(zip(*to_host(scalars))):
+                    vid_per_day = (i + jax.process_count()) / timediff * 24 * 3600
+                    run.log({"U-Net MSE/Total": float(unet_sq), "U-Net MAE/Total": float(unet_abs),
+                             "VAE MSE/Total": float(vae_sq), "VAE MAE/Total": float(vae_abs),
+                             **extra,
+                             "Step": offset, "Runtime": timediff,
+                             "Speed/Videos per Day": vid_per_day,
+                             "Speed/Frames per Day": vid_per_day * context * jax.process_count(),
+                             "Epoch": epoch})
+                if i == tracing_start_step:
+                    jax.profiler.start_trace("trace")
+                if i == tracing_stop_step:
+                    jax.profiler.stop_trace()
         with open("out.np", "wb") as f:
             np.savez(f, **to_host(vae_state.params))
 
