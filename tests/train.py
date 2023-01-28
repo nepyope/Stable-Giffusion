@@ -183,7 +183,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          unet_batch_factor: int = 16,
          warmup_steps: int = 2048,
          lr_halving_every_n_steps: int = 8192,
-         t5_tokens: int = 16384):
+         t5_tokens: int = 2 ** 18):
     global _CONTEXT, _RESHAPE
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
@@ -230,7 +230,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         encoded = lax.stop_gradient(encoded)  # [8*batch, t5_tokens//8, features] avoids padding batch to multiple of 8
         encoded = encoded.reshape(local_batch, -1, 768)  # [batch,  t5_tokens, features]
         encoded = t5_conv.apply(t5_conv_params, encoded)
-        encoded = jax.lax.pmean(encoded, "batch")
+        encoded = lax.pmean(encoded, "batch")
 
         encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 2, 3))
         encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
@@ -260,7 +260,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     def all_to_all(x, split=2):
         return lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
 
-    def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]
+    def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"input_ids": all_to_all(batch["input_ids"]),
                 "attention_mask": all_to_all(batch["attention_mask"]),
                 "pixel_values": all_to_all(batch["pixel_values"], 1),
