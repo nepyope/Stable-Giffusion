@@ -101,7 +101,7 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
 
 def get_proxies():
     r = requests.get("https://proxy.webshare.io/api/proxy/list/?mode=backbone&page_size=1000",
-                     headers={"Authorization": "wt7c6034fy30k5gk14jlacqh0xflh8j4x7a5lcut"})
+                     headers={"Authorization": "sudl99m2vcl0kf6x1wyh7pa8nnatg378lo9ltwct"})
     return [f"{r['username']}:{r['password']}" + '@' + f"{r['proxy_address']}:{r['ports']['socks5']}"
             for r in r.json()['results']]
 
@@ -114,7 +114,11 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                                     proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
                 subs = subs[subs.find("<transcript>") + len("<transcript>"):subs.find('</text>')]
                 subs = subs[subs.find('>') + 1:]
-                return ftfy.ftfy(subs)
+                subs = ftfy.ftfy(subs)
+                if "but your computer or network may be sending automated queries. To protect our users, we can't process your request right now." in subs:
+                    print("Skipping", p)
+                    continue
+                return subs
             except urllib3.exceptions.MaxRetryError:
                 pass
         proxies.clear()
@@ -131,13 +135,11 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
 
         url = video_url["url"]
         path = f"{filename}.{video_url['ext']}"
-
         try:
             with requests.get(url, stream=True) as r, open(path, 'wb') as f:
                 shutil.copyfileobj(r.raw, f)
         except Exception:  # skipcq: PYL-W0703
             continue  # Broken URL, next might work
-
         width = round(video_url["width"] * video_url["height"] / target_image_size)
         try:
             out, _ = ffmpeg.input(path) \
@@ -151,7 +153,6 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
 
         if os.path.exists(path):
             os.remove(path)
-
         return np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3))
 
 
@@ -181,6 +182,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
         rng.shuffle(ip_addresses)
         subs = get_subs(video_urls, ip_addresses)
 
+        print(3, i, wor, subs)
         frames = frames[:frames.shape[0] // context_size * context_size]
         frames = frames.reshape(-1, context_size, *frames.shape[1:])
         queue.put((to_share(frames, smm), subs))
@@ -206,7 +208,7 @@ class DataLoader:
         for path in os.listdir(url_dir):
             with open(f'{url_dir}/{path}', 'rb') as f:
                 vals = json.load(f)
-                ids.extend([x for i, d in zip(vals["id"], vals["duration"]) for x, z in zip(i, d) if z > context / fps])
+                ids.extend([x for i, d in zip(vals["id"], vals["duration"]) for x, z in zip(i, d) if z < 100])
         random.Random(self.seed).shuffle(self.ids)
         self.ids = ids[int(len(ids) * jax.process_index() / jax.process_count()):
                        int(len(ids) * (jax.process_index() + 1) / jax.process_count())]
@@ -231,7 +233,7 @@ class DataLoader:
             while True:
                 if done == self.workers:
                     break
-                if len(samples) < idx + self.batch_size and len(samples) < self.parallel_videos:
+                if len(samples) <= idx + self.batch_size and len(samples) < self.parallel_videos:
                     try:
                         out = queue.get(timeout=120)
                     except Empty:
@@ -245,13 +247,14 @@ class DataLoader:
                     np_batch = []
                     subtitles = []
                     for _ in range(self.batch_size):
-                        idx = (idx + 1) % len(samples)
                         while len(samples) > idx and not samples[idx][0]:
                             del samples[idx]
                         if len(samples) <= idx:
                             break
+                        print(idx, len(samples[idx][0]), len(samples[idx][1]))
                         np_batch.append(samples[idx][0].pop(0))
                         subtitles.append(samples[idx][1])
+                        idx = (idx + 1) % self.parallel_videos
                     if len(np_batch) == self.batch_size:
                         if _DEBUG:
                             yield [hashlib.sha3_512(s.encode()).hexdigest() for s in subtitles]
@@ -268,7 +271,7 @@ class DataLoader:
 
 if __name__ == '__main__':
     sub_hashes = collections.defaultdict(int)
-    for i in DataLoader(1, "/home/ubuntu/urls/", 1, 8, 1, 1, 1, 1, 128, None, 1):
+    for i in DataLoader(1, "/home/ubuntu/urls/", 1, 8, 8, 1, 1, 1, 128, None, 1):
         for h in i:
             sub_hashes[h] += 1
         print({h[:6]: sub_hashes[h] for h in i})
