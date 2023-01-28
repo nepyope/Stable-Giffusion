@@ -257,7 +257,18 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     def sample_vae(params: Any, inp: jax.Array):
         return jnp.transpose(vae_apply({"params": params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
 
+    def all_to_all(x, split=2):
+        return lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
+
+    def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]
+        return {"input_ids": all_to_all(batch["input_ids"]),
+                "attention_mask": all_to_all(batch["attention_mask"]),
+                "pixel_values": all_to_all(batch["pixel_values"], 1),
+                "idx": batch["idx"] + jnp.arange(jax.device_count())}
+
     def sample(unet_params, vae_params, t5_conv_state, batch: Dict[str, Union[np.ndarray, int]]):
+        batch = all_to_all_batch(batch)
+        batch = jax.tree_map(lambda x: x[0], batch)
         latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 4)
 
         inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
@@ -342,16 +353,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         new_t5_conv_state = t5_conv_state.apply_gradients(grads=t5_conv_grad)
         return (new_unet_state, new_vae_state, new_t5_conv_state), scalars
 
-    def all_to_all(x, split=2):
-        return lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
-
     def train_loop(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
                    t5_conv_state: train_state.TrainState, batch: Dict[str, Union[np.ndarray, int]]):
-        batch = {"input_ids": all_to_all(batch["input_ids"]),
-                 "attention_mask": all_to_all(batch["attention_mask"]),
-                 "pixel_values": all_to_all(batch["pixel_values"], 1),
-                 "idx": batch["idx"] + jnp.arange(jax.device_count())}
-        return lax.scan(train_step, (unet_state, vae_state, t5_conv_state), batch)
+        return lax.scan(train_step, (unet_state, vae_state, t5_conv_state), all_to_all_batch(batch))
 
     p_train_step = jax.pmap(train_loop, "batch", donate_argnums=(0, 1))
 
@@ -383,18 +387,19 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             (unet_state, vae_state, t5_conv_state), scalars = p_train_step(unet_state, vae_state, t5_conv_state, batch)
             timediff = time.time() - start_time
             for offset, (unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs) in zip(*to_host(scalars)):
-                run.log({"U-Net MSE/Total": float(np.mean(unet_dist_sq)), "U-Net MAE/Total": float(np.mean(unet_dist_abs)),
-                         "VAE MSE/Total": float(np.mean(vae_dist_sq)), "VAE MAE/Total": float(np.mean(vae_dist_abs)),
-                         **{f"U-Net MSE/Frame {k}": float(loss) for k, loss in enumerate(unet_dist_sq)},
-                         **{f"U-Net MAE/Frame {k}": float(loss) for k, loss in enumerate(unet_dist_abs)},
-                         **{f"VAE MSE/Frame {k}": float(loss) for k, loss in enumerate(vae_dist_sq)},
-                         **{f"VAE MAE/Frame {k}": float(loss) for k, loss in enumerate(vae_dist_abs)},
-                         **extra,
-                         "Step": offset, "Runtime": timediff,
-                         "Speed/Videos per Day": (i + jax.process_count()) / timediff * 24 * 3600,
-                         "Speed/Frames per Day": (i + jax.process_count()) * context * jax.process_count() / timediff *
-                                                 24 * 3600,
-                         "Epoch": epoch})
+                run.log(
+                    {"U-Net MSE/Total": float(np.mean(unet_dist_sq)), "U-Net MAE/Total": float(np.mean(unet_dist_abs)),
+                     "VAE MSE/Total": float(np.mean(vae_dist_sq)), "VAE MAE/Total": float(np.mean(vae_dist_abs)),
+                     **{f"U-Net MSE/Frame {k}": float(loss) for k, loss in enumerate(unet_dist_sq)},
+                     **{f"U-Net MAE/Frame {k}": float(loss) for k, loss in enumerate(unet_dist_abs)},
+                     **{f"VAE MSE/Frame {k}": float(loss) for k, loss in enumerate(vae_dist_sq)},
+                     **{f"VAE MAE/Frame {k}": float(loss) for k, loss in enumerate(vae_dist_abs)},
+                     **extra,
+                     "Step": offset, "Runtime": timediff,
+                     "Speed/Videos per Day": (i + jax.process_count()) / timediff * 24 * 3600,
+                     "Speed/Frames per Day": (i + jax.process_count()) * context * jax.process_count() / timediff *
+                                             24 * 3600,
+                     "Epoch": epoch})
 
             if i == tracing_start_step:
                 jax.profiler.start_trace("trace")
