@@ -206,7 +206,7 @@ class DataLoader:
         for path in os.listdir(url_dir):
             with open(f'{url_dir}/{path}', 'rb') as f:
                 vals = json.load(f)
-                ids.extend([x for i, d in zip(vals["id"], vals["duration"]) for x, z in zip(i, d) if z < 100])
+                ids.extend([x for i, d in zip(vals["id"], vals["duration"]) for x, z in zip(i, d) if z > context / fps])
         random.Random(self.seed).shuffle(self.ids)
         self.ids = ids[int(len(ids) * jax.process_index() / jax.process_count()):
                        int(len(ids) * (jax.process_index() + 1) / jax.process_count())]
@@ -268,7 +268,8 @@ class DataLoader:
 
 if __name__ == '__main__':
     sub_hashes = collections.defaultdict(int)
-    for i in DataLoader(1, "/home/ubuntu/urls/", 1, 8, 8, 1, 1, 1, 128, None, 1):
+    for i in DataLoader(1, "/home/ubuntu/urls/", 1, 8, 1, 120, 1, 1, 128,
+                        transformers.AutoTokenizer.from_pretrained("google/long-t5-local-base"), 1):
         for h in i:
             sub_hashes[h] += 1
         print({h[:6]: sub_hashes[h] for h in i})

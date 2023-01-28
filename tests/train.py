@@ -183,16 +183,17 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          unet_batch_factor: int = 16,
          warmup_steps: int = 2048,
          lr_halving_every_n_steps: int = 8192,
-         t5_tokens: int = 2 ** 18):
+         t5_tokens: int = 2 ** 13):
     global _CONTEXT, _RESHAPE
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
-    t5_conv = nn.Sequential([nn.Conv(features=1024, kernel_size=(24,), strides=(8,), padding="VALID"),
+    t5_conv = nn.Sequential([nn.Conv(features=1024, kernel_size=(25,), strides=(8,)),
                              nn.LayerNorm(epsilon=1e-10),
                              nn.relu,
-                             nn.Conv(features=1024, kernel_size=(24,), strides=(8,), padding="VALID"),
+                             nn.Conv(features=1024, kernel_size=(25,), strides=(8,)),
                              ])
+
     inp_shape = jax.random.normal(jax.random.PRNGKey(0), (jax.device_count(), t5_tokens, 768))
     t5_conv_params = t5_conv.init(jax.random.PRNGKey(0), inp_shape)
 
@@ -230,7 +231,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         encoded = lax.stop_gradient(encoded)  # [8*batch, t5_tokens//8, features] avoids padding batch to multiple of 8
         encoded = encoded.reshape(local_batch, -1, 768)  # [batch,  t5_tokens, features]
         encoded = t5_conv.apply(t5_conv_params, encoded)
-        encoded = lax.pmean(encoded, "batch")
+        encoded = lax.all_gather(encoded, "batch", axis=1, tiled=True)
 
         encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 2, 3))
         encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
