@@ -342,15 +342,15 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         new_t5_conv_state = t5_conv_state.apply_gradients(grads=t5_conv_grad)
         return (new_unet_state, new_vae_state, new_t5_conv_state), scalars
 
-    def all_to_all(x):
-        return lax.all_to_all(x, "batch", 1, 0, tiled=True)
+    def all_to_all(x, split=2):
+        return lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
 
     def train_loop(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
                    t5_conv_state: train_state.TrainState, batch: Dict[str, Union[np.ndarray, int]]):
         batch = {"input_ids": all_to_all(batch["input_ids"]),
                  "attention_mask": all_to_all(batch["attention_mask"]),
-                 "pixel_values": all_to_all(batch["pixel_values"]),
-                 "idx": batch["idx"] + jnp.arange(jax.process_count())}
+                 "pixel_values": all_to_all(batch["pixel_values"], 1),
+                 "idx": batch["idx"] + jnp.arange(jax.device_count())}
         return lax.scan(train_step, (unet_state, vae_state, t5_conv_state), batch)
 
     p_train_step = jax.pmap(train_loop, "batch", donate_argnums=(0, 1))
@@ -359,16 +359,16 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     unet_state = jax_utils.replicate(unet_state)
     t5_conv_state = jax_utils.replicate(t5_conv_state)
 
-    data = DataLoader(workers, data_path, downloaders, resolution, fps, context * jax.process_count(), 1, prefetch,
-                      parallel_videos, tokenizer, t5_tokens)
+    data = DataLoader(workers, data_path, downloaders, resolution, fps, context * jax.device_count(),
+                      jax.local_device_count(), prefetch, parallel_videos, tokenizer, t5_tokens)
     start_time = time.time()
     for epoch in range(10 ** 9):
         for i, (video, input_ids, attention_mask) in tqdm.tqdm(enumerate(data, 1)):
             i *= jax.process_count()
             batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32),
-                     "input_ids": input_ids.reshape(jax.local_device_count(), -1, *input_ids.shape[1:]),
-                     "attention_mask": attention_mask.reshape(jax.local_device_count(), -1, *attention_mask.shape[1:])}
+                     "input_ids": input_ids.reshape(jax.local_device_count(), 8, -1),
+                     "attention_mask": attention_mask.reshape(jax.local_device_count(), 8, -1)}
             extra = {}
             if i % sample_interval == 0:
                 generated = to_host(p_sample(unet_state.params, vae_state.params, t5_conv_state.params, batch))
