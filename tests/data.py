@@ -108,7 +108,8 @@ def get_proxies():
 
 def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
     while True:
-        for p in proxies:
+        for i in range(len(proxies)):
+            p = proxies.pop(0)
             try:
                 subs = requests.get(video_urls[0]["sub_url"],
                                     proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
@@ -117,8 +118,11 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                 subs = ftfy.ftfy(subs)
                 if "but your computer or network may be sending automated queries. To protect our users, we can't process your request right now." in subs:
                     continue
+                proxies.append(p)
                 return subs
             except urllib3.exceptions.HTTPError:
+                pass
+            except requests.exceptions.RequestException:
                 pass
         proxies.clear()
         proxies.extend(get_proxies())
@@ -178,7 +182,6 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
         if frames is None or not frames.size or frames.shape[0] < context_size:
             continue
 
-        rng.shuffle(ip_addresses)
         subs = get_subs(video_urls, ip_addresses)
 
         frames = frames[:frames.shape[0] // context_size * context_size]

@@ -395,7 +395,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                     run.log({"U-Net MSE/Total": float(unet_sq), "U-Net MAE/Total": float(unet_abs),
                              "VAE MSE/Total": float(vae_sq), "VAE MAE/Total": float(vae_abs),
                              **extra,
-                             "Step": offset, "Runtime": timediff,
+                             "Step": i + offset, "Runtime": timediff,
                              "Speed/Videos per Day": vid_per_day,
                              "Speed/Frames per Day": vid_per_day * context * jax.process_count(),
                              "Epoch": epoch})
