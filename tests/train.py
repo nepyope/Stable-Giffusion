@@ -19,7 +19,7 @@ from jax.experimental.compilation_cache import compilation_cache
 from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
-from transformers import AutoTokenizer, FlaxLongT5Model
+from transformers import AutoTokenizer, FlaxLongT5Model, T5Tokenizer
 
 from data import DataLoader
 
@@ -203,7 +203,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     vae: FlaxAutoencoderKL = vae
     unet: FlaxUNet2DConditionModel = unet
-    tokenizer: AutoTokenizer = tokenizer
+    tokenizer: T5Tokenizer = tokenizer
     text_encoder: FlaxLongT5Model = text_encoder
 
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
@@ -277,13 +277,15 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
         hidden_states_rng = posterior.latent_dist.sample(sample_rng)
         hidden_states_mode = posterior.latent_dist.mode()
-
         latents = jnp.transpose(hidden_states_rng, (0, 3, 1, 2)) * 0.18215
+        tokens = batch["input_ids"].size
+        unc_tok = lax.select_n(device_id() == 0, jnp.zeros_like((tokens,)),
+                               jnp.concatenate([jnp.ones((1,)), jnp.zeros((tokens-1,))]))
+        unc_tok = unc_tok.reshape(batch["input_ids"].shape)
         vid_text = get_encoded(latents, t5_conv_state, batch["input_ids"], batch["attention_mask"])
-        vid_no_text = get_encoded(latents, t5_conv_state, unconditioned_tokens, jnp.ones_like(unconditioned_tokens))
+        vid_no_text = get_encoded(latents, t5_conv_state, unc_tok, unc_tok)  # input_ids == attention_mask for t5
         no_vid_text = get_encoded(jnp.zeros_like(latents), t5_conv_state, batch["input_ids"], batch["attention_mask"])
-        no_vid_no_text = get_encoded(jnp.zeros_like(latents), t5_conv_state, unconditioned_tokens,
-                                     jnp.ones_like(unconditioned_tokens))
+        no_vid_no_text = get_encoded(jnp.zeros_like(latents), t5_conv_state, unc_tok, unc_tok)
         encoded = jnp.concatenate([no_vid_no_text, no_vid_no_text, no_vid_no_text, vid_no_text, no_vid_text, vid_text])
 
         def _step(state, i):
