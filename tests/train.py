@@ -392,7 +392,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                      "input_ids": input_ids.reshape(jax.local_device_count(), 8, -1),
                      "attention_mask": attention_mask.reshape(jax.local_device_count(), 8, -1)}
             extra = {}
-            pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count()}'
+            pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
             if i % sample_interval == 0:
                 sample_out = p_sample(unet_state.params, vae_state.params, t5_conv_state.params, batch)
                 s_rng, s_mode, s_vnt, s_nvt, s_vt = np.split(to_host(sample_out, lambda x: x), 5, 1)
