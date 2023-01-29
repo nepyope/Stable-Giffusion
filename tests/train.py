@@ -48,7 +48,7 @@ def _conv_dimension_numbers(input_shape):
 
 
 def device_id():
-    return (lax.psum_scatter(jnp.arange(jax.device_count()), "batch") / jax.device_count()).astype(jnp.int32)
+    return lax.axis_index("batch")
 
 
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
@@ -238,15 +238,15 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 2, 3))
         encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
 
-        latents = latents.reshape(-1, 1, context, *latents.shape[1:])
-        latents = lax.all_gather(latents, "batch", axis=2, tiled=True)
+        latents = latents.reshape(-1, context, *latents.shape[1:])
+        latents = lax.all_gather(latents, "batch", axis=1, tiled=True)
 
         if latents.shape[0] > local_batch:
             encoded = lax.broadcast_in_dim(encoded, (latents.shape[0] // local_batch, *encoded.shape),
                                            tuple(range(1, 1 + encoded.ndim))).reshape(-1, *encoded.shape[1:])
 
         latents = lax.broadcast_in_dim(latents, (latents.shape[0], context, *latents.shape[2:]),
-                                       (0, 1, 2, 3, 4, 5))
+                                       (0, 2, 3, 4, 5))
         mask = jnp.arange(context * jax.device_count()).reshape(1, 1, -1, 1, 1, 1)
         mask = (jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) + device_id() * context) > mask
         latents = latents * mask
@@ -273,10 +273,13 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                 "pixel_values": all_to_all(batch["pixel_values"], 1),
                 "idx": batch["idx"] + jnp.arange(jax.device_count())}
 
+    def rng(idx: jax.Array):
+        return jax.random.PRNGKey(idx * jax.device_count() + device_id())
+
     def sample(unet_params, vae_params, t5_conv_state, batch: Dict[str, Union[np.ndarray, int]]):
         batch = all_to_all_batch(batch)
         batch = jax.tree_map(lambda x: x[0], batch)
-        latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 4)
+        latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 4)
 
         inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
         posterior = vae_apply({"params": vae_params}, inp, method=vae.encode)
@@ -324,7 +327,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
         def compute_loss(params):
             unet_params, vae_params, t5_conv_params = params
-            gaussian, dropout, sample_rng, noise_rng, step_rng = jax.random.split(jax.random.PRNGKey(batch["idx"]), 5)
+            gaussian, dropout, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 5)
 
             img = batch["pixel_values"].astype(jnp.float32) / 255
             inp = jnp.transpose(img, (0, 3, 1, 2))
@@ -393,8 +396,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                 s_rng, s_mode, s_vnt, s_nvt, s_vt = np.split(to_host(sample_out, lambda x: x), 5, 1)
                 extra[f"Samples/Reconstruction (RNG) {pid}"] = to_img(s_rng)
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
-                extra[f"Samples/Reconstruction (U-Net, Text Guided) {pid}"] = to_img(s_vnt)
-                extra[f"Samples/Reconstruction (U-Net, Video Guided) {pid}"] = to_img(s_nvt)
+                extra[f"Samples/Reconstruction (U-Net, Video Guided) {pid}"] = to_img(s_vnt)
+                extra[f"Samples/Reconstruction (U-Net, Text Guided) {pid}"] = to_img(s_nvt)
                 extra[f"Samples/Reconstruction (U-Net, Full Guidance) {pid}"] = to_img(s_vt)
                 extra[f"Samples/Ground Truth {pid}"] = to_img(batch["pixel_values"][0] / 255)
 
