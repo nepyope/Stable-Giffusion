@@ -246,7 +246,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             encoded = lax.broadcast_in_dim(encoded, (latents.shape[0] // local_batch, *encoded.shape),
                                            tuple(range(1, 1 + encoded.ndim))).reshape(-1, *encoded.shape[1:])
 
-        latents = lax.broadcast_in_dim(latents, (latents.shape[0], context, *latents.shape[2:]),
+        latents = lax.broadcast_in_dim(latents, (latents.shape[0], context, *latents.shape[1:]),
                                        (0, 2, 3, 4, 5))
         mask = jnp.arange(context * jax.device_count()).reshape(1, 1, -1, 1, 1, 1)
         mask = (jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) + device_id() * context) > mask
