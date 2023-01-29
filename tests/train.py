@@ -187,7 +187,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          unet_batch_factor: int = 16,
          warmup_steps: int = 2048,
          lr_halving_every_n_steps: int = 8192,
-         t5_tokens: int = 2 ** 13):
+         t5_tokens: int = 2 ** 13,
+         save_interval: int = 1024):
     global _CONTEXT, _RESHAPE
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
@@ -417,8 +418,10 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                 jax.profiler.start_trace("trace")
             if i == tracing_stop_step:
                 jax.profiler.stop_trace()
-        with open("out.np", "wb") as f:
-            np.savez(f, **to_host(vae_state.params))
+            if i % save_interval == 0:
+                for n, s in (("vae", vae_state), ("unet", unet_state), ("conv", t5_conv_state)):
+                    with open(n + ".np", "wb") as f:
+                        np.savez(f, **to_host(s.params))
 
 
 if __name__ == "__main__":
