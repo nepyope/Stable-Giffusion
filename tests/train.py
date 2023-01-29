@@ -286,9 +286,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
         posterior = vae_apply({"params": vae_params}, inp, method=vae.encode)
 
-        hidden_states_rng = posterior.latent_dist.sample(sample_rng)
-        hidden_states_mode = posterior.latent_dist.mode()
-        latents = jnp.transpose(hidden_states_rng, (0, 3, 1, 2)) * 0.18215
+        hidden_rng = posterior.latent_dist.sample(sample_rng)
+        hidden_mode = posterior.latent_dist.mode()
+        latents = jnp.transpose(hidden_mode, (0, 3, 1, 2)) * 0.18215
         tokens = batch["input_ids"].size
         unc_tok = lax.select_n(device_id() == 0, jnp.zeros((tokens,)),
                                jnp.concatenate([jnp.ones((1,)), jnp.zeros((tokens - 1,))]))
@@ -313,8 +313,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         state = noise_scheduler.set_timesteps(sched_state, schedule_length, latents.shape)
         (out, _), _ = lax.scan(_step, (latents, state), jnp.arange(schedule_length)[::-1])
         out = jnp.transpose(out, (0, 2, 3, 1)) / 0.18215
-
-        return sample_vae(vae_params, jnp.concatenate([hidden_states_rng, hidden_states_mode, out]))
+        vnt, nvt, vt = jnp.split(out, 3)
+        return jnp.concatenate([sample_vae(vae_params, x) for x in (hidden_rng, hidden_mode, vnt, nvt, vt)])
 
     p_sample = jax.pmap(sample, "batch")
 
