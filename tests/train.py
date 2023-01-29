@@ -99,11 +99,12 @@ def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
                                   rhs_dilation=kernel_dilation, dimension_numbers=dimension_numbers,
                                   feature_group_count=self.feature_group_count, precision=self.precision)
     y1 = y2[:-1]  # [0, 1, 2]; [3, 4, 5]  -->  [0, 1]; [3, 4]
-    # [0, 1, 2]; [3, 4, 5]; [6, 7, 8]  -->  [2]; [5]; [8]  -->  [8]; [2]; [5]
+    # [0, 1, 2]; [3, 4, 5]; [6, 7, 8]  -->  2; 5; 8  -->  8; 2; 5
     y0 = lax.ppermute(y2[-1], "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
-    y0 = lax.select_n(device_id() == 0, y0, jnp.zeros_like(y0))  # [8]; [2]; [5]  -->  [-]; [2]; [5]
-    y0 = y0.reshape(1, *y0.shape)
-    return y + jnp.concatenate([y0, y1])  # [-]; [2]; [5] + [0, 1]; [3, 4]; [6, 7]  -->  [-, 0, 1]; [2, 3, 4]; [5, 6, 7]
+    y0 = lax.select_n(device_id() == 0, y0, jnp.zeros_like(y0))  # 8; 2; 5  -->  -; 2; 5
+    y0 = y0.reshape(1, *y0.shape)  # -; 2; 5  ->  [-]; [2]; [5]
+    y0 = jnp.concatenate([y0, y1])  # [-]; [2]; [5] (cat) [0, 1]; [3, 4]; [6, 7]  -->  [-, 0, 1]; [2, 3, 4]; [5, 6, 7]
+    return y + y0  # [0, 1, 2]; [3, 4; 5]; [6, 7, 8] + [-, 0, 1]; [2, 3, 4]; [5, 6, 7]
 
 
 nn.Conv.__call__ = conv_call
@@ -232,7 +233,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     def get_encoded(latents: jax.Array, t5_conv_params, input_ids: jax.Array, attention_mask: Optional[jax.Array]):
         encoded = text_encoder.encode(input_ids, attention_mask, params=text_encoder.params).last_hidden_state
         encoded = lax.stop_gradient(encoded)  # [8*batch, t5_tokens//8, features] avoids padding batch to multiple of 8
-        encoded = encoded.reshape(local_batch, -1, 768)  # [batch,  t5_tokens, features]
+        encoded = encoded.reshape(local_batch, -1, 768)  # [batch, t5_tokens, features]
         encoded = t5_conv.apply(t5_conv_params, encoded)
         encoded = lax.all_gather(encoded, "batch", axis=1, tiled=True)
 
@@ -400,7 +401,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                 extra[f"Samples/Reconstruction (U-Net, Video Guided) {pid}"] = to_img(s_vnt)
                 extra[f"Samples/Reconstruction (U-Net, Text Guided) {pid}"] = to_img(s_nvt)
                 extra[f"Samples/Reconstruction (U-Net, Full Guidance) {pid}"] = to_img(s_vt)
-                extra[f"Samples/Ground Truth {pid}"] = to_img(batch["pixel_values"][0] / 255)
+                extra[f"Samples/Ground Truth {pid}"] = to_img(batch["pixel_values"].astype(jnp.float32) / 255)
 
             (unet_state, vae_state, t5_conv_state), scalars = p_train_step(unet_state, vae_state, t5_conv_state, batch)
             timediff = time.time() - start_time
