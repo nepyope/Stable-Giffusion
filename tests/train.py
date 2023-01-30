@@ -126,7 +126,7 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
 def dict_to_array(x):
     new_weights = {}
     for k, v in dict(x).items():
-        if isinstance(v, np.array):
+        if isinstance(v, np.ndarray):
             if v.dtype == object:
                new_weights[k] = dict_to_array(v)
             else:
