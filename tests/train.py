@@ -413,7 +413,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                 jax.profiler.stop_trace()
             if i % save_interval == 0:
                 for n, s in (("vae", vae_state), ("unet", unet_state), ("conv", t5_conv_state)):
-                    p = **to_host(s.params)
+                    p = to_host(s.params)
                     flattened, jax_structure = jax.tree_util.tree_flatten(p)
                     structure = str(jax_structure)  # like "PyTreeDef({'2': {'a': *}})"
                     structure = structure.replace('PyTreeDef', '')[1:-1]  # clean up "types"
