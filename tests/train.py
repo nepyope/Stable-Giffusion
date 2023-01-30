@@ -375,9 +375,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     p_train_step = jax.pmap(train_loop, "batch", donate_argnums=(0, 1))
     
     if not overwrite and os.path.isfile("vae.np"):
-        vae_state = dict(np.load("vae.np"))
-        unet_state = dict(np.load("unet.np"))
-        t5_conv_state = dict(np.load("conv.np"))
+        vae_state = dict(np.load("vae.np", allow_pickle=True))
+        unet_state = dict(np.load("unet.np", allow_pickle=True))
+        t5_conv_state = dict(np.load("conv.np", allow_pickle=True))
     vae_state = jax_utils.replicate(vae_state)
     unet_state = jax_utils.replicate(unet_state)
     t5_conv_state = jax_utils.replicate(t5_conv_state)
