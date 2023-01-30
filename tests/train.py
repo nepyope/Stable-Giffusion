@@ -30,11 +30,6 @@ compilation_cache.initialize_cache("compilation_cache")
 _CONTEXT = 0
 _RESHAPE = False
 
-
-def _conv_dimension_numbers(input_shape):
-    """Computes the dimension numbers based on the input shape."""
-
-
 _original_call = nn.Conv.__call__
 
 
@@ -125,6 +120,18 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
         else:
             print(f"Unknown type {type(v)}")
             new_weights[k] = v
+    return new_weights
+
+
+def dict_to_array(x):
+    new_dict = {}
+    for k, v in dict(x).items():
+        if isinstance(v, dict):        
+            new_dict[k] = dict_to_array(v)
+        if isinstance(v, (list, tuple)):
+            new_weights[k] = list(zip(*sorted(dict_to_array(dict(enumerate(v))).items()))[1])
+        else:
+            new_weights[k] = np.array(v)
     return new_weights
 
 
@@ -375,9 +382,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     p_train_step = jax.pmap(train_loop, "batch", donate_argnums=(0, 1))
     
     if not overwrite and os.path.isfile("vae.np"):
-        vae_state = dict(np.load("vae.np", allow_pickle=True))
-        unet_state = dict(np.load("unet.np", allow_pickle=True))
-        t5_conv_state = dict(np.load("conv.np", allow_pickle=True))
+        vae_state = dict_to_array(np.load("vae.np", allow_pickle=True))
+        unet_state = dict_to_array(np.load("unet.np", allow_pickle=True))
+        t5_conv_state = dict_to_array(np.load("conv.np", allow_pickle=True))
     vae_state = jax_utils.replicate(vae_state)
     unet_state = jax_utils.replicate(unet_state)
     t5_conv_state = jax_utils.replicate(t5_conv_state)
