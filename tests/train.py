@@ -124,10 +124,10 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
 
 
 def dict_to_array(x):
-    new_dict = {}
+    new_weights = {}
     for k, v in dict(x).items():
         if isinstance(v, dict):        
-            new_dict[k] = dict_to_array(v)
+            new_weights[k] = dict_to_array(v)
         if isinstance(v, (list, tuple)):
             new_weights[k] = list(zip(*sorted(dict_to_array(dict(enumerate(v))).items()))[1])
         else:
