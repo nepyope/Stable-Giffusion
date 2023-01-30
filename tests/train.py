@@ -49,59 +49,16 @@ def device_id():
 
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     inputs = jnp.asarray(inputs, self.dtype)
-
-    y = _original_call(self, inputs)
-    if not _RESHAPE or "quant" in self.scope.name:
-        return y
-
-    kernel_size = tuple(self.kernel_size)
-
-    def maybe_broadcast(x):
-        if x is None:
-            x = 1
-        if isinstance(x, int):
-            return (x,) * len(kernel_size)
-        return x
-
-    if inputs.ndim == len(kernel_size) + 1:
-        inputs = jnp.expand_dims(inputs, axis=0)
-
-    strides = maybe_broadcast(self.strides)  # self.strides or (1,) * (inputs.ndim - 2)
-    input_dilation = maybe_broadcast(self.input_dilation)
-    kernel_dilation = maybe_broadcast(self.kernel_dilation)
-
-    padding = self.padding
-    if self.padding == 'CIRCULAR':
-        kernel_size_dilated = [(k - 1) * d + 1 for k, d in zip(kernel_size, kernel_dilation)]
-        pads = [(0, 0)] + [((k - 1) // 2, k // 2) for k in kernel_size_dilated] + [(0, 0)]
-        inputs = jnp.pad(inputs, pads, mode='wrap')
-        padding = 'VALID'
-
-    if isinstance(self.padding, str):
-        pad_shape = inputs.shape
-        ndim = len(pad_shape)
-        lhs_perm = (0, ndim - 1) + tuple(range(1, ndim - 1))
-        rhs_perm = (ndim - 1, ndim - 2) + tuple(range(0, ndim - 2))
-        rhs_shape = np.take(pad_shape, rhs_perm)[2:]
-        effective_rhs_shape = [(k - 1) * r + 1 for k, r in zip(rhs_shape, kernel_dilation)]
-        padding = lax.padtype_to_pads(np.take(pad_shape, lhs_perm)[2:], effective_rhs_shape, strides, padding)
-
-    in_features = jnp.shape(inputs)[-1]
-    kernel_shape = kernel_size + (in_features // self.feature_group_count, self.features)
-    kernel = self.scope.param('kernel2', self.kernel_init, kernel_shape, self.param_dtype)
-    dimension_numbers = _conv_dimension_numbers(inputs.shape)
-
-    y2 = lax.conv_general_dilated(inputs, kernel, strides, padding, lhs_dilation=input_dilation,
-                                  rhs_dilation=kernel_dilation, dimension_numbers=dimension_numbers,
-                                  feature_group_count=self.feature_group_count, precision=self.precision)
-    y1 = y2[:-1]  # [0, 1, 2]; [3, 4, 5]  -->  [0, 1]; [3, 4]
-    # [0, 1, 2]; [3, 4, 5]; [6, 7, 8]  -->  2; 5; 8  -->  8; 2; 5
-    y0 = lax.ppermute(y2[-1], "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
-    y0 = lax.select_n(device_id() == 0, y0, jnp.zeros_like(y0))  # 8; 2; 5  -->  -; 2; 5
-    y0 = y0.reshape(1, *y0.shape)  # -; 2; 5  ->  [-]; [2]; [5]
-    y0 = jnp.concatenate([y0, y1])  # [-]; [2]; [5] (cat) [0, 1]; [3, 4]; [6, 7]  -->  [-, 0, 1]; [2, 3, 4]; [5, 6, 7]
-    return y + y0  # [0, 1, 2]; [3, 4; 5]; [6, 7, 8] + [-, 0, 1]; [2, 3, 4]; [5, 6, 7]
-
+    if _RESHAPE and "quant" not in self.scope.name:
+        i1 = inputs[:-1]  # [0, 1, 2]; [3, 4, 5]  -->  [0, 1]; [3, 4]
+        # [0, 1, 2]; [3, 4, 5]; [6, 7, 8]  -->  2; 5; 8  -->  8; 2; 5
+        i0 = lax.ppermute(inputs[-1], "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
+        i0 = lax.select_n(device_id() == 0, i0, jnp.zeros_like(i0))  # 8; 2; 5  -->  -; 2; 5
+        i0 = y0.reshape(1, *i0.shape)  # -; 2; 5  ->  [-]; [2]; [5]
+        i0 = jnp.concatenate([i0, i1])  # [-]; [2]; [5] (cat) [0, 1]; [3, 4]; [6, 7]  -->  [-, 0, 1]; [2, 3, 4]; [5, 6, 7]
+        inputs = jnp.concatenate([i0, inputs], -1)
+    return _original_call(self, inputs)
+        
 
 nn.Conv.__call__ = conv_call
 
@@ -114,8 +71,7 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
         elif isinstance(v, (list, tuple)):
             new_weights[k] = list(zip(*sorted(patch_weights(dict(enumerate(v)), "conv" in k or do_patch).items())))[1]
         elif isinstance(v, jax.Array) and do_patch and k == "kernel":
-            new_weights[k] = v
-            new_weights[k + "2"] = v * 1e-3
+            new_weights[k] = jnp.concatenate([v * 1e-3, v], -2)  # KernelShape + (in_features,) + (out_features,)
         elif isinstance(v, jax.Array):
             new_weights[k] = v
         else:
