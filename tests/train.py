@@ -189,7 +189,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          warmup_steps: int = 2048,
          lr_halving_every_n_steps: int = 8192,
          t5_tokens: int = 2 ** 13,
-         save_interval: int = 1024):
+         save_interval: int = 1024,
+         overwrite: bool = False):
     global _CONTEXT, _RESHAPE
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
@@ -372,7 +373,11 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         return lax.scan(train_step, (unet_state, vae_state, t5_conv_state), all_to_all_batch(batch))
 
     p_train_step = jax.pmap(train_loop, "batch", donate_argnums=(0, 1))
-
+    
+    if not overwrite and os.path.isfile("vae.np"):
+        vae_state = np.load("vae.np")
+        unet_state = np.load("unet.np")
+        t5_conv_state = np.load("conv.np")
     vae_state = jax_utils.replicate(vae_state)
     unet_state = jax_utils.replicate(unet_state)
     t5_conv_state = jax_utils.replicate(t5_conv_state)
