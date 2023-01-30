@@ -53,6 +53,7 @@ def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
         i0 = lax.ppermute(inputs, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
         i0 = lax.select_n(device_id() == 0, i0, jnp.zeros_like(i0))
         i1 = jnp.concatenate([i0, inputs], 0)
+        s = i0.shape[0]
         inputs = jnp.concatenate([inputs, i1[s-1:-1], i1[s-5:-5], i0], -1)
     return _original_call(self, inputs)
         
