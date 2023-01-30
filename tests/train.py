@@ -227,6 +227,11 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                             scale_by_laprop(beta1, beta2, eps, lr_sched),
                             # optax.transform.add_decayed_weights(weight_decay, mask),  # TODO: mask normalization
                             )
+    
+    if not overwrite and os.path.isfile("vae.np"):
+        vae_params = dict_to_array(np.load("vae.np", allow_pickle=True))
+        unet_params = dict_to_array(np.load("unet.np", allow_pickle=True))
+        t5_conv_params = dict_to_array(np.load("conv.np", allow_pickle=True))
 
     vae_state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
     unet_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
@@ -381,10 +386,6 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     p_train_step = jax.pmap(train_loop, "batch", donate_argnums=(0, 1))
     
-    if not overwrite and os.path.isfile("vae.np"):
-        vae_state = dict_to_array(np.load("vae.np", allow_pickle=True))
-        unet_state = dict_to_array(np.load("unet.np", allow_pickle=True))
-        t5_conv_state = dict_to_array(np.load("conv.np", allow_pickle=True))
     vae_state = jax_utils.replicate(vae_state)
     unet_state = jax_utils.replicate(unet_state)
     t5_conv_state = jax_utils.replicate(t5_conv_state)
