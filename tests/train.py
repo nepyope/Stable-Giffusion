@@ -50,13 +50,10 @@ def device_id():
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     inputs = jnp.asarray(inputs, self.dtype)
     if _RESHAPE and "quant" not in self.scope.name:
-        i1 = inputs[:-1]  # [0, 1, 2]; [3, 4, 5]  -->  [0, 1]; [3, 4]
-        # [0, 1, 2]; [3, 4, 5]; [6, 7, 8]  -->  2; 5; 8  -->  8; 2; 5
-        i0 = lax.ppermute(inputs[-1], "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
-        i0 = lax.select_n(device_id() == 0, i0, jnp.zeros_like(i0))  # 8; 2; 5  -->  -; 2; 5
-        i0 = y0.reshape(1, *i0.shape)  # -; 2; 5  ->  [-]; [2]; [5]
-        i0 = jnp.concatenate([i0, i1])  # [-]; [2]; [5] (cat) [0, 1]; [3, 4]; [6, 7]  -->  [-, 0, 1]; [2, 3, 4]; [5, 6, 7]
-        inputs = jnp.concatenate([i0, inputs], -1)
+        i0 = lax.ppermute(inputs, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
+        i0 = lax.select_n(device_id() == 0, i0, jnp.zeros_like(i0))
+        i1 = jnp.concatenate([i0, inputs], 0)
+        inputs = jnp.concatenate([inputs, i1[s-1:-1], i1[s-5:-5], i0], -1)
     return _original_call(self, inputs)
         
 
@@ -71,7 +68,7 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
         elif isinstance(v, (list, tuple)):
             new_weights[k] = list(zip(*sorted(patch_weights(dict(enumerate(v)), "conv" in k or do_patch).items())))[1]
         elif isinstance(v, jax.Array) and do_patch and k == "kernel":
-            new_weights[k] = jnp.concatenate([v * 1e-3, v], -2)  # KernelShape + (in_features,) + (out_features,)
+            new_weights[k] = jnp.concatenate([v, v*1e-2, v*1e-3, v*1e-4], -2)  # KernelShape + (in_features,) + (out_features,)
         elif isinstance(v, jax.Array):
             new_weights[k] = v
         else:
