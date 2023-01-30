@@ -126,12 +126,17 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
 def dict_to_array(x):
     new_weights = {}
     for k, v in dict(x).items():
-        if isinstance(v, dict):        
+        if isinstance(v, np.array):
+            if v.dtype == object:
+               new_weights[k] = dict_to_array(v)
+            else:
+               new_weights[k] = v
+        elif isinstance(v, dict):        
             new_weights[k] = dict_to_array(v)
-        if isinstance(v, (list, tuple)):
+        elif isinstance(v, (list, tuple)):
             new_weights[k] = list(zip(*sorted(dict_to_array(dict(enumerate(v))).items()))[1])
         else:
-            new_weights[k] = np.array(v)
+            new_weights[k] = dict_to_array(v)
     return new_weights
 
 
