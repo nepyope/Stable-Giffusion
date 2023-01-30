@@ -129,7 +129,7 @@ def dict_to_array_dispatch(v):
         if v.shape == ():
             return dict_to_array_dispatch(v.item())
         if v.dtype == object:
-           return [dict_to_array_dispatch(x) for x in v]   
+           raise ValueError(str(v)) 
         return v
     elif isinstance(v, dict):        
         return dict_to_array(v)
