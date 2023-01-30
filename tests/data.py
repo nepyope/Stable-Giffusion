@@ -122,6 +122,7 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                 subs = subs[subs.find('>') + 1:]
                 subs = ftfy.ftfy(subs)
                 if "but your computer or network may be sending automated queries. To protect our users, we can't process your request right now." in subs:
+                    print("blocked IP")
                     continue
                 proxies.append(p)
                 return subs
@@ -129,6 +130,7 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                 pass
             except requests.exceptions.RequestException:
                 pass
+        print("Refreshing proxies")
         proxies.clear()
         proxies.extend(get_proxies())
 
