@@ -123,20 +123,23 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
     return new_weights
 
 
+
+def dict_to_array_dispatch(v):
+    if isinstance(v, np.ndarray):
+        if v.dtype == object:
+           return [dict_to_array_dispatch(x) for x in v]   
+        return v
+    elif isinstance(v, dict):        
+        return dict_to_array(v)
+    elif isinstance(v, (list, tuple)):
+        return list(zip(*sorted(dict_to_array(dict(enumerate(v))).items()))[1])
+    else:
+        return dict_to_array(v)
+
 def dict_to_array(x):
     new_weights = {}
     for k, v in dict(x).items():
-        if isinstance(v, np.ndarray):
-            if v.dtype == object:
-               new_weights[k] = dict_to_array(v)
-            else:
-               new_weights[k] = v
-        elif isinstance(v, dict):        
-            new_weights[k] = dict_to_array(v)
-        elif isinstance(v, (list, tuple)):
-            new_weights[k] = list(zip(*sorted(dict_to_array(dict(enumerate(v))).items()))[1])
-        else:
-            new_weights[k] = dict_to_array(v)
+        new_weights[k] = dict_to_array_dispatch(v)
     return new_weights
 
 
