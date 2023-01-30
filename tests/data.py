@@ -110,6 +110,7 @@ def get_proxies():
             pass
 
 
+@try_except
 def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
     while True:
         for _ in range(len(proxies)):
@@ -186,11 +187,11 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
         if frames is None or not frames.size or frames.shape[0] < context_size:
             continue
 
-        try:
-            subs = get_subs(video_urls, ip_addresses)
-        except:
-             continue
-
+        
+        subs = get_subs(video_urls, ip_addresses)
+        if not subs:
+            continue
+        
         frames = frames[:frames.shape[0] // context_size * context_size]
         frames = frames.reshape(-1, context_size, *frames.shape[1:])
         queue.put((to_share(frames, smm), subs))
