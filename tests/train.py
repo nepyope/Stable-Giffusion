@@ -1,6 +1,7 @@
 import os
 import time
 from typing import Union, Dict, Any, Optional, Callable
+import json
 
 import jax
 import jax.numpy as jnp
@@ -111,7 +112,7 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
         if isinstance(v, dict):
             new_weights[k] = patch_weights(v, ("conv" in k and "quant" not in k) or do_patch)
         elif isinstance(v, (list, tuple)):
-            new_weights[k] = list(zip(*sorted(patch_weights(dict(enumerate(v)), "conv" in k or do_patch).items()))[1])
+            new_weights[k] = list(zip(*sorted(patch_weights(dict(enumerate(v)), "conv" in k or do_patch).items())))[1]
         elif isinstance(v, jax.Array) and do_patch and k == "kernel":
             new_weights[k] = v
             new_weights[k + "2"] = v * 1e-3
@@ -194,6 +195,12 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule) -> Gra
     return GradientTransformation(init_fn, update_fn)
 
 
+def deep_replace(d, value):
+    if isinstance(d, dict):
+        return {k: deep_replace(v, value) for k, v in d.items()}
+    return value
+
+
 @app.command()
 def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-16,
          max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
@@ -239,9 +246,18 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                             )
     
     if not overwrite and os.path.isfile("vae.np"):
-        vae_params = dict_to_array(np.load("vae.np", allow_pickle=True))
-        unet_params = dict_to_array(np.load("unet.np", allow_pickle=True))
-        t5_conv_params = dict_to_array(np.load("conv.np", allow_pickle=True))
+        vae_params = list(zip(*sorted(np.load("vae.np").items())))[1]
+        unet_params = list(zip(*sorted(np.load("unet.np").items())))[1]
+        t5_conv_params = list(zip(*sorted(np.load("conv.np").items())))[1]
+        with open("vae.json", 'r') as f:
+            _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
+        vae_params = structure.unflatten(vae_params)
+        with open("unet.json", 'r') as f:
+            _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
+        unet_params = structure.unflatten(unet_params)
+        with open("conv.json", 'r') as f:
+            _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
+        t5_conv_params = structure.unflatten(t5_conv_params)
 
     vae_state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
     unet_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
@@ -444,8 +460,16 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                 jax.profiler.stop_trace()
             if i % save_interval == 0:
                 for n, s in (("vae", vae_state), ("unet", unet_state), ("conv", t5_conv_state)):
+                    p = **to_host(s.params)
+                    flattened, jax_structure = jax.tree_util.tree_flatten(p)
+                    structure = str(jax_structure)  # like "PyTreeDef({'2': {'a': *}})"
+                    structure = structure.replace('PyTreeDef', '')[1:-1]  # clean up "types"
+                    structure = structure.replace(': *', ': null').replace("{'", '{"').replace("':", '":')
+                    structure = structure.replace("', ", '", ').replace(", '", ', "')  # to valid JSON
+                    with open(n + '.json', 'w') as f:
+                        f.write(structure)
                     with open(n + ".np", "wb") as f:
-                        np.savez(f, **to_host(s.params))
+                        np.savez(f, **dict(enumerate(flattened)))
 
 
 if __name__ == "__main__":
