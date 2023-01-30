@@ -126,6 +126,8 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
 
 def dict_to_array_dispatch(v):
     if isinstance(v, np.ndarray):
+        if v.shape == ():
+            return dict_to_array_dispatch(v.item())
         if v.dtype == object:
            return [dict_to_array_dispatch(x) for x in v]   
         return v
