@@ -52,7 +52,7 @@ def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     inputs = jnp.asarray(inputs, self.dtype)
     if _RESHAPE and "quant" not in self.scope.name:
         i0 = lax.ppermute(inputs, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
-        inputs = jnp.concatenate([inputs, i0, lax.cummax(inputs, 0)], 0)
+        inputs = jnp.concatenate([inputs, i0, lax.cummax(inputs, 0)], -1)
     return _original_call(self, inputs)
 
 
