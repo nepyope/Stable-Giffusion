@@ -159,7 +159,9 @@ def get_subs(audio_urls: List[dict]) -> np.ndarray:
         try:
             audio = whisper.load_audio(path)
             print('loaded audio')
+            t = time.time()
             subs = whisper.transcribe(quantized_model, audio)['text']
+            print(time.time() - t)
             print(subs)
         except:
             continue
@@ -190,11 +192,10 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             continue
 
         subs = get_subs(audio_urls)
-        print(subs)
         
         frames = frames[:frames.shape[0] // context_size * context_size]
         frames = frames.reshape(-1, context_size, *frames.shape[1:])
-        queue.put((to_share(frames, smm), ""))
+        queue.put((to_share(frames, smm), subs))
     queue.put(_DONE)
 
 
@@ -212,7 +213,7 @@ class DataLoader:
         self.seed = seed
         self.parallel_videos = parallel_videos
         self.tokenizer = tokenizer
-
+        
         self.ids = ids = []
         self.t5_tokens = t5_tokens
         for path in os.listdir(url_dir):
