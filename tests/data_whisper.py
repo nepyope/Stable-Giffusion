@@ -25,10 +25,11 @@ import requests
 import transformers
 import urllib3.exceptions
 import youtube_dl
-
+import psutil
 _DEBUG = False
 _DONE = "DONE"
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
+
 
 @dataclasses.dataclass
 class Share:
@@ -105,7 +106,6 @@ def get_video(video_urls: List[dict], target_image_size: int, target_fps: int,
                      ) -> np.ndarray:
     filename = uuid.uuid4()
     path = str(filename)
-
     for video_url in video_urls:
         if os.path.exists(path):
             os.remove(path)
@@ -130,12 +130,12 @@ def get_video(video_urls: List[dict], target_image_size: int, target_fps: int,
         
         if os.path.exists(path):
             os.remove(path)
+
         return np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3))
 
-def get_subs(audio_urls: List[dict]) -> np.ndarray:
+def get_subs(audio_urls: List[dict]) -> str:
     filename = uuid.uuid4()
     path = str(filename)
-
 
     model_fp32 = whisper.load_model(
     name="base",
@@ -168,11 +168,14 @@ def get_subs(audio_urls: List[dict]) -> np.ndarray:
 
         if os.path.exists(path):
             os.remove(path)
+
         return subs
+
 
 def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_image_size: int, target_fps: int,
                  context_size: int, queue: multiprocessing.Queue, smm: managers.SharedMemoryManager,
                  ):
+
     youtube_base = 'https://www.youtube.com/watch?v='
     youtube_getter = youtube_dl.YoutubeDL(
         {'writeautomaticsub': False, 'socket_timeout': 600, "quiet": True, "verbose": False, "no_warnings": True,
@@ -190,9 +193,8 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
         frames = get_video(video_urls, target_image_size, target_fps)
         if frames is None or not frames.size or frames.shape[0] < context_size:
             continue
-
-        subs = get_subs(audio_urls)
         
+        subs = get_subs(audio_urls)
         frames = frames[:frames.shape[0] // context_size * context_size]
         frames = frames.reshape(-1, context_size, *frames.shape[1:])
         queue.put((to_share(frames, smm), subs))
@@ -213,7 +215,7 @@ class DataLoader:
         self.seed = seed
         self.parallel_videos = parallel_videos
         self.tokenizer = tokenizer
-        
+
         self.ids = ids = []
         self.t5_tokens = t5_tokens
         for path in os.listdir(url_dir):
