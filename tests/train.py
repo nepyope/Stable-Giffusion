@@ -1,8 +1,8 @@
+import datetime
+import json
 import os
 import time
 from typing import Union, Dict, Any, Optional, Callable
-import json
-import datetime
 
 import jax
 import jax.numpy as jnp
@@ -52,12 +52,9 @@ def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     inputs = jnp.asarray(inputs, self.dtype)
     if _RESHAPE and "quant" not in self.scope.name:
         i0 = lax.ppermute(inputs, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
-        i0 = lax.select_n(device_id() == 0, i0, jnp.zeros_like(i0))
-        i1 = jnp.concatenate([i0, inputs], 0)
-        s = i0.shape[0]
-        inputs = jnp.concatenate([inputs, i1[s-1:-1], i1[s-5:-5], i0], -1)
+        inputs = jnp.concatenate([inputs, i0, lax.cummax(inputs, 0)], 0)
     return _original_call(self, inputs)
-        
+
 
 nn.Conv.__call__ = conv_call
 
@@ -70,7 +67,8 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
         elif isinstance(v, (list, tuple)):
             new_weights[k] = list(zip(*sorted(patch_weights(dict(enumerate(v)), "conv" in k or do_patch).items())))[1]
         elif isinstance(v, jax.Array) and do_patch and k == "kernel":
-            new_weights[k] = jnp.concatenate([v, v*1e-2, v*1e-3, v*1e-4], -2)  # KernelShape + (in_features,) + (out_features,)
+            # KernelShape + (in_features,) + (out_features,)
+            new_weights[k] = jnp.concatenate([v, v * 1e-2, v * 1e-3], -2)
         elif isinstance(v, jax.Array):
             new_weights[k] = v
         else:
@@ -79,20 +77,20 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
     return new_weights
 
 
-
 def dict_to_array_dispatch(v):
     if isinstance(v, np.ndarray):
         if v.shape == ():
             return dict_to_array_dispatch(v.item())
         if v.dtype == object:
-           raise ValueError(str(v)) 
+            raise ValueError(str(v))
         return v
-    elif isinstance(v, dict):        
+    elif isinstance(v, dict):
         return dict_to_array(v)
     elif isinstance(v, (list, tuple)):
         return list(zip(*sorted(dict_to_array(dict(enumerate(v))).items()))[1])
     else:
         return dict_to_array(v)
+
 
 def dict_to_array(x):
     new_weights = {}
@@ -199,7 +197,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                             scale_by_laprop(beta1, beta2, eps, lr_sched),
                             # optax.transform.add_decayed_weights(weight_decay, mask),  # TODO: mask normalization
                             )
-    
+
     if not overwrite and os.path.isfile("vae.np"):
         vae_params = list(zip(*sorted(np.load("vae.np").items())))[1]
         unet_params = list(zip(*sorted(np.load("unet.np").items())))[1]
@@ -227,14 +225,14 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     local_batch = 1
 
     def get_encoded(latents: jax.Array, t5_conv_params, input_ids: jax.Array, attention_mask: Optional[jax.Array]):
-        #encoded = text_encoder.encode(input_ids, attention_mask, params=text_encoder.params).last_hidden_state
-        #encoded = lax.stop_gradient(encoded)  # [8*batch, t5_tokens//8, features] avoids padding batch to multiple of 8
-        #encoded = encoded.reshape(local_batch, -1, 768)  # [batch, t5_tokens, features]
-        #encoded = t5_conv.apply(t5_conv_params, encoded)
-        #encoded = lax.all_gather(encoded, "batch", axis=1, tiled=True)
+        # encoded = text_encoder.encode(input_ids, attention_mask, params=text_encoder.params).last_hidden_state
+        # encoded = lax.stop_gradient(encoded)  # [8*batch, t5_tokens//8, features] avoids padding batch to multiple of 8
+        # encoded = encoded.reshape(local_batch, -1, 768)  # [batch, t5_tokens, features]
+        # encoded = t5_conv.apply(t5_conv_params, encoded)
+        # encoded = lax.all_gather(encoded, "batch", axis=1, tiled=True)
 
-        #encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 2, 3))
-        #encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
+        # encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 2, 3))
+        # encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
 
         latents = latents.reshape(-1, context, *latents.shape[1:])
         latents = lax.all_gather(latents, "batch", axis=1, tiled=True)
@@ -368,7 +366,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         return lax.scan(train_step, (unet_state, vae_state, t5_conv_state), all_to_all_batch(batch))
 
     p_train_step = jax.pmap(train_loop, "batch", donate_argnums=(0, 1))
-    
+
     vae_state = jax_utils.replicate(vae_state)
     unet_state = jax_utils.replicate(unet_state)
     t5_conv_state = jax_utils.replicate(t5_conv_state)
