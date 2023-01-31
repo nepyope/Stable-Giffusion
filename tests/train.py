@@ -213,6 +213,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
         t5_conv_params = structure.unflatten(t5_conv_params)
 
+    t5_conv_params = {}
+
     vae_state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
     unet_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
     t5_conv_state = train_state.TrainState.create(apply_fn=t5_conv.__call__, params=t5_conv_params, tx=optimizer)
@@ -224,14 +226,14 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     local_batch = 1
 
     def get_encoded(latents: jax.Array, t5_conv_params, input_ids: jax.Array, attention_mask: Optional[jax.Array]):
-        encoded = text_encoder.encode(input_ids, attention_mask, params=text_encoder.params).last_hidden_state
-        encoded = lax.stop_gradient(encoded)  # [8*batch, t5_tokens//8, features] avoids padding batch to multiple of 8
-        encoded = encoded.reshape(local_batch, -1, 768)  # [batch, t5_tokens, features]
-        encoded = t5_conv.apply(t5_conv_params, encoded)
-        encoded = lax.all_gather(encoded, "batch", axis=1, tiled=True)
+        #encoded = text_encoder.encode(input_ids, attention_mask, params=text_encoder.params).last_hidden_state
+        #encoded = lax.stop_gradient(encoded)  # [8*batch, t5_tokens//8, features] avoids padding batch to multiple of 8
+        #encoded = encoded.reshape(local_batch, -1, 768)  # [batch, t5_tokens, features]
+        #encoded = t5_conv.apply(t5_conv_params, encoded)
+        #encoded = lax.all_gather(encoded, "batch", axis=1, tiled=True)
 
-        encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 2, 3))
-        encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
+        #encoded = lax.broadcast_in_dim(encoded, (local_batch, context, *encoded.shape[1:]), (0, 2, 3))
+        #encoded = encoded.reshape(local_batch * context, encoded.shape[2], -1)
 
         latents = latents.reshape(-1, context, *latents.shape[1:])
         latents = lax.all_gather(latents, "batch", axis=1, tiled=True)
@@ -245,9 +247,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         mask = jnp.arange(context * jax.device_count()).reshape(1, 1, -1, 1, 1, 1)
         mask = (jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) + device_id() * context) > mask
         latents = latents * mask
-        latents = latents.reshape(latents.shape[0] * context, -1, encoded.shape[2])
+        return latents.reshape(latents.shape[0] * context, -1, encoded.shape[2])
 
-        return jnp.concatenate([encoded, latents], 1)
+        # return jnp.concatenate([encoded, latents], 1)
 
     def vae_apply(*args, method=vae.__call__, **kwargs):
         global _RESHAPE
