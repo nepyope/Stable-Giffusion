@@ -109,9 +109,6 @@ def get_video_data(video_urls: List[dict], target_image_size: int, target_fps: i
         try:
             with requests.get(url, stream=True) as r, open(path, 'wb') as f:
                 shutil.copyfileobj(r.raw, f)
-
-            subs = whisper.transcribe(whisper_model, path)['text']
-
         except Exception:  # skipcq: PYL-W0703
             continue  # Broken URL, next might work
         width = round(video_url["width"] * video_url["height"] / target_image_size)
@@ -124,6 +121,8 @@ def get_video_data(video_urls: List[dict], target_image_size: int, target_fps: i
                 .run(capture_stdout=True)
         except ffmpeg.Error:  # Broken Video, next might works
             continue
+
+        subs = whisper.transcribe(whisper_model, path)['text']
 
         if os.path.exists(path):
             os.remove(path)
