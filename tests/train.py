@@ -2,6 +2,7 @@ import os
 import time
 from typing import Union, Dict, Any, Optional, Callable
 import json
+import datetime
 
 import jax
 import jax.numpy as jnp
@@ -379,8 +380,11 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     def to_img(x: jax.Array) -> wandb.Image:
         return wandb.Image(x.reshape(-1, resolution, 3))
 
+    first_step = True
     for epoch in range(10 ** 9):
         for i, (video, input_ids, attention_mask) in tqdm.tqdm(enumerate(data, 1)):
+            if first_step:
+                print("got first data sample", datetime.datetime.now())
             i *= jax.process_count()
             batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32),
