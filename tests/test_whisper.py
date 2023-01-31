@@ -22,7 +22,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
          workers: int = os.cpu_count() // 2, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
          kernel: int = 3, data_path: str = "./urls", batch_size: int = 4,
-         sample_interval: int = 64, parallel_videos: int = 2,
+         sample_interval: int = 64, parallel_videos: int = 128,
          tracing_start_step: int = 128, tracing_stop_step: int = 196,
          schedule_length: int = 1024,
          guidance: float = 7.5,
