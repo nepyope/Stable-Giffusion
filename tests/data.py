@@ -130,9 +130,10 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                 pass
             except requests.exceptions.RequestException:
                 pass
-        print("Refreshing proxies")
+            print("error")
         proxies.clear()
         proxies.extend(get_proxies())
+        print("Refreshing proxies", len(proxies))
 
 
 def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps: int,
@@ -180,18 +181,15 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
     for i, wor in enumerate(work, worker_id):
         video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
-
         if not video_urls:
             continue
 
-        frames = get_video_frames(video_urls, target_image_size, target_fps)
-
-        if frames is None or not frames.size or frames.shape[0] < context_size:
-            continue
-
-        
         subs = get_subs(video_urls, ip_addresses)
         if not subs:
+            continue
+
+        frames = get_video_frames(video_urls, target_image_size, target_fps)
+        if frames is None or not frames.size or frames.shape[0] < context_size:
             continue
         
         frames = frames[:frames.shape[0] // context_size * context_size]
