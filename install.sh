@@ -9,3 +9,11 @@ tar -xzvf pip-22.3.1.tar.gz
 cd pip-22.3.1
 python3 -m setup.py install
 cd .. 
+
+git clone https://github.com/MiscellaneousStuff/openai-whisper-cpu
+cd openai-whisper-cpu
+git submodule init
+git submodule update
+pip install -e ./whisper
+cd .. 
+sudo rm -r openai-whisper-cpu
