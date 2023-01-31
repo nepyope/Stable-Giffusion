@@ -8,7 +8,7 @@ from diffusers.utils import check_min_version
 import tqdm
 
 from transformers import AutoTokenizer
-from data import DataLoader
+from data_whisper import DataLoader
 
 app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")

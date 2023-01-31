@@ -191,11 +191,14 @@ class DataLoader:
         lock = multiprocessing.Semaphore(self.video_downloaders)
         queue = multiprocessing.Queue(self.prefetch)
         workers = []
+
         with managers.SharedMemoryManager() as smm:
+
             for i in range(self.workers):
                 work = self.ids[int(len(self.ids) * i / self.workers):int(len(self.ids) * (i + 1) / self.workers)]
                 args = work, i, lock, self.resolution, self.fps, self.context, queue, smm, self.quantized_model
                 workers.append(multiprocessing.Process(args=args, daemon=True, target=frame_worker))
+
             for w in workers:
                 w.start()
 
@@ -203,6 +206,7 @@ class DataLoader:
             samples = []
             idx = 0
             while True:
+
                 if done == self.workers:
                     break
                 if len(samples) <= idx + self.batch_size and len(samples) < self.parallel_videos:
@@ -215,6 +219,7 @@ class DataLoader:
                         done += 1
                         continue
                     samples.append((list(from_share(out[0])), out[1]))
+
                 else:
                     np_batch = []
                     subtitles = []
