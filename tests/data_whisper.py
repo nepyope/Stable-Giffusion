@@ -67,7 +67,7 @@ def try_except(fn: Callable, default=None):
 
 
 @try_except
-def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.Semaphore, target_image_size: int
+def get_urls(youtube_getter, youtube_base: str, url: str, lock: threading.Semaphore, target_image_size: int
                    ) -> List[dict]:
     # We have to lock this part because it can lead to errors if multiple thread try to scrape video Information at
     # the same time.
@@ -77,7 +77,11 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
     if info is None or 'formats' not in info:
         return []
     video_urls = []
+    audio_urls = []
     for f in info['formats']:
+        if f.get('acodec') != 'none' and f.get('vcodec') == 'none':
+            audio_urls.append({'ext': f['ext'], 'url': f['url'], 'tbr': f.get('tbr')})
+
         width = f.get('width')
         height = f.get('height')
         url = f.get('url')
@@ -90,16 +94,18 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
             continue
         if format_note == "tiny" or width <= target_image_size or height <= target_image_size:
             continue
+
         video_urls.append({'width': width, 'height': height, 'ext': f['ext'], 'url': f['url'],
                            })
 
-    return sorted(video_urls, key=lambda x: (x['ext'] != 'mp4', x['width'], x['height']))
+    return sorted(video_urls, key=lambda x: (x['ext'] != 'mp4', x['width'], x['height'])), sorted(audio_urls, key=lambda x: x['tbr'])
 
 
-def get_video_data(video_urls: List[dict], target_image_size: int, target_fps: int,
-                     whisper_model:whisper.model.Whisper) -> Tuple[np.ndarray, str]:
+def get_video(video_urls: List[dict], target_image_size: int, target_fps: int,
+                     ) -> np.ndarray:
     filename = uuid.uuid4()
     path = str(filename)
+
     for video_url in video_urls:
         if os.path.exists(path):
             os.remove(path)
@@ -121,17 +127,50 @@ def get_video_data(video_urls: List[dict], target_image_size: int, target_fps: i
                 .run(capture_stdout=True)
         except ffmpeg.Error:  # Broken Video, next might works
             continue
+        
+        if os.path.exists(path):
+            os.remove(path)
+        return np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3))
 
-        subs = whisper.transcribe(whisper_model, path)['text']
+def get_subs(audio_urls: List[dict]) -> np.ndarray:
+    filename = uuid.uuid4()
+    path = str(filename)
+
+
+    model_fp32 = whisper.load_model(
+    name="base",
+    device="cpu")
+    quantized_model = torch.quantization.quantize_dynamic(
+        model_fp32, {torch.nn.Linear}, dtype=torch.qint8
+    )
+    print('loaded model')
+    for audio_url in audio_urls:
+        print('downloading audio')
+        if os.path.exists(path):
+            os.remove(path)
+
+        url = audio_url["url"]
+        path = f"{filename}.{audio_url['ext']}"
+        try:
+            with requests.get(url, stream=True) as r, open(path, 'wb') as f:
+                shutil.copyfileobj(r.raw, f)
+        except Exception:  # skipcq: PYL-W0703
+            continue  # Broken URL, next might work
+        try:
+            audio = whisper.load_audio(path)
+            print('loaded audio')
+            subs = whisper.transcribe(quantized_model, audio)['text']
+            print(subs)
+        except:
+            continue
 
         if os.path.exists(path):
             os.remove(path)
-        return (np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3)), subs)
-
+        return subs
 
 def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_image_size: int, target_fps: int,
                  context_size: int, queue: multiprocessing.Queue, smm: managers.SharedMemoryManager,
-                 whisper_model: whisper.model.Whisper):
+                 ):
     youtube_base = 'https://www.youtube.com/watch?v='
     youtube_getter = youtube_dl.YoutubeDL(
         {'writeautomaticsub': False, 'socket_timeout': 600, "quiet": True, "verbose": False, "no_warnings": True,
@@ -142,17 +181,20 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
     rng.shuffle(work)
 
     for i, wor in enumerate(work, worker_id):
-        video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
-        if not video_urls:
+        video_urls, audio_urls = get_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+        if not video_urls or not audio_urls:
             continue
 
-        frames, subs = get_video_data(video_urls, target_image_size, target_fps, whisper_model)
+        frames = get_video(video_urls, target_image_size, target_fps)
         if frames is None or not frames.size or frames.shape[0] < context_size:
             continue
+
+        subs = get_subs(audio_urls)
+        print(subs)
         
         frames = frames[:frames.shape[0] // context_size * context_size]
         frames = frames.reshape(-1, context_size, *frames.shape[1:])
-        queue.put((to_share(frames, smm), subs))
+        queue.put((to_share(frames, smm), ""))
     queue.put(_DONE)
 
 
@@ -170,12 +212,7 @@ class DataLoader:
         self.seed = seed
         self.parallel_videos = parallel_videos
         self.tokenizer = tokenizer
-        self.model_fp32 = whisper.load_model(
-            name="base",
-            device="cpu")
-        self.quantized_model = torch.quantization.quantize_dynamic(
-            self.model_fp32, {torch.nn.Linear}, dtype=torch.qint8
-        ).share_memory()
+
         self.ids = ids = []
         self.t5_tokens = t5_tokens
         for path in os.listdir(url_dir):
@@ -196,12 +233,11 @@ class DataLoader:
 
             for i in range(self.workers):
                 work = self.ids[int(len(self.ids) * i / self.workers):int(len(self.ids) * (i + 1) / self.workers)]
-                args = work, i, lock, self.resolution, self.fps, self.context, queue, smm, self.quantized_model
+                args = work, i, lock, self.resolution, self.fps, self.context, queue, smm
                 workers.append(multiprocessing.Process(args=args, daemon=True, target=frame_worker))
 
             for w in workers:
                 w.start()
-
             done = 0
             samples = []
             idx = 0
