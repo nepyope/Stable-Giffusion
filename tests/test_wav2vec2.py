@@ -19,3 +19,4 @@ input_values = processor(
     ds["speech"][0], sampling_rate=16_000, return_tensors="np"
 ).input_values  # Batch size 1
 hidden_states = model(input_values).last_hidden_state
+print(hidden_states)
