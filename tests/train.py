@@ -49,7 +49,7 @@ def device_id():
     return lax.axis_index("batch")
 
 
-def conv_call(self: nn.Conv, inputs: jnp.ndarray) -> jnp.ndarray:
+def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     inputs = jnp.asarray(inputs, self.dtype)
     #if _RESHAPE and "quant" not in self.scope.name:
     #    i0 = lax.ppermute(inputs, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
@@ -68,10 +68,10 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
             new_weights[k] = patch_weights(v, ("conv" in k and "quant" not in k) or do_patch)
         elif isinstance(v, (list, tuple)):
             new_weights[k] = list(zip(*sorted(patch_weights(dict(enumerate(v)), "conv" in k or do_patch).items())))[1]
-        elif isinstance(v, jnp.ndarray) and do_patch and k == "kernel":
+        elif isinstance(v, jax.Array) and do_patch and k == "kernel":
             # KernelShape + (in_features,) + (out_features,)
             new_weights[k] = jnp.concatenate([v, v * 1e-2, v * 1e-3], -2)
-        elif isinstance(v, jnp.ndarray):
+        elif isinstance(v, jax.Array):
             new_weights[k] = v
         else:
             print(f"Unknown type {type(v)}")
@@ -105,7 +105,7 @@ def _take_0th(x):
     return x[0]
 
 
-def to_host(k, index_fn: Callable[[jnp.ndarray], jnp.ndarray] = _take_0th):
+def to_host(k, index_fn: Callable[[jax.Array], jax.Array] = _take_0th):
     return jax.device_get(jax.tree_util.tree_map(index_fn, k))
 
 
@@ -120,7 +120,7 @@ def bias_correction(moment, decay, count):
     return jax.tree_map(lambda t: t / bias_correction.astype(t.dtype), moment)
 
 
-def promote(inp: jnp.ndarray) -> jnp.ndarray:
+def promote(inp: jax.Array) -> jax.Array:
     return jnp.asarray(inp, jnp.promote_types(jnp.float64, jnp.result_type(inp)))
 
 
@@ -210,7 +210,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
     local_batch = 1
 
-    def get_encoded(latents: jnp.ndarray):
+    def get_encoded(latents: jax.Array):
         latents = latents.reshape(-1, context, *latents.shape[1:])
         latents = lax.all_gather(latents, "batch", axis=1, tiled=True)
 
@@ -228,7 +228,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         _RESHAPE = False
         return out
 
-    def sample_vae(params: Any, inp: jnp.ndarray):
+    def sample_vae(params: Any, inp: jax.Array):
         return jnp.transpose(vae_apply({"params": params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
 
     def all_to_all(x, split=2):
@@ -238,7 +238,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         return {"pixel_values": all_to_all(batch["pixel_values"], 1),
                 "idx": batch["idx"] + jnp.arange(jax.device_count())}
 
-    def rng(idx: jnp.ndarray):
+    def rng(idx: jax.Array):
         return jax.random.PRNGKey(idx * jax.device_count() + device_id())
 
     def sample(unet_params, vae_params, batch: Dict[str, Union[np.ndarray, int]]):
@@ -330,7 +330,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     data = range(100)
     start_time = time.time()
 
-    def to_img(x: jnp.ndarray) -> wandb.Image:
+    def to_img(x: jax.Array) -> wandb.Image:
         return wandb.Image(x.reshape(-1, resolution, 3))
 
     first_step = True
