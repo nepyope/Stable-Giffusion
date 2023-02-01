@@ -173,23 +173,12 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
-    t5_conv = nn.Sequential([nn.Conv(features=1024, kernel_size=(25,), strides=(4,)),
-                             nn.LayerNorm(epsilon=1e-10),
-                             nn.relu,
-                             nn.Conv(features=1024, kernel_size=(25,), strides=(4,)),
-                             ])
-
-    inp_shape = jax.random.normal(jax.random.PRNGKey(0), (jax.local_device_count(), t5_tokens, 768))
-    t5_conv_params = t5_conv.init(jax.random.PRNGKey(0), inp_shape)
-
     tokenizer = AutoTokenizer.from_pretrained("google/long-t5-tglobal-base")
-    text_encoder = FlaxLongT5Model.from_pretrained("google/long-t5-tglobal-base", dtype=jnp.float32)
     vae_params = patch_weights(vae_params)
 
     vae: FlaxAutoencoderKL = vae
     unet: FlaxUNet2DConditionModel = unet
     tokenizer: T5Tokenizer = tokenizer
-    text_encoder: FlaxLongT5Model = text_encoder
 
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
 
@@ -202,7 +191,6 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     if not overwrite and os.path.isfile("vae.np"):
         vae_params = list(zip(*sorted(np.load("vae.np").items())))[1]
         unet_params = list(zip(*sorted(np.load("unet.np").items())))[1]
-        t5_conv_params = list(zip(*sorted(np.load("conv.np").items())))[1]
         with open("vae.json", 'r') as f:
             _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
         vae_params = structure.unflatten(vae_params)
@@ -211,13 +199,10 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         unet_params = structure.unflatten(unet_params)
         with open("conv.json", 'r') as f:
             _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
-        t5_conv_params = structure.unflatten(t5_conv_params)
 
-    t5_conv_params = {}
 
     vae_state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
     unet_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
-    t5_conv_state = train_state.TrainState.create(apply_fn=t5_conv.__call__, params=t5_conv_params, tx=optimizer)
 
     noise_scheduler = FlaxPNDMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear",
                                         num_train_timesteps=schedule_length)
@@ -297,7 +282,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         unet_state, vae_state = all_states
 
         def compute_loss(params):
-            unet_params, vae_params, t5_conv_params = params
+            unet_params, vae_params = params
             gaussian, dropout, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 5)
 
             img = batch["pixel_values"].astype(jnp.float32) / 255
@@ -326,15 +311,12 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
         compute_loss = jax.remat(compute_loss, policy=jax.checkpoint_policies.checkpoint_dots_with_no_batch_dims)
         grad_fn = jax.value_and_grad(compute_loss, has_aux=True)
-        (loss, scalars), (unet_grad, vae_grad, t5_conv_grad) = grad_fn(
-            (unet_state.params, vae_state.params, t5_conv_state.params))
+        (loss, scalars), (unet_grad, vae_grad) = grad_fn((unet_state.params, vae_state.params))
         unet_grad = lax.pmean(unet_grad, "batch")
         vae_grad = lax.pmean(vae_grad, "batch")
-        t5_conv_grad = lax.pmean(t5_conv_grad, "batch")
         new_unet_state = unet_state.apply_gradients(grads=unet_grad)
         new_vae_state = vae_state.apply_gradients(grads=vae_grad)
-        new_t5_conv_state = t5_conv_state.apply_gradients(grads=t5_conv_grad)
-        return (new_unet_state, new_vae_state, new_t5_conv_state), lax.pmean(scalars, "batch")
+        return (new_unet_state, new_vae_state), lax.pmean(scalars, "batch")
 
     def train_loop(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
                    batch: Dict[str, Union[np.ndarray, int]]):
