@@ -338,7 +338,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         for i, video in tqdm.tqdm(enumerate(data, 1)):
             if first_step:
                 print("got first data sample", datetime.datetime.now())
-            video = np.ones((jax.local_device_count(), context, resolution, resolution, 3))
+            video = np.ones((jax.local_device_count(), context * jax.device_count(), resolution, resolution, 3))
             i *= jax.process_count()
             batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32)}
