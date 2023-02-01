@@ -327,8 +327,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     vae_state = jax_utils.replicate(vae_state)
     unet_state = jax_utils.replicate(unet_state)
 
-    data = DataLoader(workers, data_path, downloaders, resolution, fps, context * jax.device_count(),
-                      jax.local_device_count(), prefetch, parallel_videos, tokenizer, t5_tokens)
+    data = range(100)
     start_time = time.time()
 
     def to_img(x: jnp.ndarray) -> wandb.Image:
@@ -339,6 +338,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         for i, video in tqdm.tqdm(enumerate(data, 1)):
             if first_step:
                 print("got first data sample", datetime.datetime.now())
+            video = np.ones((jax.local_device_count(), context, resolution, resolution, 3))
             i *= jax.process_count()
             batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32)}
