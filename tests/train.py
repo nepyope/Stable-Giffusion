@@ -51,7 +51,7 @@ def device_id():
 
 @jax.custom_gradient
 def communicate(x: jax.Array):
-    normalizer = jnp.arange(x.shape[0]).reshape(-1, *(1,) * (x.ndim - 1))
+    normalizer = jnp.arange(x.shape[0]).reshape(-1, *(1,) * (x.ndim - 1)) + 1
 
     def _grad(dy: jax.Array):
         dy, dy0, dyc = jnp.split(dy, 3, -1)
@@ -418,15 +418,15 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             (unet_state, vae_state, t5_conv_state), scalars = p_train_step(unet_state, vae_state, t5_conv_state, batch)
             timediff = time.time() - start_time
             for offset, (unet_sq, unet_abs, vae_sq, vae_abs) in enumerate(zip(*to_host(scalars))):
-                vid_per_day = (i + jax.process_count()) / timediff * 24 * 3600
+                vid_per_day = i / timediff * 24 * 3600
                 log = {"U-Net MSE/Total": float(unet_sq), "U-Net MAE/Total": float(unet_abs),
                        "VAE MSE/Total": float(vae_sq), "VAE MAE/Total": float(vae_abs),
-                       "Step": i + offset, "Epoch": epoch}
+                       "Step": i + offset - jax.process_count(), "Epoch": epoch}
                 if offset == jax.device_count() - 1:
                     log.update(extra)
                     log.update({"Runtime": timediff, "Speed/Videos per Day": vid_per_day,
                                 "Speed/Frames per Day": vid_per_day * context * jax.process_count()})
-                run.log(log, step=i + offset)
+                run.log(log, step=(global_step - 1) * jax.process_count())
             if i == tracing_start_step:
                 jax.profiler.start_trace("trace")
             if i == tracing_stop_step:
