@@ -184,10 +184,9 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
         if not video_urls:
             continue
 
-        subs = ""
-        #subs = get_subs(video_urls, ip_addresses)
-        #if not subs:
-        #    continue
+        subs = get_subs(video_urls, ip_addresses)
+        if not subs:
+            continue
 
         frames = get_video_frames(video_urls, target_image_size, target_fps)
         if frames is None or not frames.size or frames.shape[0] < context_size:
