@@ -8,6 +8,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
+import smart_open
 import tqdm
 import typer
 import wandb
@@ -156,18 +157,19 @@ def deep_replace(d, value):
 
 @app.command()
 def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-16,
-         max_grad_norm: float = 1, downloaders: int = 4, resolution: int = 384, fps: int = 4, context: int = 16,
-         workers: int = os.cpu_count() // 2, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
+         max_grad_norm: float = 1, downloaders: int = 2, resolution: int = 128, fps: int = 4, context: int = 8,
+         workers: int = 16, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
          data_path: str = "./urls", sample_interval: int = 64, parallel_videos: int = 128,
-         tracing_start_step: int = 128, tracing_stop_step: int = 196,
+         tracing_start_step: int = 10 ** 9, tracing_stop_step: int = 10 ** 9,
          schedule_length: int = 1024,
          guidance: float = 7.5,
-         unet_batch_factor: int = 16,
+         unet_batch_factor: int = 1,
          warmup_steps: int = 2048,
-         lr_halving_every_n_steps: int = 8192,
+         lr_halving_every_n_steps: int = 2 ** 17,
          t5_tokens: int = 2 ** 13,
          save_interval: int = 1024,
-         overwrite: bool = False):
+         overwrite: bool = False,
+         base_path: str = "gs://video-us/checkpoint/"):
     global _CONTEXT, _RESHAPE
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
@@ -202,13 +204,13 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         vae_params = list(zip(*sorted(np.load("vae.np").items())))[1]
         unet_params = list(zip(*sorted(np.load("unet.np").items())))[1]
         t5_conv_params = list(zip(*sorted(np.load("conv.np").items())))[1]
-        with open("vae.json", 'r') as f:
+        with smart_open.open(base_path + "vae.json", 'r') as f:
             _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
         vae_params = structure.unflatten(vae_params)
-        with open("unet.json", 'r') as f:
+        with smart_open.open(base_path + "unet.json", 'r') as f:
             _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
         unet_params = structure.unflatten(unet_params)
-        with open("conv.json", 'r') as f:
+        with smart_open.open(base_path + "conv.json", 'r') as f:
             _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
         t5_conv_params = structure.unflatten(t5_conv_params)
 
@@ -422,9 +424,9 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                     structure = structure.replace('PyTreeDef', '')[1:-1]  # clean up "types"
                     structure = structure.replace(': *', ': null').replace("{'", '{"').replace("':", '":')
                     structure = structure.replace("', ", '", ').replace(", '", ', "')  # to valid JSON
-                    with open(n + '.json', 'w') as f:
+                    with smart_open.open(base_path + n + '.json', 'w') as f:
                         f.write(structure)
-                    with open(n + ".np", "wb") as f:
+                    with smart_open.open(base_path + n + ".np", "wb") as f:
                         np.savez(f, **dict(enumerate(flattened)))
 
 
