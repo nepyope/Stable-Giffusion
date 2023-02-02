@@ -351,7 +351,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                 extra[f"Samples/Reconstruction (U-Net, Video Guided) {pid}"] = to_img(s_vnt)
                 extra[f"Samples/Ground Truth {pid}"] = to_img(batch["pixel_values"].astype(jnp.float32) / 255)
 
-            (unet_state, vae_state), scalars = p_train_step(unet_state, vae_state, batch)
+            (unet_state, vae_state, t5_conv_state), scalars = p_train_step(unet_state, vae_state, batch)
             timediff = time.time() - start_time
             for offset, (unet_sq, unet_abs, vae_sq, vae_abs) in enumerate(zip(*to_host(scalars))):
                 vid_per_day = (i + jax.process_count()) / timediff * 24 * 3600
