@@ -246,7 +246,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         mask = jnp.arange(context * jax.device_count()).reshape(1, 1, -1, 1, 1, 1)
         mask = (jnp.arange(context).reshape(1, -1, 1, 1, 1, 1) + device_id() * context) > mask
         latents = latents * mask
-        return latents.reshape(latents.shape[0] * context, -1, 1024)
+        return latents.reshape(latents.shape[0] * context, -1, encoded.shape[2])
 
         # return jnp.concatenate([encoded, latents], 1)
 
