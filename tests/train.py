@@ -49,11 +49,26 @@ def device_id():
     return lax.axis_index("batch")
 
 
+@jax.custom_gradient
+def communicate(x: jax.Array):
+    normalizer = jnp.arange(x.shape[0]).reshape(-1, *(1,) * (x.ndim - 1))
+
+    def _grad(dy: jax.Array):
+        dy, dy0, dyc = jnp.split(dy, 3, -1)
+        dy0 = lax.ppermute(dy0, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
+        dy0 = lax.select_n(device_id() == jax.device_count() - 1, dy0, jnp.zeros_like(dy0))
+        dyc = lax.cumsum(dyc / normalizer, 0, reverse=True)
+        return dy + dy0 + dyc
+
+    x0 = lax.ppermute(x, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
+    x0 = lax.select_n(device_id() == 0, x0, jnp.zeros_like(x0))
+    return jnp.concatenate([x, x0, lax.cumsum(x, 0) / normalizer], -1), _grad
+
+
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     inputs = jnp.asarray(inputs, self.dtype)
     if _RESHAPE and "quant" not in self.scope.name:
-        i0 = lax.ppermute(inputs, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
-        inputs = jnp.concatenate([inputs, i0, lax.cummax(inputs, 0)], -1)
+        inputs = communicate(inputs)
     return _original_call(self, inputs)
 
 
@@ -174,10 +189,10 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
-    t5_conv = nn.Sequential([nn.Conv(features=1024, kernel_size=(25,), strides=(4,)),
+    t5_conv = nn.Sequential([nn.Conv(features=1024, kernel_size=(13,), strides=(4,)),
                              nn.LayerNorm(epsilon=1e-10),
                              nn.relu,
-                             nn.Conv(features=1024, kernel_size=(25,), strides=(4,)),
+                             nn.Conv(features=1024, kernel_size=(13,), strides=(4,)),
                              ])
 
     inp_shape = jax.random.normal(jax.random.PRNGKey(0), (jax.local_device_count(), t5_tokens, 768))
