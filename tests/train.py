@@ -433,7 +433,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                 jax.profiler.start_trace("trace")
             if i == tracing_stop_step:
                 jax.profiler.stop_trace()
-            if i % save_interval == 0:
+            if i % save_interval == 0 and jax.process_index() == 0:
                 for n, s in (("vae", vae_state), ("unet", unet_state), ("conv", t5_conv_state)):
                     p = to_host(s.params)
                     flattened, jax_structure = jax.tree_util.tree_flatten(p)
