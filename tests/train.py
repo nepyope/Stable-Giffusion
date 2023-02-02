@@ -51,10 +51,10 @@ def device_id():
 
 def conv_call(self: nn.Conv, inputs: jnp.ndarray) -> jnp.ndarray:
     inputs = jnp.asarray(inputs, self.dtype)
-    #if _RESHAPE and "quant" not in self.scope.name:
-    #    i0 = lax.ppermute(inputs, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
-    #    arange = jnp.arange(inputs.shape[0]).reshape(-1, *(1,) * (inputs.ndim - 1))
-    #    inputs = jnp.concatenate([inputs, i0, lax.cumsum(inputs, 0) / arange], -1)
+    if _RESHAPE and "quant" not in self.scope.name:
+        i0 = lax.ppermute(inputs, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
+        arange = jnp.arange(inputs.shape[0]).reshape(-1, *(1,) * (inputs.ndim - 1))
+        inputs = jnp.concatenate([inputs, i0, lax.cumsum(inputs, 0) / arange], -1)
     return _original_call(self, inputs)
 
 
@@ -175,7 +175,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
     tokenizer = AutoTokenizer.from_pretrained("google/long-t5-tglobal-base")
-    # vae_params = patch_weights(vae_params)
+    vae_params = patch_weights(vae_params)
 
     vae: FlaxAutoencoderKL = vae
     unet: FlaxUNet2DConditionModel = unet
