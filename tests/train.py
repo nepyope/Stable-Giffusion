@@ -426,7 +426,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                     log.update(extra)
                     log.update({"Runtime": timediff, "Speed/Videos per Day": vid_per_day,
                                 "Speed/Frames per Day": vid_per_day * context * jax.process_count()})
-                run.log(log, step=(global_step - 1) * jax.process_count())
+                run.log(log, step=(global_step - 1) * jax.process_count() + offset)
             if i == tracing_start_step:
                 jax.profiler.start_trace("trace")
             if i == tracing_stop_step:
