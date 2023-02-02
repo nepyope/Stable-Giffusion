@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import traceback
 import time
 from typing import Union, Dict, Any, Optional, Callable
 
@@ -32,6 +33,7 @@ compilation_cache.initialize_cache("compilation_cache")
 
 _CONTEXT = 0
 _RESHAPE = False
+_UPLOAD_RETRIES = 8
 
 _original_call = nn.Conv.__call__
 
@@ -441,8 +443,14 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                     structure = structure.replace("', ", '", ').replace(", '", ', "')  # to valid JSON
                     with smart_open.open(base_path + n + '.json', 'w') as f:
                         f.write(structure)
-                    with smart_open.open(base_path + n + ".np", "wb") as f:
-                        np.savez(f, **dict(enumerate(flattened)))
+                    for _ in range(_UPLOAD_RETRIES):
+                        try:
+                            with smart_open.open(base_path + n + ".np", "wb") as f:
+                                np.savez(f, **dict(enumerate(flattened)))
+                            break
+                        except:
+                            print("failed to write", n, "checkpoint")
+                            traceback.print_exc()
 
 
 if __name__ == "__main__":
