@@ -226,7 +226,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     if not overwrite:
         vae_params = load(base_path + "vae")
         unet_params = load(base_path + "unet") 
-        t5_conv_params = load(base_path + "conv")        with smart_open.open(base_path + "vae.json", 'r') as f:
+        t5_conv_params = load(base_path + "conv")        
  
     vae_state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
     unet_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
