@@ -2,7 +2,7 @@ import datetime
 import json
 import os
 import time
-from typing import Union, Dict, Any, Callable
+from typing import Union, Dict, Any, Optional, Callable
 
 import jax
 import jax.numpy as jnp
@@ -21,11 +21,10 @@ from jax.experimental.compilation_cache import compilation_cache
 from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
-from transformers import AutoTokenizer, T5Tokenizer
+from transformers import AutoTokenizer, FlaxLongT5Model, T5Tokenizer
 
 from data import DataLoader
 
-jax.distributed.initialize()
 app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")
 compilation_cache.initialize_cache("compilation_cache")
@@ -200,6 +199,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         unet_params = structure.unflatten(unet_params)
         with open("conv.json", 'r') as f:
             _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
+
 
     vae_state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
     unet_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
