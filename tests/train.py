@@ -192,7 +192,6 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          tracing_start_step: int = 10 ** 9, tracing_stop_step: int = 10 ** 9,
          schedule_length: int = 1024,
          guidance: float = 7.5,
-         unet_batch_factor: int = 1,
          warmup_steps: int = 4096,
          lr_halving_every_n_steps: int = 2 ** 17,
          t5_tokens: int = 2 ** 13,
@@ -344,13 +343,13 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
         def compute_loss(params):
             unet_params, vae_params, t5_conv_params = params
-            gaussian, dropout, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 5)
+            gauss0, gauss1, drop0,  drop1, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 7)
 
             img = batch["pixel_values"].astype(jnp.float32) / 255
             inp = jnp.transpose(img, (0, 3, 1, 2))
-            vae_outputs = vae_apply({"params": vae_params}, inp, deterministic=True, method=vae.encode)
-            latents = jnp.concatenate([vae_outputs.latent_dist.sample(r)
-                                       for r in jax.random.split(sample_rng, unet_batch_factor)])
+            vae_outputs = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gauss0, "dropout": drop0},
+                                    deterministic=False, method=vae.encode)
+            latents = vae_outputs.latent_dist.sample(sample_rng)
             latents = jnp.transpose(latents, (0, 3, 1, 2))
             latents = lax.stop_gradient(latents * 0.18215)
 
@@ -361,8 +360,8 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             encoded = get_encoded(latents, t5_conv_params, batch["input_ids"], batch["attention_mask"])
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoded).sample
 
-            vae_pred = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gaussian, "dropout": dropout},
-                                 sample_posterior=True, deterministic=False).sample
+            vae_pred = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gauss1, "dropout": drop1},
+                                 deterministic=False, method=vae.decode).sample
             vae_pred = jnp.transpose(vae_pred, (0, 2, 3, 1))
 
             # TODO: use perceptual loss
