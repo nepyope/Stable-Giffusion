@@ -51,18 +51,24 @@ def device_id():
 
 @jax.custom_gradient
 def communicate(x: jax.Array):
-    normalizer = jnp.arange(x.shape[0]).reshape(-1, *(1,) * (x.ndim - 1)) + 1
+    normalizer = jnp.arange(x.shape[0] * 2).reshape(-1, *(1,) * (x.ndim - 1)) + 1
 
     def _grad(dy: jax.Array):
-        dy, dy0, dyc = jnp.split(dy, 3, -1)
-        dy0 = lax.ppermute(dy0, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
-        dy0 = lax.select_n(device_id() == jax.device_count() - 1, dy0, jnp.zeros_like(dy0))
+        dy, dyc = jnp.split(dy, 2, -1)
         dyc = lax.cumsum(dyc / normalizer, 0, reverse=True)
+        dyc, dyc0 = jnp.split(dyc, 2, -1)
+        dy, dy0 = jnp.split(dy, 2, -1)
+        dy0 = dy0 + dyc0
+        dy0 = lax.select_n(device_id() == 0, dy0, jnp.zeros_like(dy0))
+        dy0 = lax.ppermute(dy0, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
         return dy + dy0 + dyc
 
     x0 = lax.ppermute(x, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
-    x0 = lax.select_n(device_id() == 0, x0, jnp.zeros_like(x0))
-    return jnp.concatenate([x, x0, lax.cumsum(x, 0) / normalizer], -1), _grad
+    x0 = lax.select_n(device_id() == 0, x0, jnp.zeros_like(x))
+    cat = jnp.concatenate([x, x0], 0)
+    cat = jnp.concatenate([cat, lax.cumsum(cat, 0) / normalizer], 0)
+    cat = cat.reshape(4, *x.shape).transpose(*range(1, x.ndim - 1), 0, x.ndim - 1).reshape(*x.shape[:-1], -1)
+    return cat, _grad
 
 
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
@@ -84,7 +90,7 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
             new_weights[k] = list(zip(*sorted(patch_weights(dict(enumerate(v)), "conv" in k or do_patch).items())))[1]
         elif isinstance(v, jax.Array) and do_patch and k == "kernel":
             # KernelShape + (in_features,) + (out_features,)
-            new_weights[k] = jnp.concatenate([v, v * 1e-2, v * 1e-3], -2)
+            new_weights[k] = jnp.concatenate([v, v * 1e-2, v * 1e-3, v * 1e-4], -2)
         elif isinstance(v, jax.Array):
             new_weights[k] = v
         else:
@@ -103,7 +109,7 @@ def dict_to_array_dispatch(v):
     elif isinstance(v, dict):
         return dict_to_array(v)
     elif isinstance(v, (list, tuple)):
-        return list(zip(*sorted(dict_to_array(dict(enumerate(v))).items()))[1])
+        return list(zip(*sorted(dict_to_array(dict(enumerate(v))).items())))[1]
     else:
         return dict_to_array(v)
 
@@ -174,17 +180,18 @@ def deep_replace(d, value):
 def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-16,
          max_grad_norm: float = 1, downloaders: int = 2, resolution: int = 128, fps: int = 4, context: int = 8,
          workers: int = 16, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
-         data_path: str = "./urls", sample_interval: int = 64, parallel_videos: int = 128,
+         data_path: str = "./urls", sample_interval: int = 1024, parallel_videos: int = 128,
          tracing_start_step: int = 10 ** 9, tracing_stop_step: int = 10 ** 9,
          schedule_length: int = 1024,
          guidance: float = 7.5,
          unet_batch_factor: int = 1,
-         warmup_steps: int = 2048,
+         warmup_steps: int = 4096,
          lr_halving_every_n_steps: int = 2 ** 17,
          t5_tokens: int = 2 ** 13,
          save_interval: int = 1024,
          overwrite: bool = False,
-         base_path: str = "gs://video-us/checkpoint/"):
+         base_path: str = "gs://video-us/checkpoint/",
+         unet_init_steps: int = 2048, conv_init_steps: int = 1024):
     global _CONTEXT, _RESHAPE
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
@@ -370,9 +377,11 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         unet_grad = lax.pmean(unet_grad, "batch")
         vae_grad = lax.pmean(vae_grad, "batch")
         t5_conv_grad = lax.pmean(t5_conv_grad, "batch")
-        new_unet_state = unet_state.apply_gradients(grads=unet_grad)
         new_vae_state = vae_state.apply_gradients(grads=vae_grad)
-        new_t5_conv_state = t5_conv_state.apply_gradients(grads=t5_conv_grad)
+        new_unet_state = lax.switch(batch["idx"] > unet_init_steps,
+                                    [lambda: unet_state, lambda: unet_state.apply_gradients(grads=unet_grad)])
+        new_t5_conv_state = lax.switch(batch["idx"] > conv_init_steps,
+                                       [lambda: t5_conv_state, t5_conv_state.apply_gradients(grads=t5_conv_grad)])
         return (new_unet_state, new_vae_state, new_t5_conv_state), lax.pmean(scalars, "batch")
 
     def train_loop(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
