@@ -55,7 +55,7 @@ def device_id():
 def communicate(x: jax.Array):
 
     def _grad(dy: jax.Array):
-        normalizer1 = jnp.arange(x.shape[0] * 2).reshape(2, x.shape[0])
+        normalizer1 = jnp.arange(x.shape[0] * 2).reshape(2, x.shape[0]) + 1
         normalizer1 = normalizer1.transpose(1, 0)
         normalizer1 = lax.broadcast_in_dim(normalizer1, (x.shape[0], 2, x.shape[-1]), (0, 1))
         normalizer1 = normalizer1.reshape(x.shape[0], *(1,) * (dy.ndim - 2), -1)
