@@ -236,16 +236,18 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     optimizer = scale_by_laprop(beta1, beta2, eps, lr_sched)
     pos_embd = jax.random.normal(jax.random.PRNGKey(0), (t5_tokens // 16 + context * jax.device_count(), 1024))
     pos_embd = pos_embd * pos_embd_scale
+    pos_embd = {"embd": pos_embd}
 
     if not overwrite:
         vae_params = load(base_path + "vae")
         unet_params = load(base_path + "unet")
         t5_conv_params = load(base_path + "conv")
+        pos_embd = load(base_path + "embd")
 
     vae_state = TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
     unet_state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
     t5_conv_state = TrainState.create(apply_fn=t5_conv.__call__, params=t5_conv_params, tx=optimizer)
-    pos_embd_state = TrainState.create(apply_fn=lambda: None, params={"embd": pos_embd}, tx=optimizer)
+    pos_embd_state = TrainState.create(apply_fn=lambda: None, params=pos_embd, tx=optimizer)
 
     noise_scheduler = FlaxPNDMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear",
                                         num_train_timesteps=schedule_length)
