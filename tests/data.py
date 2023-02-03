@@ -127,9 +127,9 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                 proxies.append(p)
                 return subs
             except urllib3.exceptions.HTTPError:
-                traceback.print_exc()
+                pass
             except requests.exceptions.RequestException:
-                traceback.print_exc()
+                pass
             print("error")
         proxies.clear()
         proxies.extend(get_proxies())
