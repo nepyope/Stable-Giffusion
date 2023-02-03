@@ -383,7 +383,7 @@ def main(lr: float = 1e-5, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         new_unet_state = lax.switch((batch["idx"] > unet_init_steps).astype(jnp.int32),
                                     [lambda: unet_state, lambda: unet_state.apply_gradients(grads=unet_grad)])
         new_t5_conv_state = lax.switch((batch["idx"] > conv_init_steps).astype(jnp.int32),
-                                       [lambda: t5_conv_state, t5_conv_state.apply_gradients(grads=t5_conv_grad)])
+                                       [lambda: t5_conv_state, lambda: t5_conv_state.apply_gradients(grads=t5_conv_grad)])
         return (new_unet_state, new_vae_state, new_t5_conv_state), lax.pmean(scalars, "batch")
 
     def train_loop(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
