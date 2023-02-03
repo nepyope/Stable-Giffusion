@@ -191,7 +191,7 @@ def load(path: str):
 @app.command()
 def main(lr: float = 1e-5, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-16,
          max_grad_norm: float = 1, downloaders: int = 2, resolution: int = 128, fps: int = 4, context: int = 8,
-         workers: int = 16, prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1",
+         workers: int = 16, prefetch: int = 6, base_model: str = "flax/stable-diffusion-2-1",
          data_path: str = "./urls", sample_interval: int = 1024, parallel_videos: int = 128,
          tracing_start_step: int = 10 ** 9, tracing_stop_step: int = 10 ** 9,
          schedule_length: int = 1024,
@@ -380,9 +380,9 @@ def main(lr: float = 1e-5, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         vae_grad = lax.pmean(vae_grad, "batch")
         t5_conv_grad = lax.pmean(t5_conv_grad, "batch")
         new_vae_state = vae_state.apply_gradients(grads=vae_grad)
-        new_unet_state = lax.switch(batch["idx"] > unet_init_steps,
+        new_unet_state = lax.switch((batch["idx"] > unet_init_steps).astype(jnp.int32),
                                     [lambda: unet_state, lambda: unet_state.apply_gradients(grads=unet_grad)])
-        new_t5_conv_state = lax.switch(batch["idx"] > conv_init_steps,
+        new_t5_conv_state = lax.switch((batch["idx"] > conv_init_steps).astype(jnp.int32),
                                        [lambda: t5_conv_state, t5_conv_state.apply_gradients(grads=t5_conv_grad)])
         return (new_unet_state, new_vae_state, new_t5_conv_state), lax.pmean(scalars, "batch")
 
