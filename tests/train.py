@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import traceback
 import time
 from typing import Union, Dict, Any, Optional, Callable
 
@@ -32,6 +33,7 @@ compilation_cache.initialize_cache("compilation_cache")
 
 _CONTEXT = 0
 _RESHAPE = False
+_UPLOAD_RETRIES = 8
 
 _original_call = nn.Conv.__call__
 
@@ -176,6 +178,12 @@ def deep_replace(d, value):
     return value
 
 
+def load(path: str):
+    params = list(zip(*sorted([(int(i), v) for i, v in np.load(path + ".np").items()])))[1]
+    with smart_open.open(path + ".json", 'r') as f:
+        _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
+    return structure.unflatten(params)
+
 @app.command()
 def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-16,
          max_grad_norm: float = 1, downloaders: int = 2, resolution: int = 128, fps: int = 4, context: int = 8,
@@ -222,20 +230,11 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                             # optax.transform.add_decayed_weights(weight_decay, mask),  # TODO: mask normalization
                             )
 
-    if not overwrite and os.path.isfile("vae.np"):
-        vae_params = list(zip(*sorted(np.load("vae.np").items())))[1]
-        unet_params = list(zip(*sorted(np.load("unet.np").items())))[1]
-        t5_conv_params = list(zip(*sorted(np.load("conv.np").items())))[1]
-        with smart_open.open(base_path + "vae.json", 'r') as f:
-            _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
-        vae_params = structure.unflatten(vae_params)
-        with smart_open.open(base_path + "unet.json", 'r') as f:
-            _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
-        unet_params = structure.unflatten(unet_params)
-        with smart_open.open(base_path + "conv.json", 'r') as f:
-            _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
-        t5_conv_params = structure.unflatten(t5_conv_params)
-
+    if not overwrite:
+        vae_params = load(base_path + "vae")
+        unet_params = load(base_path + "unet") 
+        t5_conv_params = load(base_path + "conv")        
+ 
     vae_state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
     unet_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
     t5_conv_state = train_state.TrainState.create(apply_fn=t5_conv.__call__, params=t5_conv_params, tx=optimizer)
@@ -440,7 +439,7 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                 jax.profiler.start_trace("trace")
             if i == tracing_stop_step:
                 jax.profiler.stop_trace()
-            if i % save_interval == 0:
+            if i % save_interval == 0 and jax.process_index() == 0:
                 for n, s in (("vae", vae_state), ("unet", unet_state), ("conv", t5_conv_state)):
                     p = to_host(s.params)
                     flattened, jax_structure = jax.tree_util.tree_flatten(p)
@@ -450,8 +449,14 @@ def main(lr: float = 1e-4, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                     structure = structure.replace("', ", '", ').replace(", '", ', "')  # to valid JSON
                     with smart_open.open(base_path + n + '.json', 'w') as f:
                         f.write(structure)
-                    with smart_open.open(base_path + n + ".np", "wb") as f:
-                        np.savez(f, **dict(enumerate(flattened)))
+                    for _ in range(_UPLOAD_RETRIES):
+                        try:
+                            with smart_open.open(base_path + n + ".np", "wb") as f:
+                                np.savez(f, {str(i): v for i, v in enumerate(flattened)})
+                            break
+                        except:
+                            print("failed to write", n, "checkpoint")
+                            traceback.print_exc()
 
 
 if __name__ == "__main__":
