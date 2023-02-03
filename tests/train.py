@@ -53,11 +53,14 @@ def device_id():
 
 @jax.custom_gradient
 def communicate(x: jax.Array):
-    normalizer = jnp.arange(x.shape[0] * 2).reshape(-1, *(1,) * (x.ndim - 1)) + 1
 
     def _grad(dy: jax.Array):
+        normalizer1 = jnp.arange(x.shape[0] * 2).reshape(2, x.shape[0])
+        normalizer1 = normalizer1.transpose(1, 0)
+        normalizer1 = lax.broadcast_in_dim(normalizer1, (x.shape[0], 2, x.shape[-1]), (0, 1))
+        normalizer1 = normalizer1.reshape(x.shape[0], *(1,) * (dy.ndim - 2), -1)
         dy, dyc = jnp.split(dy, 2, -1)
-        dyc = lax.cumsum(dyc / normalizer, 0, reverse=True)
+        dyc = lax.cumsum(dyc / normalizer1, 0, reverse=True)
         dyc, dyc0 = jnp.split(dyc, 2, -1)
         dy, dy0 = jnp.split(dy, 2, -1)
         dy0 = dy0 + dyc0
@@ -65,10 +68,11 @@ def communicate(x: jax.Array):
         dy0 = lax.ppermute(dy0, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
         return dy + dy0 + dyc
 
+    normalizer0 = jnp.arange(x.shape[0] * 2).reshape(-1, *(1,) * (x.ndim - 1)) + 1
     x0 = lax.ppermute(x, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
     x0 = lax.select_n(device_id() == 0, x0, jnp.zeros_like(x))
     cat = jnp.concatenate([x, x0], 0)
-    cat = jnp.concatenate([cat, lax.cumsum(cat, 0) / normalizer], 0)
+    cat = jnp.concatenate([cat, lax.cumsum(cat, 0) / normalizer0], 0)
     cat = cat.reshape(4, *x.shape).transpose(*range(1, x.ndim), 0, x.ndim).reshape(*x.shape[:-1], -1)
     return cat, _grad
 
