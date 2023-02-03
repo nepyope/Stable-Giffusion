@@ -354,7 +354,7 @@ def main(lr: float = 1e-5, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             vae_outputs = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gauss0, "dropout": drop0},
                                     deterministic=False, method=vae.encode)
             vae_outputs = vae_outputs.latent_dist.sample(sample_rng)
-            latents = jnp.transpose(latents, (0, 3, 1, 2))
+            latents = jnp.transpose(vae_outputs, (0, 3, 1, 2))
             latents = lax.stop_gradient(latents * 0.18215)
 
             noise = jax.random.normal(noise_rng, latents.shape)
