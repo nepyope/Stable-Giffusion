@@ -353,7 +353,7 @@ def main(lr: float = 1e-5, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             inp = jnp.transpose(img, (0, 3, 1, 2))
             vae_outputs = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gauss0, "dropout": drop0},
                                     deterministic=False, method=vae.encode)
-            latents = vae_outputs.latent_dist.sample(sample_rng)
+            vae_outputs = vae_outputs.latent_dist.sample(sample_rng)
             latents = jnp.transpose(latents, (0, 3, 1, 2))
             latents = lax.stop_gradient(latents * 0.18215)
 
@@ -364,7 +364,7 @@ def main(lr: float = 1e-5, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             encoded = get_encoded(latents, t5_conv_params, batch["input_ids"], batch["attention_mask"])
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoded).sample
 
-            vae_pred = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gauss1, "dropout": drop1},
+            vae_pred = vae_apply({"params": vae_params}, vae_outputs, rngs={"gaussian": gauss1, "dropout": drop1},
                                  deterministic=False, method=vae.decode).sample
             vae_pred = jnp.transpose(vae_pred, (0, 2, 3, 1))
 
