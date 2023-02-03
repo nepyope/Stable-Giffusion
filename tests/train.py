@@ -409,7 +409,7 @@ def main(lr: float = 1e-5, beta1: float = 0.9, beta2: float = 0.99, weight_decay
             global_step += 1
             if global_step <= 2:
                 print(f"Step {global_step}", datetime.datetime.now())
-            i *= jax.process_count()
+            i *= jax.device_count()
             batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32),
                      "input_ids": input_ids.reshape(jax.local_device_count(), 8, -1),
@@ -432,12 +432,12 @@ def main(lr: float = 1e-5, beta1: float = 0.9, beta2: float = 0.99, weight_decay
                 vid_per_day = i / timediff * 24 * 3600
                 log = {"U-Net MSE/Total": float(unet_sq), "U-Net MAE/Total": float(unet_abs),
                        "VAE MSE/Total": float(vae_sq), "VAE MAE/Total": float(vae_abs),
-                       "Step": i + offset - jax.process_count(), "Epoch": epoch}
+                       "Step": i + offset - jax.device_count(), "Epoch": epoch}
                 if offset == jax.device_count() - 1:
                     log.update(extra)
                     log.update({"Runtime": timediff, "Speed/Videos per Day": vid_per_day,
-                                "Speed/Frames per Day": vid_per_day * context * jax.process_count()})
-                run.log(log, step=(global_step - 1) * jax.process_count() + offset)
+                                "Speed/Frames per Day": vid_per_day * context * jax.device_count()})
+                run.log(log, step=(global_step - 1) * jax.device_count() + offset)
             if i == tracing_start_step:
                 jax.profiler.start_trace("trace")
             if i == tracing_stop_step:
