@@ -69,7 +69,7 @@ def communicate(x: jax.Array):
     x0 = lax.select_n(device_id() == 0, x0, jnp.zeros_like(x))
     cat = jnp.concatenate([x, x0], 0)
     cat = jnp.concatenate([cat, lax.cumsum(cat, 0) / normalizer], 0)
-    cat = cat.reshape(4, *x.shape).transpose(*range(1, x.ndim - 1), 0, x.ndim - 1).reshape(*x.shape[:-1], -1)
+    cat = cat.reshape(4, *x.shape).transpose(*range(1, x.ndim), 0, x.ndim).reshape(*x.shape[:-1], -1)
     return cat, _grad
 
 
