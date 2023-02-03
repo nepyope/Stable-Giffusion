@@ -90,7 +90,7 @@ def patch_weights(weights: Dict[str, Any], do_patch: bool = False):
             new_weights[k] = list(zip(*sorted(patch_weights(dict(enumerate(v)), "conv" in k or do_patch).items())))[1]
         elif isinstance(v, jax.Array) and do_patch and k == "kernel":
             # KernelShape + (in_features,) + (out_features,)
-            new_weights[k] = jnp.concatenate([v, v * 1e-2, v * 1e-3, v * 1e-4], -2)
+            new_weights[k] = jnp.concatenate([v * 1e-2, v, v * 1e-3, v * 1e-4], -2)
         elif isinstance(v, jax.Array):
             new_weights[k] = v
         else:
