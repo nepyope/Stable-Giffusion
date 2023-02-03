@@ -162,7 +162,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: 
 
         g_norm = jax.tree_util.tree_map(lambda x: clip_norm(x, 1e-16), updates)
         p_norm = jax.tree_util.tree_map(lambda x: clip_norm(x, 1e-3), params)
-        updates = jax.tree_util.tree_map(lambda x, pn, gn: x * lax.min(pn / gn * clip, 1), updates, p_norm, g_norm)
+        updates = jax.tree_util.tree_map(lambda x, pn, gn: x * lax.min(pn / gn * clip, 1.), updates, p_norm, g_norm)
 
         nu = update_moment(updates, nu, b2, 2)
         count_inc = safe_int32_increment(state.count)
