@@ -410,6 +410,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     vae_state = jax_utils.replicate(vae_state)
     unet_state = jax_utils.replicate(unet_state)
     t5_conv_state = jax_utils.replicate(t5_conv_state)
+    pos_embd_state = jax_utils.replicate(pos_embd_state)
 
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context * jax.device_count(),
                       jax.local_device_count(), prefetch, parallel_videos, tokenizer, t5_tokens)
