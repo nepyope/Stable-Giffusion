@@ -1,8 +1,7 @@
 import datetime
 import json
-import os
-import traceback
 import time
+import traceback
 from typing import Union, Dict, Any, Optional, Callable
 
 import jax
@@ -145,17 +144,26 @@ def promote(inp: jax.Array) -> jax.Array:
     return jnp.asarray(inp, jnp.promote_types(jnp.float64, jnp.result_type(inp)))
 
 
-def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule) -> GradientTransformation:
+def clip_norm(val: jax.Array, min_norm: float) -> jax.Array:
+    return jnp.maximum(jnp.sqrt(lax.square(val).sum()), min_norm)
+
+
+def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: float = 1e-3) -> GradientTransformation:
     def init_fn(params):
         mu = jax.tree_map(jnp.zeros_like, params)  # First moment
         nu = jax.tree_map(jnp.zeros_like, params)  # Second moment
         return ScaleByAdamState(count=jnp.zeros([], jnp.int32), mu=mu, nu=nu)
 
     def update_fn(updates, state, params=None):
-        del params
         updates = jax.tree_map(promote, updates)
+        params = jax.tree_map(promote, params)
         nu = jax.tree_map(promote, state.nu)
         mu = jax.tree_map(promote, state.mu)
+
+        g_norm = jax.tree_util.tree_map(lambda x: clip_norm(x, 1e-16), updates)
+        p_norm = jax.tree_util.tree_map(lambda x: clip_norm(x, 1e-3), params)
+        updates = jax.tree_util.tree_map(lambda x, pn, gn: x * lax.min(pn / gn * clip, 1), updates, p_norm, g_norm)
+
         nu = update_moment(updates, nu, b2, 2)
         count_inc = safe_int32_increment(state.count)
         nu_hat = bias_correction(nu, b2, count_inc)
@@ -183,8 +191,9 @@ def load(path: str):
         _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
     return structure.unflatten(params)
 
+
 @app.command()
-def main(lr: float = 1e-5, beta1: float = 0.9, beta2: float = 0.99, weight_decay: float = 0.001, eps: float = 1e-16,
+def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float = 1e-16,
          max_grad_norm: float = 1, downloaders: int = 2, resolution: int = 128, fps: int = 4, context: int = 8,
          workers: int = 16, prefetch: int = 6, base_model: str = "flax/stable-diffusion-2-1",
          data_path: str = "./urls", sample_interval: int = 1024, parallel_videos: int = 128,
@@ -194,10 +203,10 @@ def main(lr: float = 1e-5, beta1: float = 0.9, beta2: float = 0.99, weight_decay
          warmup_steps: int = 4096,
          lr_halving_every_n_steps: int = 2 ** 17,
          t5_tokens: int = 2 ** 13,
-         save_interval: int = 1024,
+         save_interval: int = 2048,
          overwrite: bool = False,
          base_path: str = "gs://video-us/checkpoint/",
-         unet_init_steps: int = 2048, conv_init_steps: int = 1024):
+         unet_init_steps: int = 8192, conv_init_steps: int = 4096):
     global _CONTEXT, _RESHAPE
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
@@ -223,16 +232,13 @@ def main(lr: float = 1e-5, beta1: float = 0.9, beta2: float = 0.99, weight_decay
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
 
     lr_sched = optax.warmup_exponential_decay_schedule(0, lr, warmup_steps, lr_halving_every_n_steps, 0.5)
-    optimizer = optax.chain(optax.clip_by_global_norm(max_grad_norm),
-                            scale_by_laprop(beta1, beta2, eps, lr_sched),
-                            # optax.transform.add_decayed_weights(weight_decay, mask),  # TODO: mask normalization
-                            )
+    optimizer = scale_by_laprop(beta1, beta2, eps, lr_sched)
 
     if not overwrite:
         vae_params = load(base_path + "vae")
-        unet_params = load(base_path + "unet") 
-        t5_conv_params = load(base_path + "conv")        
- 
+        unet_params = load(base_path + "unet")
+        t5_conv_params = load(base_path + "conv")
+
     vae_state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
     unet_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
     t5_conv_state = train_state.TrainState.create(apply_fn=t5_conv.__call__, params=t5_conv_params, tx=optimizer)
@@ -342,7 +348,7 @@ def main(lr: float = 1e-5, beta1: float = 0.9, beta2: float = 0.99, weight_decay
 
         def compute_loss(params):
             unet_params, vae_params, t5_conv_params = params
-            gauss0, gauss1, drop0,  drop1, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 7)
+            gauss0, gauss1, drop0, drop1, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 7)
 
             img = batch["pixel_values"].astype(jnp.float32) / 255
             inp = jnp.transpose(img, (0, 3, 1, 2))
@@ -378,7 +384,8 @@ def main(lr: float = 1e-5, beta1: float = 0.9, beta2: float = 0.99, weight_decay
         new_unet_state = lax.switch((batch["idx"] > unet_init_steps).astype(jnp.int32),
                                     [lambda: unet_state, lambda: unet_state.apply_gradients(grads=unet_grad)])
         new_t5_conv_state = lax.switch((batch["idx"] > conv_init_steps).astype(jnp.int32),
-                                       [lambda: t5_conv_state, lambda: t5_conv_state.apply_gradients(grads=t5_conv_grad)])
+                                       [lambda: t5_conv_state,
+                                        lambda: t5_conv_state.apply_gradients(grads=t5_conv_grad)])
         return (new_unet_state, new_vae_state, new_t5_conv_state), lax.pmean(scalars, "batch")
 
     def train_loop(unet_state: train_state.TrainState, vae_state: train_state.TrainState,
