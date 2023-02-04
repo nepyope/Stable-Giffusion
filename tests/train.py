@@ -413,6 +413,8 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, timesteps)
 
             encoded = get_encoded(t5_conv_params, batch["input_ids"], batch["attention_mask"], external_params)
+            encoded = lax.broadcast_in_dim(encoded, (unet_batch, *encoded.shape), tuple(range(1, encoded.ndim + 1)))
+            encoded = encoded.reshape(-1, encoded.shape[2:])
             unet_pred = unet_fn(latents, noisy_latents, external_params, encoded, unet_params, False)
 
             # TODO: use perceptual loss
