@@ -288,9 +288,9 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         return encoded.reshape(local_batch * context, encoded.shape[2], -1) + external_state["embd"].reshape(1, -1,
                                                                                                              1024)
 
-    def merge(latent, noise, params, shift):
+    def merge(latent, noise, params, do_shift):
         shape = noise.shape
-        if shift:
+        if do_shift:
             first = shift(latent[-1], 1)
             first = lax.select_n(device_id() == 0, first, jnp.zeros_like(first))
             latent = jnp.concatenate([first.reshape(1, *first.shape), latent[:-1]], 0)
@@ -304,8 +304,8 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         out = jnp.maximum(linear0 * params["scale"], 0) @ params["merge1"]
         return out.reshape(shape)
 
-    def unet_fn(latent, noise, params, encoded, unet_params, shift: bool = True):
-        return unet.apply({"params": unet_params}, merge(latent, noise, params, shift), i, encoded).sample
+    def unet_fn(latent, noise, params, encoded, unet_params, do_shift: bool = True):
+        return unet.apply({"params": unet_params}, merge(latent, noise, params, do_shift), i, encoded).sample
 
     def vae_apply(*args, method=vae.__call__, **kwargs):
         global _RESHAPE
