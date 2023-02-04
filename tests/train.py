@@ -248,13 +248,13 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     lr_sched = optax.warmup_exponential_decay_schedule(0, lr, warmup_steps, lr_halving_every_n_steps, 0.5)
     optimizer = scale_by_laprop(beta1, beta2, eps, lr_sched)
     pos_embd = jax.random.normal(jax.random.PRNGKey(0), (t5_tokens // 64, 1024))
-    latent_merge00 = jax.random.normal(jax.random.PRNGKey(0), (1024, 2048))
-    latent_merge01 = jax.random.normal(jax.random.PRNGKey(0), (1024, 2048))
-    latent_merge_scale = jnp.ones((2048,))
-    latent_merge1 = jax.random.normal(jax.random.PRNGKey(0), (2048, 1024))
+    latent_merge00 = jax.random.normal(jax.random.PRNGKey(0), (1024, 2048)) * pos_embd_scale
+    latent_merge01 = jax.random.normal(jax.random.PRNGKey(0), (1024, 2048)) * pos_embd_scale
+    latent_merge01 = latent_merge01 + jnp.concatenate([jnp.eye((1024, 1024)), -jnp.eye((1024, 1024))], 1)
+    latent_merge1 = jax.random.normal(jax.random.PRNGKey(0), (2048, 1024)) * pos_embd_scale
+    latent_merge1 = latent_merge1 + jnp.concatenate([jnp.eye((1024, 1024)), -jnp.eye((1024, 1024))], 0)
     pos_embd = pos_embd * pos_embd_scale
-    external = {"embd": pos_embd, "merge00": latent_merge00, "merge01": latent_merge01, "scale": latent_merge_scale,
-                "merge1": latent_merge1}
+    external = {"embd": pos_embd, "merge00": latent_merge00, "merge01": latent_merge01, "merge1": latent_merge1}
 
     if unet_mode:
         vae_params = load(base_path + "vae", vae_params)
@@ -299,9 +299,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         if latent.shape[0] != noise.shape[0]:
             latent = lax.broadcast_in_dim(latent, (noise.shape[0] // latent.shape[0], *latent.shape), (1, 2))
             latent = latent.reshape(-1, latent.shape[-1])
-        linear0 = noise + latent
-        linear0 /= jnp.maximum(jnp.linalg.norm(linear0, axis=-1, keepdims=True), 1e-10)
-        out = jnp.maximum(linear0 * params["scale"], 0) @ params["merge1"]
+        out = jnp.maximum(noise + latent, 0) @ params["merge1"]
         return out.reshape(shape)
 
     def unet_fn(latent, noise, params, encoded, unet_params, do_shift: bool = True):
