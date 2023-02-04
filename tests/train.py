@@ -185,7 +185,7 @@ def deep_replace(d, value):
     return value
 
 
-def load(path: str):
+def load(path: str, prototype: Dict[str, jax.Array]):
     try:
         with smart_open.open(path + ".np", 'rb') as f:
             params = list(zip(*sorted([(int(i), v) for i, v in np.load(f).items()])))[1]
@@ -193,11 +193,8 @@ def load(path: str):
         with smart_open.open(path + ".np", 'rb') as f:
             params = list(zip(*sorted([(int(i), v) for i, v in np.load(f, allow_pickle=True)["arr_0"].item().items()])))[1]
 
-    with smart_open.open(path + ".json", 'r') as f:
-        txt = f.read()
-    print(txt)
-    _, structure = jax.tree_util.tree_flatten(deep_replace(json.loads(txt), jnp.zeros((1,))))
-    return structure.unflatten(params)
+    _, tree = jax.tree_util.tree_flatten(prototype)
+    return tree.unflatten(params)
 
 
 @app.command()
@@ -247,10 +244,10 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     pos_embd = {"embd": pos_embd}
 
     if not overwrite:
-        vae_params = load(base_path + "vae")
-        unet_params = load(base_path + "unet")
-        t5_conv_params = load(base_path + "conv")
-        pos_embd = load(base_path + "embd")
+        vae_params = load(base_path + "vae", vae_params)
+        unet_params = load(base_path + "unet", unet_params)
+        t5_conv_params = load(base_path + "conv", t5_conv_params)
+        pos_embd = load(base_path + "embd", pos_embd)
 
     vae_state = TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
     unet_state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
@@ -470,12 +467,6 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 for n, s in (("vae", vae_state), ("unet", unet_state), ("conv", t5_conv_state), ("embd", pos_embd_state)):
                     p = to_host(s.params)
                     flattened, jax_structure = jax.tree_util.tree_flatten(p)
-                    structure = str(jax_structure)  # like "PyTreeDef({'2': {'a': *}})"
-                    structure = structure.replace('PyTreeDef', '')[1:-1]  # clean up "types"
-                    structure = structure.replace(': *', ': null').replace("{'", '{"').replace("':", '":')
-                    structure = structure.replace("', ", '", ').replace(", '", ', "')  # to valid JSON
-                    with smart_open.open(base_path + n + '.json', 'w') as f:
-                        f.write(structure)
                     for _ in range(_UPLOAD_RETRIES):
                         try:
                             with smart_open.open(base_path + n + ".np", "wb") as f:
