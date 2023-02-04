@@ -349,8 +349,8 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         unc_tok = lax.select_n(device_id() == 0, jnp.zeros((tokens,)),
                                jnp.concatenate([jnp.ones((1,)), jnp.zeros((tokens - 1,))]))
         unc_tok = unc_tok.reshape(batch["input_ids"].shape)
-        vid_no_text = get_encoded(t5_conv_state, unc_tok, unc_tok, external_params)
-        vid_text = get_encoded(t5_conv_state, batch["input_ids"], batch["attention_mask"], external_params)
+        vid_no_text = get_encoded(t5_conv_params, unc_tok, unc_tok, external_params)
+        vid_text = get_encoded(t5_conv_params, batch["input_ids"], batch["attention_mask"], external_params)
         encoded = jnp.concatenate([vid_no_text, vid_text])
 
         def _step(state, i):
