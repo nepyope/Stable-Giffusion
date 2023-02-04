@@ -211,9 +211,12 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
          pos_embd_scale: float = 1e-3,
          save_interval: int = 2048,
          overwrite: bool = False,
+         unet_mode: bool = True,
          base_path: str = "gs://video-us/checkpoint/",
-         unet_init_steps: int = 16384, conv_init_steps: int = 8192):
+         unet_init_steps: int = 1024, conv_init_steps: int = 0):
     global _CONTEXT, _RESHAPE
+    unet_init_steps -= conv_init_steps * unet_mode
+    conv_init_steps *= 1 - unet_mode
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
@@ -242,6 +245,9 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     pos_embd = jax.random.normal(jax.random.PRNGKey(0), (t5_tokens // 16 + context * jax.device_count(), 1024))
     pos_embd = pos_embd * pos_embd_scale
     pos_embd = {"embd": pos_embd}
+
+    if unet_mode:
+        vae_params = load(base_path + "vae", vae_params)
 
     if not overwrite:
         vae_params = load(base_path + "vae", vae_params)
@@ -356,18 +362,28 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         dist_abs = lax.abs(dist).mean()
         return dist_sq, dist_abs
 
-    def train_step(all_states: Tuple[TrainState, TrainState, TrainState, TrainState],
+    def train_step(all_states: Union[Tuple[TrainState, TrainState, TrainState], Tuple[TrainState, TrainState, TrainState, TrainState]],
                    batch: Dict[str, jax.Array]):
-        unet_state, vae_state, t5_conv_state, pos_embd_state = all_states
+        if unet_mode:
+            unet_state, t5_conv_state, pos_embd_state = all_states
+        else:
+            unet_state, vae_state, t5_conv_state, pos_embd_state = all_states
 
         def compute_loss(params):
-            unet_params, vae_params, t5_conv_params, pos_embd_params = params
+            if unet_mode:
+                vae_params = vae_state.params
+                unet_params, t5_conv_params, pos_embd_params = params
+            else:
+                unet_params, vae_params, t5_conv_params, pos_embd_params = params
             gauss0, gauss1, drop0, drop1, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 7)
 
             img = batch["pixel_values"].astype(jnp.float32) / 255
             inp = jnp.transpose(img, (0, 3, 1, 2))
-            vae_outputs = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gauss0, "dropout": drop0},
-                                    deterministic=False, method=vae.encode)
+            if unet_mode:
+                vae_outputs = vae_apply({"params": vae_params}, inp, deterministic=True, method=vae.encode)
+            else:
+                vae_outputs = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gauss0, "dropout": drop0},
+                                        deterministic=False, method=vae.encode)
             vae_outputs = vae_outputs.latent_dist.sample(sample_rng)
             latents = jnp.transpose(vae_outputs, (0, 3, 1, 2))
             latents = lax.stop_gradient(latents * 0.18215)
@@ -379,36 +395,45 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             encoded = get_encoded(latents, t5_conv_params, batch["input_ids"], batch["attention_mask"], pos_embd_params)
             unet_pred = unet.apply({"params": unet_params}, noisy_latents, timesteps, encoded).sample
 
-            vae_pred = vae_apply({"params": vae_params}, vae_outputs, rngs={"gaussian": gauss1, "dropout": drop1},
-                                 deterministic=False, method=vae.decode).sample
-            vae_pred = jnp.transpose(vae_pred, (0, 2, 3, 1))
-
             # TODO: use perceptual loss
             unet_dist_sq, unet_dist_abs = distance(unet_pred, noise)
-            vae_dist_sq, vae_dist_abs = distance(vae_pred, img)
+
+            if unet_mode:
+                vae_dist_sq = vae_dist_abs = jnp.zeros(())
+            else:
+                vae_pred = vae_apply({"params": vae_params}, vae_outputs, rngs={"gaussian": gauss1, "dropout": drop1},
+                                     deterministic=False, method=vae.decode).sample
+                vae_pred = jnp.transpose(vae_pred, (0, 2, 3, 1))
+                vae_dist_sq, vae_dist_abs = distance(vae_pred, img)
+
             return unet_dist_sq.mean() + vae_dist_sq.mean(), (unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs)
 
         grad_fn = jax.value_and_grad(compute_loss, has_aux=True)
-        (loss, scalars), (unet_grad, vae_grad, t5_conv_grad, pos_embd_grad) = grad_fn(
-            (unet_state.params, vae_state.params, t5_conv_state.params, pos_embd_state.params))
-        unet_grad, vae_grad, t5_conv_grad, pos_embd_grad = lax.pmean((unet_grad, vae_grad, t5_conv_grad, pos_embd_grad),
-                                                                     "batch")
-        new_vae_state = vae_state.apply_gradients(grads=vae_grad)
+
+        if unet_mode:
+            inp = (unet_state.params, t5_conv_state.params, pos_embd_state.params)
+        else:
+            inp = (unet_state.params, vae_state.params, t5_conv_state.params, pos_embd_state.params)
+        (loss, scalars), grads = grad_fn(inp)
+        scalars = lax.pmean(scalars, "batch")
+        grads = lax.pmean(grads, "batch")
+        if not unet_mode:
+            new_vae_state = vae_state.apply_gradients(grads=grads[1])
         new_unet_state = lax.switch((batch["idx"] > unet_init_steps).astype(jnp.int32),
-                                    [lambda: unet_state, lambda: unet_state.apply_gradients(grads=unet_grad)])
+                                    [lambda: unet_state, lambda: unet_state.apply_gradients(grads=grads[0])])
         new_t5_conv_state = lax.switch((batch["idx"] > conv_init_steps).astype(jnp.int32),
                                        [lambda: t5_conv_state,
-                                        lambda: t5_conv_state.apply_gradients(grads=t5_conv_grad)])
-        pos_embd_grad["embd"] = pos_embd_grad["embd"] * 0.1  # embedding gradient shrink from GLM
+                                        lambda: t5_conv_state.apply_gradients(grads=grads[-2])])
+        grads[-1]["embd"] = grads[-1]["embd"] * 0.1  # embedding gradient shrink from GLM
         new_pos_embd_state = lax.switch((batch["idx"] > conv_init_steps).astype(jnp.int32),
                                        [lambda: pos_embd_state,
-                                        lambda: pos_embd_state.apply_gradients(grads=pos_embd_grad)])
-        return (new_unet_state, new_vae_state, new_t5_conv_state, new_pos_embd_state), lax.pmean(scalars, "batch")
+                                        lambda: pos_embd_state.apply_gradients(grads=grads[-1])])
+        if unet_mode:
+            return (new_unet_state, new_t5_conv_state, new_pos_embd_state), scalars
+        return (new_unet_state, new_vae_state, new_t5_conv_state, new_pos_embd_state), scalars
 
-    def train_loop(unet_state: TrainState, vae_state: TrainState,
-                   t5_conv_state: TrainState, pos_embd_state: TrainState,
-                   batch: Dict[str, Union[np.ndarray, int]]):
-        return lax.scan(train_step, (unet_state, vae_state, t5_conv_state, pos_embd_state), all_to_all_batch(batch))
+    def train_loop(states, batch: Dict[str, Union[np.ndarray, int]]):
+        return lax.scan(train_step, states, all_to_all_batch(batch))
 
     p_train_step = jax.pmap(train_loop, "batch", donate_argnums=(0, 1))
 
@@ -447,7 +472,11 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 extra[f"Samples/Reconstruction (U-Net, Full Guidance) {pid}"] = to_img(s_vt)
                 extra[f"Samples/Ground Truth {pid}"] = to_img(batch["pixel_values"].astype(jnp.float32) / 255)
 
-            (unet_state, vae_state, t5_conv_state, pos_embd_state), scalars = p_train_step(unet_state, vae_state, t5_conv_state, pos_embd_state, batch)
+            if unet_mode:
+                (unet_state, t5_conv_state, pos_embd_state), scalars = p_train_step((unet_state, t5_conv_state, pos_embd_state), batch)
+            else:
+                (unet_state, vae_state, t5_conv_state, pos_embd_state), scalars = p_train_step((unet_state, vae_state, t5_conv_state, pos_embd_state), batch)
+
             timediff = time.time() - start_time
             for offset, (unet_sq, unet_abs, vae_sq, vae_abs) in enumerate(zip(*to_host(scalars))):
                 vid_per_day = i / timediff * 24 * 3600
