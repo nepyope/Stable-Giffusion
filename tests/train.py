@@ -186,7 +186,8 @@ def deep_replace(d, value):
 
 
 def load(path: str):
-    params = list(zip(*sorted([(int(i), v) for i, v in np.load(path + ".np").items()])))[1]
+    with smart_open.open(path + ".np", 'rb') as f:
+        params = list(zip(*sorted([(int(i), v) for i, v in np.load(f).items()])))[1]
     with smart_open.open(path + ".json", 'r') as f:
         _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
     return structure.unflatten(params)
