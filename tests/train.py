@@ -202,7 +202,7 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 
 
 @app.command()
-def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float = 1e-16,
+def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float = 1e-16,
          downloaders: int = 2, resolution: int = 128, fps: int = 4, context: int = 8,
          workers: int = 16, prefetch: int = 6, base_model: str = "flax/stable-diffusion-2-1",
          data_path: str = "./urls", sample_interval: int = 1024, parallel_videos: int = 128,
@@ -245,8 +245,6 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
 
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
 
-    lr_sched = optax.warmup_exponential_decay_schedule(0, lr, warmup_steps, lr_halving_every_n_steps, 0.5)
-    optimizer = scale_by_laprop(beta1, beta2, eps, lr_sched)
     pos_embd = jax.random.normal(jax.random.PRNGKey(0), (t5_tokens // 64, 1024))
     latent_merge00 = jax.random.normal(jax.random.PRNGKey(0), (1024, 2048)) * pos_embd_scale
     latent_merge01 = jax.random.normal(jax.random.PRNGKey(0), (1024, 2048)) * pos_embd_scale
@@ -265,10 +263,15 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         t5_conv_params = load(base_path + "conv", t5_conv_params)
         external = load(base_path + "embd", external)
 
+    lr_sched = optax.warmup_exponential_decay_schedule(0, lr, warmup_steps, lr_halving_every_n_steps, 0.5)
+    optimizer = scale_by_laprop(beta1, beta2, eps, lr_sched)
+    unet_lr_sched = optax.warmup_exponential_decay_schedule(0, lr * unet_batch, warmup_steps, lr_halving_every_n_steps,
+                                                            0.5)
+    unet_optimizer = scale_by_laprop(beta1, beta2, eps, unet_lr_sched)
     vae_state = TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
-    unet_state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
-    t5_conv_state = TrainState.create(apply_fn=t5_conv.__call__, params=t5_conv_params, tx=optimizer)
-    external_state = TrainState.create(apply_fn=lambda: None, params=external, tx=optimizer)
+    t5_conv_state = TrainState.create(apply_fn=t5_conv.__call__, params=t5_conv_params, tx=unet_optimizer)
+    external_state = TrainState.create(apply_fn=lambda: None, params=external, tx=unet_optimizer)
+    unet_state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=unet_optimizer)
 
     noise_scheduler = FlaxPNDMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear",
                                         num_train_timesteps=schedule_length)
