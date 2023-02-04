@@ -253,7 +253,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     latent_merge_scale = jnp.ones((2048,))
     latent_merge1 = jax.random.normal(jax.random.PRNGKey(0), (2048, 1024))
     pos_embd = pos_embd * pos_embd_scale
-    external = {"embd": pos_embd, "merge00": latent_merge00,"merge01": latent_merge01, "scale": latent_merge_scale,
+    external = {"embd": pos_embd, "merge00": latent_merge00, "merge01": latent_merge01, "scale": latent_merge_scale,
                 "merge1": latent_merge1}
 
     if unet_mode:
@@ -376,8 +376,9 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                    batch: Dict[str, jax.Array]):
         if unet_mode:
             unet_state, t5_conv_state, external_state = all_states
+            v_state = vae_state
         else:
-            unet_state, vae_state, t5_conv_state, external_state = all_states
+            unet_state, v_state, t5_conv_state, external_state = all_states
 
         def compute_loss(params):
             if unet_mode:
@@ -424,12 +425,12 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         if unet_mode:
             inp = (unet_state.params, t5_conv_state.params, external_state.params)
         else:
-            inp = (unet_state.params, vae_state.params, t5_conv_state.params, external_state.params)
+            inp = (unet_state.params, v_state.params, t5_conv_state.params, external_state.params)
         (loss, scalars), grads = grad_fn(inp)
         scalars = lax.pmean(scalars, "batch")
         grads = lax.pmean(grads, "batch")
         if not unet_mode:
-            new_vae_state = vae_state.apply_gradients(grads=grads[1])
+            new_vae_state = v_state.apply_gradients(grads=grads[1])
         new_unet_state = lax.switch((batch["idx"] > unet_init_steps).astype(jnp.int32),
                                     [lambda: unet_state, lambda: unet_state.apply_gradients(grads=grads[0])])
         new_t5_conv_state = lax.switch((batch["idx"] > conv_init_steps).astype(jnp.int32),
