@@ -195,7 +195,7 @@ def load(path: str, prototype: Dict[str, jax.Array]):
     except:
         with smart_open.open(path + ".np", 'rb') as f:
             params = \
-            list(zip(*sorted([(int(i), v) for i, v in np.load(f, allow_pickle=True)["arr_0"].item().items()])))[1]
+                list(zip(*sorted([(int(i), v) for i, v in np.load(f, allow_pickle=True)["arr_0"].item().items()])))[1]
 
     _, tree = jax.tree_util.tree_flatten(prototype)
     return tree.unflatten(params)
@@ -250,9 +250,9 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     pos_embd = jax.random.normal(jax.random.PRNGKey(0), (t5_tokens // 64, 1024))
     latent_merge00 = jax.random.normal(jax.random.PRNGKey(0), (1024, 2048)) * pos_embd_scale
     latent_merge01 = jax.random.normal(jax.random.PRNGKey(0), (1024, 2048)) * pos_embd_scale
-    latent_merge01 = latent_merge01 + jnp.concatenate([jnp.eye((1024, 1024)), -jnp.eye((1024, 1024))], 1)
+    latent_merge01 = latent_merge01 + jnp.concatenate([jnp.eye(1024), -jnp.eye(1024)], 1)
     latent_merge1 = jax.random.normal(jax.random.PRNGKey(0), (2048, 1024)) * pos_embd_scale
-    latent_merge1 = latent_merge1 + jnp.concatenate([jnp.eye((1024, 1024)), -jnp.eye((1024, 1024))], 0)
+    latent_merge1 = latent_merge1 + jnp.concatenate([jnp.eye(1024), -jnp.eye(1024)], 0)
     pos_embd = pos_embd * pos_embd_scale
     external = {"embd": pos_embd, "merge00": latent_merge00, "merge01": latent_merge01, "merge1": latent_merge1}
 
@@ -518,7 +518,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 jax.profiler.stop_trace()
             if i % save_interval == 0 and jax.process_index() == 0:
                 for n, s in (
-                ("vae", vae_state), ("unet", unet_state), ("conv", t5_conv_state), ("embd", external_state)):
+                        ("vae", vae_state), ("unet", unet_state), ("conv", t5_conv_state), ("embd", external_state)):
                     p = to_host(s.params)
                     flattened, jax_structure = jax.tree_util.tree_flatten(p)
                     for _ in range(_UPLOAD_RETRIES):
