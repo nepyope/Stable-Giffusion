@@ -292,7 +292,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         shape = noise.shape
         first = shift(latent[-1], 1)
         first = lax.select_n(device_id() == 0, first, jnp.zeros_like(first))
-        latent = jnp.concatenate([first, latent[:-1]], 0)
+        latent = jnp.concatenate([first.reshape(1, *first.shape), latent[:-1]], 0)
         latent = latent.reshape(latent.shape[0], -1) @ params["merge00"]
         noise = noise.reshape(noise.shape[0], -1) @ params["merge01"]
         if latent.shape[0] != noise.shape[0]:
