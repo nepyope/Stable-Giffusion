@@ -342,7 +342,6 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
         posterior = vae_apply({"params": vae_params}, inp, method=vae.encode)
 
-        hidden_rng = posterior.latent_dist.sample(sample_rng)
         hidden_mode = posterior.latent_dist.mode()
         latents = jnp.transpose(hidden_mode, (0, 3, 1, 2)) * 0.18215
         tokens = batch["input_ids"].size
@@ -365,8 +364,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         state = noise_scheduler.set_timesteps(sched_state, schedule_length, latents.shape)
         (out, _), _ = lax.scan(_step, (latents, state), jnp.arange(schedule_length)[::-1])
         out = jnp.transpose(out, (0, 2, 3, 1)) / 0.18215
-        vnt, nvt, vt = jnp.split(out, 3)
-        return jnp.concatenate([sample_vae(vae_params, x) for x in (hidden_rng, hidden_mode, vnt, nvt, vt)])
+        return jnp.concatenate([sample_vae(vae_params, x) for x in (hidden_mode, out)])
 
     p_sample = jax.pmap(sample, "batch")
 
@@ -486,11 +484,8 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 else:
                     params = unet_state.params, vae_state.params, t5_conv_state.params, external_state.params
                 sample_out = p_sample(params, batch)
-                s_rng, s_mode, s_vnt, s_nvt, s_vt = np.split(to_host(sample_out, lambda x: x), 5, 1)
-                extra[f"Samples/Reconstruction (RNG) {pid}"] = to_img(s_rng)
+                s_mode, s_vt = np.split(to_host(sample_out, lambda x: x), 2, 1)
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
-                extra[f"Samples/Reconstruction (U-Net, Video Guided) {pid}"] = to_img(s_vnt)
-                extra[f"Samples/Reconstruction (U-Net, Text Guided) {pid}"] = to_img(s_nvt)
                 extra[f"Samples/Reconstruction (U-Net, Full Guidance) {pid}"] = to_img(s_vt)
                 extra[f"Samples/Ground Truth {pid}"] = to_img(batch["pixel_values"].astype(jnp.float32) / 255)
 
