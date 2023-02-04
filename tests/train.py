@@ -194,7 +194,9 @@ def load(path: str):
             params = list(zip(*sorted([(int(i), v) for i, v in np.load(f, allow_pickle=True)["arr_0"].item().items()])))[1]
 
     with smart_open.open(path + ".json", 'r') as f:
-        _, structure = jax.tree_util.tree_flatten(deep_replace(json.load(f), jnp.zeros((1,))))
+        txt = f.read()
+    print(txt)
+    _, structure = jax.tree_util.tree_flatten(deep_replace(json.loads(txt), jnp.zeros((1,))))
     return structure.unflatten(params)
 
 
