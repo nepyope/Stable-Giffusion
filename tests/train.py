@@ -300,7 +300,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             latent = latent.reshape(-1, latent.shape[-1])
         linear0 = noise + latent
         linear0 /= jnp.maximum(jnp.linalg.norm(linear0, axis=-1, keepdims=True), 1e-10)
-        out = jax.nn.relu(linear0 * params["scale"], 0) @ params["merge1"]
+        out = jnp.maximum(linear0 * params["scale"], 0) @ params["merge1"]
         return out.reshape(shape)
 
     def unet_fn(latent, noise, params, encoded, unet_params):
