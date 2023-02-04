@@ -409,7 +409,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             timesteps = jax.random.randint(step_rng, (latents.shape[0],), 0, noise_scheduler.config.num_train_timesteps)
             noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, timesteps)
 
-            encoded = get_encoded(latents, t5_conv_params, batch["input_ids"], batch["attention_mask"], external_params)
+            encoded = get_encoded(t5_conv_params, batch["input_ids"], batch["attention_mask"], external_params)
             unet_pred = unet_fn(latents, noisy_latents, external_params, encoded, unet_params)
 
             # TODO: use perceptual loss
