@@ -251,7 +251,10 @@ class DataLoader:
                     if out == _DONE:
                         done += 1
                         continue
-                    samples.append((list(from_share(out[0])), out[1]))
+                    try:
+                        samples.append((list(from_share(out[0])), out[1]))
+                    except:
+                        print("failed to load share")
                 else:
                     np_batch = []
                     subtitles = []
