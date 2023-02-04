@@ -218,7 +218,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
          unet_mode: bool = True,
          base_path: str = "gs://video-us/checkpoint/",
          unet_init_steps: int = 1024, conv_init_steps: int = 0,
-         unet_batch: int = 1):
+         unet_batch: int = 8):
     global _CONTEXT, _RESHAPE
     unet_init_steps -= conv_init_steps * unet_mode
     conv_init_steps *= 1 - unet_mode
@@ -288,11 +288,12 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         return encoded.reshape(local_batch * context, encoded.shape[2], -1) + external_state["embd"].reshape(1, -1,
                                                                                                              1024)
 
-    def merge(latent, noise, params):
+    def merge(latent, noise, params, shift):
         shape = noise.shape
-        first = shift(latent[-1], 1)
-        first = lax.select_n(device_id() == 0, first, jnp.zeros_like(first))
-        latent = jnp.concatenate([first.reshape(1, *first.shape), latent[:-1]], 0)
+        if shift:
+            first = shift(latent[-1], 1)
+            first = lax.select_n(device_id() == 0, first, jnp.zeros_like(first))
+            latent = jnp.concatenate([first.reshape(1, *first.shape), latent[:-1]], 0)
         latent = latent.reshape(latent.shape[0], -1) @ params["merge00"]
         noise = noise.reshape(noise.shape[0], -1) @ params["merge01"]
         if latent.shape[0] != noise.shape[0]:
@@ -303,8 +304,8 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         out = jnp.maximum(linear0 * params["scale"], 0) @ params["merge1"]
         return out.reshape(shape)
 
-    def unet_fn(latent, noise, params, encoded, unet_params):
-        return unet.apply({"params": unet_params}, merge(latent, noise, params), i, encoded).sample
+    def unet_fn(latent, noise, params, encoded, unet_params, shift: bool = True):
+        return unet.apply({"params": unet_params}, merge(latent, noise, params, shift), i, encoded).sample
 
     def vae_apply(*args, method=vae.__call__, **kwargs):
         global _RESHAPE
@@ -400,6 +401,10 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                                         deterministic=False, method=vae.encode)
             vae_outputs = jnp.concatenate([vae_outputs.latent_dist.sample(r)
                                            for r in jax.random.split(sample_rng, unet_batch)], 0)
+            if unet_batch > 1:
+                vae_outputs = vae_outputs.reshape(unet_batch, -1, *vae_outputs.shape[1:])
+                shifted = shift(vae_outputs[:, -1], 1).reshape(unet_batch, 1, *vae_outputs.shape[2:])
+                vae_outputs = jnp.concatenate([shifted, vae_outputs[:, :-1]], 1).reshape(-1, *vae_outputs.shape[2:])
             latents = jnp.transpose(vae_outputs, (0, 3, 1, 2))
             latents = lax.stop_gradient(latents * 0.18215)
 
@@ -408,7 +413,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, timesteps)
 
             encoded = get_encoded(t5_conv_params, batch["input_ids"], batch["attention_mask"], external_params)
-            unet_pred = unet_fn(latents, noisy_latents, external_params, encoded, unet_params)
+            unet_pred = unet_fn(latents, noisy_latents, external_params, encoded, unet_params, False)
 
             # TODO: use perceptual loss
             unet_dist_sq, unet_dist_abs = distance(unet_pred, noise)
