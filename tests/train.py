@@ -215,7 +215,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
          pos_embd_scale: float = 1e-3,
          save_interval: int = 2048,
          overwrite: bool = True,
-         unet_mode: bool = True,
+         unet_mode: bool = False,
          base_path: str = "gs://video-us/checkpoint/",
          unet_init_steps: int = 1024, conv_init_steps: int = 0,
          unet_batch: int = 8):
@@ -517,8 +517,8 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             if i == tracing_stop_step:
                 jax.profiler.stop_trace()
             if i % save_interval == 0 and jax.process_index() == 0:
-                for n, s in (
-                        ("vae", vae_state), ("unet", unet_state), ("conv", t5_conv_state), ("embd", external_state)):
+                states = ("unet", unet_state), ("conv", t5_conv_state), ("embd", external_state)
+                for n, s in [("vae", vae_state)] * (not unet_mode) + list(states):
                     p = to_host(s.params)
                     flattened, jax_structure = jax.tree_util.tree_flatten(p)
                     for _ in range(_UPLOAD_RETRIES):
