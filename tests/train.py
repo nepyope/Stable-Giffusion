@@ -421,7 +421,8 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             if unet_mode:
                 vae_dist_sq = vae_dist_abs = jnp.zeros(())
             else:
-                vae_pred = vae_apply({"params": vae_params}, vae_outputs, rngs={"gaussian": gauss1, "dropout": drop1},
+                vae_pred = vae_apply({"params": vae_params}, vae_outputs[:context],
+                                     rngs={"gaussian": gauss1, "dropout": drop1},
                                      deterministic=False, method=vae.decode).sample
                 vae_pred = jnp.transpose(vae_pred, (0, 2, 3, 1))
                 vae_dist_sq, vae_dist_abs = distance(vae_pred, img)
