@@ -472,7 +472,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                     for _ in range(_UPLOAD_RETRIES):
                         try:
                             with smart_open.open(base_path + n + ".np", "wb") as f:
-                                np.savez(f, {str(i): v for i, v in enumerate(flattened)})
+                                np.savez(f, **{str(i): v for i, v in enumerate(flattened)})
                             break
                         except:
                             print("failed to write", n, "checkpoint")
