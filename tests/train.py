@@ -328,8 +328,13 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     def rng(idx: jax.Array):
         return jax.random.PRNGKey(idx * jax.device_count() + device_id())
 
-    def sample(unet_params: Dict[str, jax.Array], vae_params: Dict[str, jax.Array], t5_conv_state: Dict[str, jax.Array],
-               external_params: Dict[str, jax.Array], batch: Dict[str, Union[np.ndarray, int]]):
+    def sample(params, batch: Dict[str, Union[np.ndarray, int]]):
+        if unet_mode:
+            vae_params = vae_state.params
+            unet_params, t5_conv_params, external_params = params
+        else:
+            unet_params, vae_params, t5_conv_params, external_params = params
+
         batch = all_to_all_batch(batch)
         batch = jax.tree_map(lambda x: x[0], batch)
         latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 4)
@@ -476,8 +481,11 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
             if i % sample_interval == 0:
-                sample_out = p_sample(unet_state.params, vae_state.params, t5_conv_state.params, external_state.params,
-                                      batch)
+                if unet_mode:
+                    params = unet_state.params, t5_conv_state.params, external_state.params
+                else:
+                    params = unet_state.params, vae_state.params, t5_conv_state.params, external_state.params
+                sample_out = p_sample(params, batch)
                 s_rng, s_mode, s_vnt, s_nvt, s_vt = np.split(to_host(sample_out, lambda x: x), 5, 1)
                 extra[f"Samples/Reconstruction (RNG) {pid}"] = to_img(s_rng)
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
