@@ -350,9 +350,10 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         unc_tok = lax.select_n(device_id() == 0, jnp.zeros((tokens,)),
                                jnp.concatenate([jnp.ones((1,)), jnp.zeros((tokens - 1,))]))
         unc_tok = unc_tok.reshape(batch["input_ids"].shape)
-        vid_no_text = get_encoded(t5_conv_params, unc_tok, unc_tok, external_params)
-        vid_text = get_encoded(t5_conv_params, batch["input_ids"], batch["attention_mask"], external_params)
-        encoded = jnp.concatenate([vid_no_text, vid_text])
+        no_text = get_encoded(t5_conv_params, unc_tok, unc_tok, external_params)
+        text = get_encoded(t5_conv_params, batch["input_ids"], batch["attention_mask"], external_params)
+        encoded = jnp.concatenate([no_text, no_text, no_text, text, no_text, text])
+        original_latents = jnp.concatenate([jnp.zeros_like(original_latents)] * 4 + [original_latents] * 2, 0)
 
         def _step(state, i):
             latents, state = state
@@ -363,10 +364,12 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             return noise_scheduler.step(state, pred, i, latents).to_tuple(), None
 
         latents = jax.random.normal(latent_rng, latents.shape, latents.dtype)
+        latents = lax.broadcast_in_dim(latents, (3, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
         state = noise_scheduler.set_timesteps(sched_state, schedule_length, latents.shape)
         (out, _), _ = lax.scan(_step, (latents, state), jnp.arange(schedule_length)[::-1])
         out = jnp.transpose(out, (0, 2, 3, 1)) / 0.18215
-        return jnp.concatenate([sample_vae(vae_params, x) for x in (hidden_mode, out)])
+        nvt, vnt, vt = out.split(3, 0)
+        return jnp.concatenate([sample_vae(vae_params, x) for x in (hidden_mode, nvt, vnt, vt)])
 
     p_sample = jax.pmap(sample, "batch")
 
@@ -494,8 +497,10 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 else:
                     params = unet_state.params, vae_state.params, t5_conv_state.params, external_state.params
                 sample_out = p_sample(params, batch)
-                s_mode, s_vt = np.split(to_host(sample_out, lambda x: x), 2, 1)
+                s_mode, s_nvt, s_vnt, s_vt = np.split(to_host(sample_out, lambda x: x), 24, 1)
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
+                extra[f"Samples/Reconstruction (U-Net, Text Guidance) {pid}"] = to_img(s_nvt)
+                extra[f"Samples/Reconstruction (U-Net, Video Guidance) {pid}"] = to_img(s_vnt)
                 extra[f"Samples/Reconstruction (U-Net, Full Guidance) {pid}"] = to_img(s_vt)
                 extra[f"Samples/Ground Truth {pid}"] = to_img(batch["pixel_values"].astype(jnp.float32) / 255)
 
