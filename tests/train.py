@@ -291,12 +291,8 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         return encoded.reshape(local_batch * context, encoded.shape[2], -1) + external_state["embd"].reshape(1, -1,
                                                                                                              1024)
 
-    def merge(latent, noise, params, do_shift):
+    def merge(latent, noise, params):
         shape = noise.shape
-        if do_shift:
-            first = shift(latent[-1], 1)
-            first = lax.select_n(device_id() == 0, first, jnp.zeros_like(first))
-            latent = jnp.concatenate([first.reshape(1, *first.shape), latent[:-1]], 0)
         latent = latent.reshape(latent.shape[0], -1) @ params["merge00"]
         noise = noise.reshape(noise.shape[0], -1) @ params["merge01"]
         if latent.shape[0] != noise.shape[0]:
@@ -305,8 +301,8 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         out = jnp.maximum(noise + latent, 0) @ params["merge1"]
         return out.reshape(shape)
 
-    def unet_fn(latent, noise, params, encoded, unet_params, do_shift: bool = True):
-        return unet.apply({"params": unet_params}, merge(latent, noise, params, do_shift), i, encoded).sample
+    def unet_fn(latent, noise, params, encoded, unet_params):
+        return unet.apply({"params": unet_params}, merge(latent, noise, params), i, encoded).sample
 
     def vae_apply(*args, method=vae.__call__, **kwargs):
         global _RESHAPE
@@ -346,6 +342,11 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
 
         hidden_mode = posterior.latent_dist.mode()
         original_latents = latents = jnp.transpose(hidden_mode, (0, 3, 1, 2)) * 0.18215
+
+        first = shift(original_latents[-1], 1)
+        first = lax.select_n(device_id() == 0, first, jnp.zeros_like(first))
+        original_latents = jnp.concatenate([first.reshape(1, *first.shape), original_latents[:-1]], 0)
+
         tokens = batch["input_ids"].size
         unc_tok = lax.select_n(device_id() == 0, jnp.zeros((tokens,)),
                                jnp.concatenate([jnp.ones((1,)), jnp.zeros((tokens - 1,))]))
@@ -420,7 +421,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             encoded = get_encoded(t5_conv_params, batch["input_ids"], batch["attention_mask"], external_params)
             encoded = lax.broadcast_in_dim(encoded, (unet_batch, *encoded.shape), tuple(range(1, encoded.ndim + 1)))
             encoded = encoded.reshape(-1, *encoded.shape[2:])
-            unet_pred = unet_fn(latents, noisy_latents, external_params, encoded, unet_params, False)
+            unet_pred = unet_fn(latents, noisy_latents, external_params, encoded, unet_params)
 
             # TODO: use perceptual loss
             unet_dist_sq, unet_dist_abs = distance(unet_pred, noise)
