@@ -447,19 +447,14 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         else:
             inp = (unet_state.params, v_state.params, t5_conv_state.params, external_state.params)
 
+        (loss, scalars), grads = jax.value_and_grad(lambda x: compute_loss(x, 0), has_aux=True)(inp)
         if local_iterations > 1:
             def _inner(state, itr):
-                inp, prev = state
+                prev = state
                 grad_fn = jax.value_and_grad(lambda x: compute_loss(x, itr * 2 ** 20), has_aux=True)
-                return (inp, jax.tree_util.tree_map(lambda x, y: x / local_iterations + y, grad_fn(inp), prev)), None
+                return jax.tree_util.tree_map(lambda x, y: x / local_iterations + y, grad_fn(inp), prev), None
 
-            prev = ((jnp.zeros(()), (jnp.zeros(()),) * 4), jax.tree_util.tree_map(jnp.zeros_like, inp))
-            out, _ = lax.scan(_inner, (inp, prev), jnp.arange(local_iterations))
-            _, ((_, scalars), grads) = out
-
-        else:
-            grad_fn = jax.value_and_grad(lambda x: compute_loss(x, 0), has_aux=True)
-            (_, scalars), grads = grad_fn(inp)
+            ((loss, scalars), grads), _ = lax.scan(_inner, ((loss, scalars), grads), jnp.arange(1, local_iterations))
 
         scalars, grads = lax.pmean((scalars, grads), "batch")
         new_unet_state = lax.switch((batch["idx"] > unet_init_steps).astype(jnp.int32),
