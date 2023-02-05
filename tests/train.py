@@ -301,8 +301,8 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         out = jnp.maximum(noise + latent, 0) @ params["merge1"]
         return out.reshape(shape)
 
-    def unet_fn(latent, noise, params, encoded, unet_params):
-        return unet.apply({"params": unet_params}, merge(latent, noise, params), i, encoded).sample
+    def unet_fn(latent, noise, params, encoded, timesteps, unet_params):
+        return unet.apply({"params": unet_params}, merge(latent, noise, params), timesteps, encoded).sample
 
     def vae_apply(*args, method=vae.__call__, **kwargs):
         global _RESHAPE
@@ -359,7 +359,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         def _step(state, i):
             latents, state = state
             new = lax.broadcast_in_dim(latents, (2, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
-            unet_pred = unet_fn(original_latents, new, external_params, encoded, unet_params)
+            unet_pred = unet_fn(original_latents, new, external_params, encoded, i, unet_params)
             uncond, cond = jnp.split(unet_pred, 2, 0)
             pred = uncond + guidance * (cond - uncond)
             return noise_scheduler.step(state, pred, i, latents).to_tuple(), None
@@ -421,7 +421,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             encoded = get_encoded(t5_conv_params, batch["input_ids"], batch["attention_mask"], external_params)
             encoded = lax.broadcast_in_dim(encoded, (unet_batch, *encoded.shape), tuple(range(1, encoded.ndim + 1)))
             encoded = encoded.reshape(-1, *encoded.shape[2:])
-            unet_pred = unet_fn(latents, noisy_latents, external_params, encoded, unet_params)
+            unet_pred = unet_fn(latents, noisy_latents, external_params, encoded, timesteps, unet_params)
 
             # TODO: use perceptual loss
             unet_dist_sq, unet_dist_abs = distance(unet_pred, noise)
