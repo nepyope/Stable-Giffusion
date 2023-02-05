@@ -218,7 +218,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
          unet_mode: bool = False,
          base_path: str = "gs://video-us/checkpoint/",
          unet_init_steps: int = 1024, conv_init_steps: int = 0,
-         unet_batch: int = 16,  # 32 doesn't fit
+         unet_batch: int = 8,  # 32 doesn't fit
          local_iterations: int = 16):
     global _CONTEXT, _RESHAPE
     unet_init_steps -= conv_init_steps * unet_mode
