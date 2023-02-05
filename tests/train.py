@@ -218,7 +218,8 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
          unet_mode: bool = False,
          base_path: str = "gs://video-us/checkpoint/",
          unet_init_steps: int = 1024, conv_init_steps: int = 0,
-         unet_batch: int = 16):  # 32 doesn't fit
+         unet_batch: int = 16,  # 32 doesn't fit
+         local_iterations: int = 16):
     global _CONTEXT, _RESHAPE
     unet_init_steps -= conv_init_steps * unet_mode
     conv_init_steps *= 1 - unet_mode
@@ -389,28 +390,31 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         else:
             unet_state, v_state, t5_conv_state, external_state = all_states
 
-        def compute_loss(params):
+        if unet_mode:
+            img = batch["pixel_values"].astype(jnp.float32) / 255
+            inp = jnp.transpose(img, (0, 3, 1, 2))
+            vae_out = vae_apply({"params": vae_params}, inp, deterministic=True, method=vae.encode)
+
+        def compute_loss(params, itr):
             if unet_mode:
                 vae_params = vae_state.params
                 unet_params, t5_conv_params, external_params = params
             else:
                 unet_params, vae_params, t5_conv_params, external_params = params
-            gauss0, gauss1, drop0, drop1, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 7)
+            gauss0, gauss1, drop0, drop1, sample_rng, noise_rng, step_rng = jax.random.split(itr + rng(batch["idx"]), 7)
 
-            img = batch["pixel_values"].astype(jnp.float32) / 255
-            inp = jnp.transpose(img, (0, 3, 1, 2))
             if unet_mode:
-                vae_outputs = vae_apply({"params": vae_params}, inp, deterministic=True, method=vae.encode)
+                vae_outputs = vae_out
             else:
                 vae_outputs = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gauss0, "dropout": drop0},
                                         deterministic=False, method=vae.encode)
+
             vae_outputs = jnp.concatenate([vae_outputs.latent_dist.sample(r)
                                            for r in jax.random.split(sample_rng, unet_batch)], 0)
-            if unet_batch > 1:
-                vae_outputs = vae_outputs.reshape(unet_batch, -1, *vae_outputs.shape[1:])
-                shifted = shift(vae_outputs[:, -1:], 1)
-                shifted = lax.select_n(device_id() == 0, shifted, jnp.zeros_like(shifted))
-                vae_outputs = jnp.concatenate([shifted, vae_outputs[:, :-1]], 1).reshape(-1, *vae_outputs.shape[2:])
+            vae_outputs = vae_outputs.reshape(unet_batch, -1, *vae_outputs.shape[1:])
+            shifted = shift(vae_outputs[:, -1:], 1)
+            shifted = lax.select_n(device_id() == 0, shifted, jnp.zeros_like(shifted))
+            vae_outputs = jnp.concatenate([shifted, vae_outputs[:, :-1]], 1).reshape(-1, *vae_outputs.shape[2:])
             latents = jnp.transpose(vae_outputs, (0, 3, 1, 2))
             latents = lax.stop_gradient(latents * 0.18215)
 
@@ -437,17 +441,26 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
 
             return unet_dist_sq.mean() + vae_dist_sq.mean(), (unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs)
 
-        grad_fn = jax.value_and_grad(compute_loss, has_aux=True)
-
         if unet_mode:
             inp = (unet_state.params, t5_conv_state.params, external_state.params)
         else:
             inp = (unet_state.params, v_state.params, t5_conv_state.params, external_state.params)
-        (loss, scalars), grads = grad_fn(inp)
-        scalars = lax.pmean(scalars, "batch")
-        grads = lax.pmean(grads, "batch")
-        if not unet_mode:
-            new_vae_state = v_state.apply_gradients(grads=grads[1])
+
+        if local_iterations > 1:
+            def _inner(state, itr):
+                params, prev = state
+                grad_fn = jax.value_and_grad(lambda x: compute_loss(x, itr * 2 ** 20), has_aux=True)
+                return (params, jax.tree_util.tree_map(lambda x, y: x / local_iterations + y, grad_fn(inp), prev)), None
+
+            prev = ((jnp.zeros(()), (jnp.zeros(()),) * 4), jax.tree_util.tree_map(jnp.zeros_like, params))
+            out, _ = lax.scan(_inner, (params, prev), jnp.arange(local_iterations))
+            _, ((_, scalars), grads) = out
+
+        else:
+            grad_fn = jax.value_and_grad(lambda x: compute_loss(x, 0), has_aux=True)
+            (_, scalars), grads = grad_fn(inp)
+
+        scalars, grads = lax.pmean((scalars, grads), "batch")
         new_unet_state = lax.switch((batch["idx"] > unet_init_steps).astype(jnp.int32),
                                     [lambda: unet_state, lambda: unet_state.apply_gradients(grads=grads[0])])
         new_t5_conv_state = lax.switch((batch["idx"] > conv_init_steps).astype(jnp.int32),
@@ -459,6 +472,8 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                                          lambda: external_state.apply_gradients(grads=grads[-1])])
         if unet_mode:
             return (new_unet_state, new_t5_conv_state, new_external_state), scalars
+
+        new_vae_state = v_state.apply_gradients(grads=grads[1])
         return (new_unet_state, new_vae_state, new_t5_conv_state, new_external_state), scalars
 
     def train_loop(states, batch: Dict[str, Union[np.ndarray, int]]):
