@@ -345,7 +345,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         posterior = vae_apply({"params": vae_params}, inp, method=vae.encode)
 
         hidden_mode = posterior.latent_dist.mode()
-        latents = jnp.transpose(hidden_mode, (0, 3, 1, 2)) * 0.18215
+        original_latents = latents = jnp.transpose(hidden_mode, (0, 3, 1, 2)) * 0.18215
         tokens = batch["input_ids"].size
         unc_tok = lax.select_n(device_id() == 0, jnp.zeros((tokens,)),
                                jnp.concatenate([jnp.ones((1,)), jnp.zeros((tokens - 1,))]))
@@ -357,7 +357,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         def _step(state, i):
             latents, state = state
             new = lax.broadcast_in_dim(latents, (2, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
-            unet_pred = unet_fn(latents, new, external_params, encoded, unet_params)
+            unet_pred = unet_fn(original_latents, new, external_params, encoded, unet_params)
             uncond, cond = jnp.split(unet_pred, 2, 0)
             pred = uncond + guidance * (cond - uncond)
             return noise_scheduler.step(state, pred, i, latents).to_tuple(), None
