@@ -404,7 +404,8 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                                            for r in jax.random.split(sample_rng, unet_batch)], 0)
             if unet_batch > 1:
                 vae_outputs = vae_outputs.reshape(unet_batch, -1, *vae_outputs.shape[1:])
-                shifted = shift(vae_outputs[:, -1], 1).reshape(unet_batch, 1, *vae_outputs.shape[2:])
+                shifted = shift(vae_outputs[:, -1:], 1)
+                shifted = lax.select_n(device_id() == 0, shifted, jnp.zeros_like(shifted))
                 vae_outputs = jnp.concatenate([shifted, vae_outputs[:, :-1]], 1).reshape(-1, *vae_outputs.shape[2:])
             latents = jnp.transpose(vae_outputs, (0, 3, 1, 2))
             latents = lax.stop_gradient(latents * 0.18215)
