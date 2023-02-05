@@ -206,7 +206,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
          downloaders: int = 2, resolution: int = 128, fps: int = 4, context: int = 8,
          workers: int = 16, prefetch: int = 6, base_model: str = "flax/stable-diffusion-2-1",
          data_path: str = "./urls", sample_interval: int = 1024, parallel_videos: int = 128,
-         tracing_start_step: int = 10 ** 9, tracing_stop_step: int = 10 ** 9,
+         tracing_start_step: int = 3, tracing_stop_step: int = 5,
          schedule_length: int = 1024,
          guidance: float = 7.5,
          warmup_steps: int = 16384,
