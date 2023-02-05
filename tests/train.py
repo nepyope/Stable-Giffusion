@@ -523,9 +523,9 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                     log.update({"Runtime": timediff, "Speed/Videos per Day": vid_per_day,
                                 "Speed/Frames per Day": vid_per_day * context * jax.device_count()})
                 run.log(log, step=(global_step - 1) * jax.device_count() + offset)
-            if i == tracing_start_step:
+            if i == tracing_start_step * jax.device_count():
                 jax.profiler.start_trace("trace")
-            if i == tracing_stop_step:
+            if i == tracing_stop_step * jax.device_count():
                 jax.profiler.stop_trace()
             if i % save_interval == 0 and jax.process_index() == 0:
                 states = ("unet", unet_state), ("conv", t5_conv_state), ("embd", external_state)
