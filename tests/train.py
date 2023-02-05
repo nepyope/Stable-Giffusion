@@ -401,7 +401,8 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 unet_params, t5_conv_params, external_params = params
             else:
                 unet_params, vae_params, t5_conv_params, external_params = params
-            gauss0, gauss1, drop0, drop1, sample_rng, noise_rng, step_rng = jax.random.split(itr + rng(batch["idx"]), 7)
+            itr = (itr + rng(batch["idx"])).astype(jnp.uint32)
+            gauss0, gauss1, drop0, drop1, sample_rng, noise_rng, step_rng = jax.random.split(itr, 7)
 
             if unet_mode:
                 vae_outputs = vae_out
