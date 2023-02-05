@@ -448,12 +448,12 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
 
         if local_iterations > 1:
             def _inner(state, itr):
-                params, prev = state
+                inp, prev = state
                 grad_fn = jax.value_and_grad(lambda x: compute_loss(x, itr * 2 ** 20), has_aux=True)
-                return (params, jax.tree_util.tree_map(lambda x, y: x / local_iterations + y, grad_fn(inp), prev)), None
+                return (inp, jax.tree_util.tree_map(lambda x, y: x / local_iterations + y, grad_fn(inp), prev)), None
 
-            prev = ((jnp.zeros(()), (jnp.zeros(()),) * 4), jax.tree_util.tree_map(jnp.zeros_like, params))
-            out, _ = lax.scan(_inner, (params, prev), jnp.arange(local_iterations))
+            prev = ((jnp.zeros(()), (jnp.zeros(()),) * 4), jax.tree_util.tree_map(jnp.zeros_like, inp))
+            out, _ = lax.scan(_inner, (inp, prev), jnp.arange(local_iterations))
             _, ((_, scalars), grads) = out
 
         else:
