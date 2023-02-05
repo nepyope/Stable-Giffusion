@@ -497,7 +497,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 else:
                     params = unet_state.params, vae_state.params, t5_conv_state.params, external_state.params
                 sample_out = p_sample(params, batch)
-                s_mode, s_nvt, s_vnt, s_vt = np.split(to_host(sample_out, lambda x: x), 24, 1)
+                s_mode, s_nvt, s_vnt, s_vt = np.split(to_host(sample_out, lambda x: x), 4, 1)
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
                 extra[f"Samples/Reconstruction (U-Net, Text Guidance) {pid}"] = to_img(s_nvt)
                 extra[f"Samples/Reconstruction (U-Net, Video Guidance) {pid}"] = to_img(s_vnt)
