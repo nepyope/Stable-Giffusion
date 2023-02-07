@@ -303,22 +303,23 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         latents = jnp.transpose(hidden_mode, (0, 3, 1, 2)) * 0.18215
 
         encoded = encode(latents, external_params)
+        encoded = jnp.concatenate([jnp.zeros_like(encoded)] * 4 + [encoded] * 4, 0)
 
         def _step(state, i):
             latents, state = state
             new = lax.broadcast_in_dim(latents, (2, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
             unet_pred = unet_fn(new, encoded, i, unet_params)
-            uncond, cond = jnp.split(unet_pred, 2, 0)
-            pred = uncond + guidance * (cond - uncond)
+            u1, u2, u4, u8, c1, c2, c4, c8 = jnp.split(unet_pred, 8, 0)
+            pred = jnp.concatenate([c1, u2 + (c2 - u2) * 2, u4 + (c4 - u4) * 4, u8 + (c8 - u8) * 8])
             return noise_scheduler.step(state, pred, i, latents).to_tuple(), None
 
         latents = jax.random.normal(latent_rng, latents.shape, latents.dtype)
-        latents = lax.broadcast_in_dim(latents, (3, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
+        latents = lax.broadcast_in_dim(latents, (4, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
         state = noise_scheduler.set_timesteps(sched_state, schedule_length, latents.shape)
         (out, _), _ = lax.scan(_step, (latents, state), jnp.arange(schedule_length)[::-1])
         out = jnp.transpose(out, (0, 2, 3, 1)) / 0.18215
-        nvt, vnt, vt = out.split(3, 0)
-        return jnp.concatenate([sample_vae(vae_params, x) for x in (hidden_mode, nvt, vnt, vt)])
+        g1, g2, g4, g8 = jnp.split(out, 4)
+        return jnp.concatenate([sample_vae(vae_params, x) for x in (hidden_mode, g1, g2, g4, g8)])
 
     p_sample = jax.pmap(sample, "batch")
 
@@ -443,11 +444,12 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 else:
                     params = unet_state.params, vae_state.params, external_state.params
                 sample_out = p_sample(params, batch)
-                s_mode, s_nvt, s_vnt, s_vt = np.split(to_host(sample_out, lambda x: x), 4, 1)
+                s_mode, g1, g2, g4, g8 = np.split(to_host(sample_out, lambda x: x), 5, 1)
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
-                extra[f"Samples/Reconstruction (U-Net, Text Guidance) {pid}"] = to_img(s_nvt)
-                extra[f"Samples/Reconstruction (U-Net, Video Guidance) {pid}"] = to_img(s_vnt)
-                extra[f"Samples/Reconstruction (U-Net, Full Guidance) {pid}"] = to_img(s_vt)
+                extra[f"Samples/Reconstruction (U-Net, Guidance 1) {pid}"] = to_img(g1)
+                extra[f"Samples/Reconstruction (U-Net, Guidance 2) {pid}"] = to_img(g2)
+                extra[f"Samples/Reconstruction (U-Net, Guidance 4) {pid}"] = to_img(g4)
+                extra[f"Samples/Reconstruction (U-Net, Guidance 8) {pid}"] = to_img(g8)
                 extra[f"Samples/Ground Truth {pid}"] = to_img(batch["pixel_values"].astype(jnp.float32) / 255)
 
             if unet_mode:
