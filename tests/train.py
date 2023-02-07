@@ -279,8 +279,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         return lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
-        return {"input_ids": all_to_all(batch["input_ids"]), "attention_mask": all_to_all(batch["attention_mask"]),
-                "pixel_values": all_to_all(batch["pixel_values"], 1),
+        return {"pixel_values": all_to_all(batch["pixel_values"], 1),
                 "idx": batch["idx"] + jnp.arange(jax.device_count())}
 
     def rng(idx: jax.Array):
