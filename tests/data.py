@@ -200,8 +200,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
 class DataLoader:
     def __init__(self, workers: int, url_dir: str, video_downloaders: int, resolution: int, fps: int, context: int,
-                 batch_size: int, prefetch: int, parallel_videos: int, tokenizer: transformers.BertTokenizer,
-                 t5_tokens: int, seed: int = 0):
+                 batch_size: int, prefetch: int, parallel_videos: int, seed: int = 0):
         self.workers = workers
         self.video_downloaders = video_downloaders
         self.resolution = resolution
@@ -211,9 +210,7 @@ class DataLoader:
         self.batch_size = batch_size
         self.seed = seed
         self.parallel_videos = parallel_videos
-        self.tokenizer = tokenizer
         self.ids = ids = []
-        self.t5_tokens = t5_tokens
         for path in os.listdir(url_dir):
             with open(f'{url_dir}/{path}', 'rb') as f:
                 vals = json.load(f)
@@ -270,11 +267,7 @@ class DataLoader:
                         if _DEBUG:
                             yield [hashlib.sha3_512(s.encode()).hexdigest() for s in subtitles]
                             continue
-                        tokens = self.tokenizer(subtitles, return_tensors="np", padding="max_length", truncation=True,
-                                                max_length=self.t5_tokens)
-                        input_ids = tokens["input_ids"].reshape(8 * self.batch_size, -1)
-                        attention_mask = tokens["attention_mask"].reshape(8 * self.batch_size, -1)
-                        yield np.concatenate(np_batch, axis=0), input_ids, attention_mask
+                        yield np.concatenate(np_batch, axis=0)
             for w in workers:
                 w.join()
         raise StopIteration
