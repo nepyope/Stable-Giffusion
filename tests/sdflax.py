@@ -5,7 +5,7 @@ import random
 
 import gdown
 from PIL import Image
-import numpy as np
+
 import torch
 import torch.utils.checkpoint
 import json
@@ -119,7 +119,7 @@ def main():
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=1000
     )
-    noise_scheduler.create_state()
+    sched_state = noise_scheduler.create_state()
 
     # Initialize our training
     rng = jax.random.PRNGKey(0) 
@@ -152,7 +152,7 @@ def main():
 
             # Add noise to the latents according to the noise magnitude at each timestep
             # (this is the forward diffusion process)
-            noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
+            noisy_latents = noise_scheduler.add_noise(sched_state,latents, noise, timesteps)
 
             # Get the text embedding for conditioning
             encoder_hidden_states = text_encoder(
@@ -215,7 +215,7 @@ def main():
 
         return new_state, metrics
 
-    # Create parallel version of the train step
+    # Create parallel version of the train step. feed tpus black shit if there's not enoguh frames in the video. i'm running fucking pristine 24fps, batrch is 
     unet_p_train_step = jax.pmap(unet_train_step, "batch", donate_argnums=(0,))
     vae_p_train_step = jax.pmap(vae_train_step, "batch", donate_argnums=(0,))
 
