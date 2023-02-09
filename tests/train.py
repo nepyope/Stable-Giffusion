@@ -176,7 +176,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     local_batch = 1
 
     def get_encoded(input_ids: jax.Array, attention_mask: jax.Array):
-        return text_encoder.encode(input_ids, attention_mask, params=text_encoder.params).last_hidden_state
+        return text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
 
     def unet_fn(noise, encoded, timesteps, unet_params):
         return unet.apply({"params": unet_params}, noise, timesteps, encoded).sample
