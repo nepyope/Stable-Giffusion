@@ -21,7 +21,7 @@ from jax.experimental.compilation_cache import compilation_cache
 from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
-from transformers import 
+
 from data import DataLoader
 from transformers import CLIPTokenizer, FlaxCLIPTextModel
 app = typer.Typer(pretty_exceptions_enable=False)
