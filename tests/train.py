@@ -284,13 +284,13 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             latents = lax.stop_gradient(latents * 0.18215)
 
             noise = jax.random.normal(noise_rng, latents.shape)
-            timesteps = jax.random.randint(step_rng, (), 0, noise_scheduler.config.num_train_timesteps)
-            timesteps = jnp.full((latents.shape[0],), timesteps, timesteps.dtype)
+            t0 = jax.random.randint(step_rng, (), 0, noise_scheduler.config.num_train_timesteps)
+            timesteps = jnp.full((latents.shape[0],), t0, t0.dtype)
             noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, timesteps)
             noisy_latents = jnp.transpose(noisy_latents, (1, 0, 2, 3))
             noisy_latents = noisy_latents.reshape(1, noisy_latents.shape[0], -1, noisy_latents.shape[-1])
 
-            unet_pred = unet_fn(noisy_latents, encoded, timesteps, unet_params)
+            unet_pred = unet_fn(noisy_latents, encoded, t0, unet_params)
 
             noise = jnp.transpose(noise, (1, 0, 2, 3))
             noise = noisy_latents.reshape(1, noise.shape[0], -1, noise.shape[-1])
