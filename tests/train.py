@@ -21,9 +21,9 @@ from jax.experimental.compilation_cache import compilation_cache
 from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
-
+from transformers import 
 from data import DataLoader
-
+from transformers import CLIPTokenizer, FlaxCLIPTextModel
 app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")
 compilation_cache.initialize_cache("compilation_cache")
@@ -216,6 +216,13 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
+    tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
+    text_encoder = FlaxCLIPTextModel.from_pretrained(
+        base_model, subfolder="text_encoder", dtype=jnp.float32
+    )
+    text_encoder_params = jax_utils.replicate(text_encoder.params)
+
+    
     vae_params = patch_weights(vae_params)
 
     vae: FlaxAutoencoderKL = vae
@@ -417,6 +424,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
 
     if not unet_mode:
         vae_state = jax_utils.replicate(vae_state)
+
     unet_state = jax_utils.replicate(unet_state)
     external_state = jax_utils.replicate(external_state)
 
