@@ -172,7 +172,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     noise_scheduler = FlaxPNDMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear",
                                         num_train_timesteps=schedule_length)
     sched_state = noise_scheduler.create_state()
-
+    unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np")
     local_batch = 1
 
     def get_encoded(input_ids: jax.Array, attention_mask: jax.Array):
@@ -221,7 +221,8 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         latents = jnp.transpose(hidden_mode, (0, 3, 1, 2)) * 0.18215
 
         encoded = get_encoded(batch["input_ids"], batch["attention_mask"])
-        encoded = jnp.concatenate([jnp.zeros_like(encoded)] * 4 + [encoded] * 4, 0)
+        unc = get_encoded(unconditioned_tokens["input_ids"], unconditioned_tokens["attention_mask"])
+        encoded = jnp.concatenate([unc] * 4 + [encoded] * 4, 0)
 
         def _step(state, i):
             latents, state = state
