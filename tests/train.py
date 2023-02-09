@@ -396,7 +396,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             if i == tracing_stop_step * jax.device_count():
                 jax.profiler.stop_trace()
             if i % save_interval == 0 and jax.process_index() == 0:
-                states = ("unet", unet_state), ("embd", external_state)
+                states = ("unet", unet_state),
                 for n, s in [("vae", vae_state)] * (not unet_mode) + list(states):
                     p = to_host(s.params)
                     flattened, jax_structure = jax.tree_util.tree_flatten(p)

@@ -244,8 +244,8 @@ class DataLoader:
                             continue
                         tokens = self.tokenizer(titles, return_tensors="np", padding="max_length", truncation=True,
                                                 max_length=self.clip_tokens)
-                        input_ids = tokens["input_ids"].reshape(8 * self.batch_size, -1)
-                        attention_mask = tokens["attention_mask"].reshape(8 * self.batch_size, -1)
+                        input_ids = tokens["input_ids"].reshape(self.batch_size, -1)
+                        attention_mask = tokens["attention_mask"].reshape(self.batch_size, -1)
                         yield np.concatenate(np_batch, axis=0), input_ids, attention_mask
             for w in workers:
                 w.join()
