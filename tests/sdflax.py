@@ -13,6 +13,21 @@ import jax
 import jax.numpy as jnp
 import optax
 import transformers
+import logging
+import threading
+import os
+import random
+
+import gdown
+from PIL import Image
+
+import torch
+import torch.utils.checkpoint
+import json
+import jax
+import jax.numpy as jnp
+import optax
+import transformers
 from diffusers import (
     FlaxAutoencoderKL,
     FlaxDDPMScheduler,
@@ -20,7 +35,6 @@ from diffusers import (
     FlaxStableDiffusionPipeline,
     FlaxUNet2DConditionModel,
 )
-from flax.jax_utils import replicate
 import wandb
 import cv2
 import requests
@@ -28,7 +42,6 @@ from diffusers.pipelines.stable_diffusion import FlaxStableDiffusionSafetyChecke
 from diffusers.utils import check_min_version
 from flax import jax_utils
 from flax.training import train_state
-from flax.training.common_utils import shard
 
 from torchvision import transforms
 from tqdm.auto import tqdm
@@ -50,9 +63,9 @@ def main():
         gdown.download(url, output, quiet=False)
 
 
-    resolution = (256,256)
+    resolution = (256,512)
     batch_per_device = 1
-    lr = 1e-4/(batch_per_device*jax.device_count())#i guess
+    lr = 1e-5#4/(batch_per_device*jax.device_count())#i guess
 
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -119,6 +132,7 @@ def main():
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=1000
     )
+
     sched_state = noise_scheduler.create_state()
 
     # Initialize our training
@@ -126,7 +140,7 @@ def main():
     train_rngs = jax.random.split(rng, jax.local_device_count())
 
     def unet_train_step(state, text_encoder_params, vae_params, batch, train_rng):
-        dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
+        sample_rng, new_train_rng = jax.random.split(train_rng, 2)
 
         def compute_loss(params):
             # Convert images to latent space
@@ -189,39 +203,11 @@ def main():
 
         return new_state, metrics, new_train_rng
 
-    def vae_train_step(state, batch):
-
-        def compute_loss(params):
-            gaussian, dropout = jax.random.split(jax.random.PRNGKey(0), 2)
-            img = batch["pixel_values"]
-            out = vae.apply({"params": params}, img, rngs={"gaussian": gaussian, "dropout": dropout},
-                            sample_posterior=True, deterministic=False).sample
-
-            loss = (img - out) ** 2
-            
-            loss = loss.mean()
-
-            return loss
-
-        #do separate trainning for vae
-        grad_fn = jax.value_and_grad(compute_loss)
-        loss, grad = grad_fn(state.params)
-        grad = jax.lax.pmean(grad, "batch")
-
-        new_state = state.apply_gradients(grads=grad)
-
-        metrics = {"loss": loss}
-        metrics = jax.lax.pmean(metrics, axis_name="batch")
-
-        return new_state, metrics
-
     # Create parallel version of the train step. feed tpus black shit if there's not enoguh frames in the video. i'm running fucking pristine 24fps, batrch is 
     unet_p_train_step = jax.pmap(unet_train_step, "batch", donate_argnums=(0,))
-    vae_p_train_step = jax.pmap(vae_train_step, "batch", donate_argnums=(0,))
 
     # Replicate the train state on each device
     unet_state = jax_utils.replicate(unet_state)
-    vae_state = jax_utils.replicate(vae_state)
         
     text_encoder_params = jax_utils.replicate(text_encoder.params)
     vae_params = jax_utils.replicate(vae_params)
@@ -261,8 +247,8 @@ def main():
 
         video = cv2.VideoCapture('video.mp4')
 
-        # Get the total number of frames in the video
-        total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+        # Get the total number of frames in the video. we know videos are longer than 10 seconds, so we can just use 256 frames
+        total_frames = 256
 
         data.append([])
 
@@ -298,47 +284,48 @@ def main():
         fetch = threading.Thread(target=get_data, name="Downloader", args=(ids,batch_per_device,new_data, new_n_batches, new_batch_size, new_caption))
         fetch.start()
 
-        for _ in range(10):#repeat training 10 times. how low can i get this?
-
+        for _ in range(5):
             iters = tqdm(range(n_batches), desc="Iter ... ", position=1)
             ######UNET TRAINING
             for i in iters:#maybe repeat this multiple times, sample afterwards
-
                 ####LOAD DATA
                 d = data[i*batch_size:(i+1)*batch_size]
                 images = []
                 captions = []
-                for n, i in enumerate(d):
-                    #load image from cv2
-                    img = cv2.cvtColor(i, cv2.COLOR_BGR2RGB)
-                    images.append(Image.fromarray(img))
-                    captions.append(f'{caption} FRAME{n}')
 
-                inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
+                l_d = i*batch_size
+                for n, im in enumerate(d):
+                    #load image from cv2
+                    img = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+                    images.append(Image.fromarray(img))
+                    captions.append(f'FRAME{n+l_d} {caption}')
+
+                inputs = tokenizer(captions, truncation=True)
                 input_ids = inputs.input_ids
                 images = [image.convert("RGB") for image in images]
                 images = [train_transforms(image) for image in images]
 
-                examples = []
-                for i in range(len(images)):
+                examples = []#this is all correct so far
+                for im in range(len(images)):
                     example = {}
-                    example["pixel_values"] = (torch.tensor(images[i])).float()
-                    example["input_ids"] = input_ids[i]
+                    example["pixel_values"] = (torch.tensor(images[im])).float() 
+                    example["input_ids"] = input_ids[im]
                     examples.append(example)
                 pixel_values = torch.stack([example["pixel_values"] for example in examples])
 
-                
                 pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
                 input_ids = [example["input_ids"] for example in examples]
 
                 padded_tokens = tokenizer.pad(
                     {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
                 )
+
                 batch = {
                     "pixel_values": pixel_values,
                     "input_ids": padded_tokens.input_ids,
                 }
-                batch = {k: v.numpy() for k, v in batch.items()}
+
+                batch = {k: v.numpy() for k, v in batch.items()}#ids are correct
 
                 batch = {"pixel_values": batch['pixel_values'].reshape(jax.local_device_count(), -1, *batch['pixel_values'].shape[1:]),
                         "input_ids": batch['input_ids'].reshape(jax.local_device_count(), -1, *batch['input_ids'].shape[1:])}
@@ -349,55 +336,7 @@ def main():
 
                 run.log({"UNET loss": unet_loss})
 
-            iters = tqdm(range(n_batches), desc="Iter ... ", position=1)
-            ######VAE TRAINING
-            for i in iters:#maybe repeat this multiple times, sample afterwards
-
-                ####LOAD DATA
-                d = data[i*batch_size:(i+1)*batch_size]
-                images = []
-                captions = []
-                for n, i in enumerate(d):
-                    #load image from cv2
-                    img = cv2.cvtColor(i, cv2.COLOR_BGR2RGB)
-                    images.append(Image.fromarray(img))
-                    captions.append(f'{caption} FRAME{n}')
-
-                inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
-                input_ids = inputs.input_ids
-                images = [image.convert("RGB") for image in images]
-                images = [train_transforms(image) for image in images]
-
-                examples = []
-                for i in range(len(images)):
-                    example = {}
-                    example["pixel_values"] = (torch.tensor(images[i])).float()
-                    example["input_ids"] = input_ids[i]
-                    examples.append(example)
-                pixel_values = torch.stack([example["pixel_values"] for example in examples])
-
-                
-                pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
-                input_ids = [example["input_ids"] for example in examples]
-
-                padded_tokens = tokenizer.pad(
-                    {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
-                )
-                batch = {
-                    "pixel_values": pixel_values,
-                    "input_ids": padded_tokens.input_ids,
-                }
-                batch = {k: v.numpy() for k, v in batch.items()}
-
-                batch = {"pixel_values": batch['pixel_values'].reshape(jax.local_device_count(), -1, *batch['pixel_values'].shape[1:]),
-                        "input_ids": batch['input_ids'].reshape(jax.local_device_count(), -1, *batch['input_ids'].shape[1:])}
-
-                vae_state, vae_loss = vae_p_train_step(vae_state, batch)
-                vae_loss = sum(vae_loss['loss'])/jax.device_count()
-
-                run.log({"VAE loss": vae_loss})
-
-        if epoch % 100 == 0:#save every 10 epochs
+        if epoch % 5 == 0:#save every 10 epochs. don't log anything
 
             if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
                 print('saving model...')
@@ -421,49 +360,16 @@ def main():
                     'sd-model',
                     params={
                         "text_encoder": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], text_encoder_params)),
-                        "vae": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], vae_state.params)),
+                        "vae": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], vae_params)),
                         "unet": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], unet_state.params)),
                         "safety_checker": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], safety_checker.params)),
                     },
                 )
-                print('generating samples...')
-                pipeline, params = FlaxStableDiffusionPipeline.from_pretrained(
-                    "sd-model",
-                    dtype=weight_dtype,
-                    safety_checker=None,
-                )
-                prompt = []
-                prompt = [f'{caption} FRAME0']*jax.device_count()
-                prompt_ids = pipeline.prepare_inputs(prompt)
-                p_params = replicate(params)
-                prompt_ids = shard(prompt_ids)
-                def create_key(seed=0):
-                    return jax.random.PRNGKey(seed)
-
-                rng = create_key(0)
-                rng = jax.random.split(rng, jax.device_count())
-
-                images = pipeline(prompt_ids, p_params, rng, jit=True,width=resolution[1],height=resolution[0])[0]    
-
-                #send images to wandb
-                run.log({"prompt": wandb.Html(f'<h1>{prompt[0]}</h1>')})
-                run.log({f"result": wandb.Image(images[0])})
-                run.log({"ground_truth": wandb.Image(batch["pixel_values"][0][0].transpose([1,2,0]))})
-
-                #get rid of pipeline
-                del pipeline
-                del params
-                del p_params
-                del prompt_ids
-                del images
-                del prompt
-                del rng
-                del safety_checker
-                del scheduler
-                print('resuming training')      
         
         fetch.join()
         data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
+
+        break
 
 if __name__ == "__main__":
     main()
