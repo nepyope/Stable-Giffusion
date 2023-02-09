@@ -94,7 +94,7 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
         if format_note == "tiny" or width <= target_image_size or height <= target_image_size:
             continue
         video_urls.append({'width': width, 'height': height, 'ext': f['ext'], 'url': f['url'],
-                           "sub_url": info['automatic_captions']['en'][0]['url']})
+                           "sub_url": info['automatic_captions']['en'][0]['url'], "title": info["title"]})
 
     return sorted(video_urls, key=lambda x: (x['ext'] != 'mp4', x['width'], x['height']))
 
@@ -108,32 +108,6 @@ def get_proxies():
                     for r in r.json()['results']]
         except:
             pass
-
-
-@try_except
-def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
-    while True:
-        for _ in range(len(proxies)):
-            p = proxies.pop(0)
-            try:
-                subs = requests.get(video_urls[0]["sub_url"],
-                                    proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
-                subs = subs[subs.find("<transcript>") + len("<transcript>"):subs.find('</text>')]
-                subs = subs[subs.find('>') + 1:]
-                subs = ftfy.ftfy(subs)
-                if "but your computer or network may be sending automated queries. To protect our users, we can't process your request right now." in subs:
-                    print("blocked IP")
-                    continue
-                proxies.append(p)
-                return subs
-            except urllib3.exceptions.HTTPError:
-                pass
-            except requests.exceptions.RequestException:
-                pass
-            print("error")
-        proxies.clear()
-        proxies.extend(get_proxies())
-        print("Refreshing proxies", len(proxies))
 
 
 def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps: int,
@@ -181,20 +155,19 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
     for i, wor in enumerate(work, worker_id):
         video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
-        if not video_urls:
-            continue
 
-        subs = get_subs(video_urls, ip_addresses)
-        if not subs:
+        if not video_urls:
             continue
 
         frames = get_video_frames(video_urls, target_image_size, target_fps)
         if frames is None or not frames.size or frames.shape[0] < context_size:
             continue
+
+        title = video_urls[0]["title"]
         
         frames = frames[:frames.shape[0] // context_size * context_size]
         frames = frames.reshape(-1, context_size, *frames.shape[1:])
-        queue.put((to_share(frames, smm), subs))
+        queue.put((to_share(frames, smm), title))
     queue.put(_DONE)
 
 
