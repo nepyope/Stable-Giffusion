@@ -352,12 +352,14 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
 
     global_step = 0
     for epoch in range(10 ** 9):
-        for i, video in tqdm.tqdm(enumerate(data, 1)):
+        for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 1)):
             global_step += 1
             if global_step <= 2:
                 print(f"Step {global_step}", datetime.datetime.now())
             i *= jax.device_count()
-            batch = {"pixel_values": video.reshape(jax.local_device_count(), -1, *video.shape[1:]),
+            batch = {"pixel_values": vid.reshape(jax.local_device_count(), -1, *vid.shape[1:]),
+                     "input_ids": ids.reshape(jax.local_device_count(), 1, -1),
+                     "attention_mask": msk.reshape(jax.local_device_count(), 1, -1),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int32)}
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
