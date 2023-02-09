@@ -160,9 +160,6 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
 
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
 
-    if unet_mode:
-        vae_params = load(base_path + "vae", vae_params)
-
     if not overwrite:
         vae_params = load(base_path + "vae", vae_params)
         unet_params = load(base_path + "unet", unet_params)
