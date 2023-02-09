@@ -173,7 +173,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
 class DataLoader:
     def __init__(self, workers: int, url_dir: str, video_downloaders: int, resolution: int, fps: int, context: int,
-                 batch_size: int, prefetch: int, parallel_videos: int, seed: int = 0):
+                 batch_size: int, prefetch: int, parallel_videos: int, tokenizer: transformers.BertTokenizer,  clip_tokens: int, seed: int = 0):
         self.workers = workers
         self.video_downloaders = video_downloaders
         self.resolution = resolution
@@ -183,6 +183,8 @@ class DataLoader:
         self.batch_size = batch_size
         self.seed = seed
         self.parallel_videos = parallel_videos
+        self.tokenizer = tokenizer
+        self.clip_tokens = clip_tokens
         self.ids = ids = []
         for path in os.listdir(url_dir):
             with open(f'{url_dir}/{path}', 'rb') as f:
@@ -227,20 +229,24 @@ class DataLoader:
                         print("failed to load share")
                 else:
                     np_batch = []
-                    subtitles = []
+                    titles = []
                     for _ in range(self.batch_size):
                         while len(samples) > idx and not samples[idx][0]:
                             del samples[idx]
                         if len(samples) <= idx:
                             break
                         np_batch.append(samples[idx][0].pop(0))
-                        subtitles.append(samples[idx][1])
+                        titles.append(samples[idx][1])
                         idx = (idx + 1) % self.parallel_videos
                     if len(np_batch) == self.batch_size:
                         if _DEBUG:
-                            yield [hashlib.sha3_512(s.encode()).hexdigest() for s in subtitles]
+                            yield [hashlib.sha3_512(s.encode()).hexdigest() for s in titles]
                             continue
-                        yield np.concatenate(np_batch, axis=0)
+                        tokens = self.tokenizer(titles, return_tensors="np", padding="max_length", truncation=True,
+                                                max_length=self.clip_tokens)
+                        input_ids = tokens["input_ids"].reshape(8 * self.batch_size, -1)
+                        attention_mask = tokens["attention_mask"].reshape(8 * self.batch_size, -1)
+                        yield np.concatenate(np_batch, axis=0), input_ids, attention_mask
             for w in workers:
                 w.join()
         raise StopIteration
