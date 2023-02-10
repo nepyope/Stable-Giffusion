@@ -130,7 +130,7 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
         h = target_image_size if aspect_ratio > 1 else round(target_image_size/aspect_ratio) 
         try:
             out, _ = ffmpeg.input(path) \
-                .filter("scale", w=w, h=) \
+                .filter("scale", w=w, h=h) \
                 .filter("crop", w=target_image_size, h=target_image_size).filter("fps", target_fps) \
                 .output("pipe:", format="rawvideo", pix_fmt="rgb24", loglevel="error", preset="ultrafast",
                         threads=target_image_size // 40) \
