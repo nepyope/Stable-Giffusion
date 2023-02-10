@@ -144,7 +144,6 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
          save_interval: int = 2048, overwrite: bool = True, unet_mode: bool = True,
          base_path: str = "gs://video-us/checkpoint/", unet_init_steps: int = 0, conv_init_steps: int = 0,
          local_iterations: int = 16):
-    global _CONTEXT, _RESHAPE
     unet_init_steps -= conv_init_steps * unet_mode
     conv_init_steps *= 1 - unet_mode
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
@@ -182,11 +181,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         return unet.apply({"params": unet_params}, noise, timesteps, encoded).sample
 
     def vae_apply(*args, method=vae.__call__, **kwargs):
-        global _RESHAPE
-        _RESHAPE = True
-        out = vae.apply(*args, method=method, **kwargs)
-        _RESHAPE = False
-        return out
+        return vae.apply(*args, method=method, **kwargs)
 
     def sample_vae(params: Any, inp: jax.Array):
         return jnp.transpose(vae_apply({"params": params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
@@ -204,11 +199,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         return jax.random.PRNGKey(idx * jax.device_count() + device_id())
 
     def sample(params, batch: Dict[str, Union[np.ndarray, int]]):
-        if unet_mode:
-            vae_params = vae_state.params
-            unet_params, = params
-        else:
-            unet_params, vae_params, = params
+        unet_params, vae_params, = params
 
         batch = all_to_all_batch(batch)
         batch = jax.tree_map(lambda x: x[0], batch)
@@ -252,11 +243,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
 
     def train_step(all_states: Union[Tuple[TrainState], Tuple[TrainState, TrainState]],
                    batch: Dict[str, jax.Array]):
-        if unet_mode:
-            unet_state, = all_states
-            v_state = vae_state
-        else:
-            unet_state, v_state, = all_states
+        unet_state, v_state, = all_states
 
         if unet_mode:
             img = batch["pixel_values"].astype(jnp.float32) / 255
@@ -266,7 +253,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
 
         def compute_loss(params, itr):
             if unet_mode:
-                vae_params = vae_state.params
+                vae_params = v_state.params
                 unet_params, = params
             else:
                 unet_params, vae_params, = params
@@ -362,10 +349,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
             if i % sample_interval == 0:
-                if unet_mode:
-                    params = unet_state.params,
-                else:
-                    params = unet_state.params, vae_state.params,
+                params = unet_state.params, vae_state.params,
                 sample_out = p_sample(params, batch)
                 s_mode, g1, g2, g4, g8 = np.split(to_host(sample_out, lambda x: x), 5, 1)
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
@@ -376,7 +360,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 extra[f"Samples/Ground Truth {pid}"] = to_img(batch["pixel_values"].astype(jnp.float32) / 255)
 
             if unet_mode:
-                (unet_state,), scalars = p_train_step((unet_state,), batch)
+                (unet_state,), scalars = p_train_step((unet_state, vae_state), batch)
             else:
                 (unet_state, vae_state), scalars = p_train_step((unet_state, vae_state), batch)
 
