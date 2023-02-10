@@ -26,8 +26,6 @@ from data import DataLoader
 
 app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")
-compilation_cache.initialize_cache("compilation_cache")
-
 _UPLOAD_RETRIES = 8
 
 
