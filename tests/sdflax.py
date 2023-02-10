@@ -63,8 +63,8 @@ def main():
         gdown.download(url, output, quiet=False)
 
 
-    resolution = (256,512)
-    batch_per_device = 1
+    resolution = (128,128)
+    batch_per_device = 16
     lr = 1e-5#4/(batch_per_device*jax.device_count())#i guess
 
     logging.basicConfig(
@@ -143,14 +143,21 @@ def main():
         sample_rng, new_train_rng = jax.random.split(train_rng, 2)
 
         def compute_loss(params):
+            inp =  batch["pixel_values"]
+            inp = jnp.transpose(inp, (0,2,3,1))
+            inp = jnp.vstack(inp)
+            inp = jnp.expand_dims(inp, axis=0)
+            inp = jnp.transpose(inp, (0,3,1,2))
+                
             # Convert images to latent space
             vae_outputs = vae.apply(
-                {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
+                {"params": vae_params}, inp, deterministic=True, method=vae.encode
             )
             latents = vae_outputs.latent_dist.sample(sample_rng)
             # (NHWC) -> (NCHW)
             latents = jnp.transpose(latents, (0, 3, 1, 2))
-            latents = latents * 0.18215
+            latents = latents * 0.18215 #latents are 1,4,256,16
+
 
             # Sample noise that we'll add to the latents
             noise_rng, timestep_rng = jax.random.split(sample_rng)
@@ -172,7 +179,9 @@ def main():
             encoder_hidden_states = text_encoder(
                 batch["input_ids"],
                 params=text_encoder_params
-            )[0]
+            )[0][0]
+
+            encoder_hidden_states = jnp.expand_dims(encoder_hidden_states, axis=0)
 
             # Predict the noise residual and compute loss
             model_pred = unet.apply(
@@ -298,7 +307,7 @@ def main():
                     #load image from cv2
                     img = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
                     images.append(Image.fromarray(img))
-                    captions.append(f'FRAME{n+l_d} {caption}')
+                    captions.append(f'{caption}')
 
                 inputs = tokenizer(captions, truncation=True)
                 input_ids = inputs.input_ids
@@ -336,7 +345,7 @@ def main():
 
                 run.log({"UNET loss": unet_loss})
 
-        if epoch % 5 == 0:#save every 10 epochs. don't log anything
+        if epoch % 30 == 0:#save every 10 epochs. don't log anything
 
             if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
                 print('saving model...')
@@ -368,8 +377,6 @@ def main():
         
         fetch.join()
         data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
-
-        break
 
 if __name__ == "__main__":
     main()
