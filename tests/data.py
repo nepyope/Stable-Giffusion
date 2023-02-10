@@ -126,9 +126,11 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
         except Exception:  # skipcq: PYL-W0703
             continue  # Broken URL, next might work
         aspect_ratio = video_url["width"] / video_url["height"]
+        w = round(target_image_size*aspect_ratio) if aspect_ratio > 1 else target_image_size
+        h = target_image_size if aspect_ratio > 1 else round(target_image_size/aspect_ratio) 
         try:
             out, _ = ffmpeg.input(path) \
-                .filter("scale", w=round(target_image_size*aspect_ratio), h=target_image_size) \
+                .filter("scale", w=w, h=) \
                 .filter("crop", w=target_image_size, h=target_image_size).filter("fps", target_fps) \
                 .output("pipe:", format="rawvideo", pix_fmt="rgb24", loglevel="error", preset="ultrafast",
                         threads=target_image_size // 40) \
