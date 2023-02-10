@@ -313,7 +313,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         new_unet_state = lax.switch((batch["idx"] > unet_init_steps).astype(jnp.int32),
                                     [lambda: unet_state, lambda: unet_state.apply_gradients(grads=grads[0])])
         if unet_mode:
-            return (new_unet_state,), scalars
+            return (new_unet_state, v_state), scalars
 
         new_vae_state = v_state.apply_gradients(grads=grads[1])
         return (new_unet_state, new_vae_state,), scalars
