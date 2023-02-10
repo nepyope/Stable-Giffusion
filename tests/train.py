@@ -323,9 +323,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
 
     p_train_step = jax.pmap(train_loop, "batch", donate_argnums=(0, 1))
 
-    if not unet_mode:
-        vae_state = jax_utils.replicate(vae_state)
-
+    vae_state = jax_utils.replicate(vae_state)
     unet_state = jax_utils.replicate(unet_state)
 
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context * jax.device_count(),
