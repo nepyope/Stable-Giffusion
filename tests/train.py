@@ -347,8 +347,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
             if i % sample_interval == 0:
-                params = unet_state.params, vae_state.params,
-                sample_out = p_sample(params, batch)
+                sample_out = p_sample((unet_state.params, vae_state.params), batch)
                 s_mode, g1, g2, g4, g8 = np.split(to_host(sample_out, lambda x: x), 5, 1)
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
                 extra[f"Samples/Reconstruction (U-Net, Guidance 1) {pid}"] = to_img(g1)
@@ -357,10 +356,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 extra[f"Samples/Reconstruction (U-Net, Guidance 8) {pid}"] = to_img(g8)
                 extra[f"Samples/Ground Truth {pid}"] = to_img(batch["pixel_values"].astype(jnp.float32) / 255)
 
-            if unet_mode:
-                (unet_state,), scalars = p_train_step((unet_state, vae_state), batch)
-            else:
-                (unet_state, vae_state), scalars = p_train_step((unet_state, vae_state), batch)
+            (unet_state, vae_state), scalars = p_train_step((unet_state, vae_state), batch)
 
             timediff = time.time() - start_time
             for offset, (unet_sq, unet_abs, vae_sq, vae_abs) in enumerate(zip(*to_host(scalars))):
