@@ -136,13 +136,13 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 
 @app.command()
 def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float = 1e-16, downloaders: int = 2,
-         resolution: int = 128, fps: int = 4, context: int = 8, workers: int = 16, prefetch: int = 6,
+         resolution: int = 128, fps: int = 1, context: int = 16, workers: int = 16, prefetch: int = 6,
          base_model: str = "flax/stable-diffusion-2-1", data_path: str = "./urls", sample_interval: int = 1024,
-         parallel_videos: int = 128, tracing_start_step: int = 3, tracing_stop_step: int = 5,
-         schedule_length: int = 1024, guidance: float = 7.5, warmup_steps: int = 16384,
+         parallel_videos: int = 128, tracing_start_step: int = 10**9, tracing_stop_step: int = 10**9,
+         schedule_length: int = 1024, guidance: float = 7.5, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, pos_embd_scale: float = 1e-3,
-         save_interval: int = 2048, overwrite: bool = True, unet_mode: bool = False,
-         base_path: str = "gs://video-us/checkpoint/", unet_init_steps: int = 1024, conv_init_steps: int = 0,
+         save_interval: int = 2048, overwrite: bool = True, unet_mode: bool = True,
+         base_path: str = "gs://video-us/checkpoint/", unet_init_steps: int = 0, conv_init_steps: int = 0,
          local_iterations: int = 16):
     global _CONTEXT, _RESHAPE
     unet_init_steps -= conv_init_steps * unet_mode
