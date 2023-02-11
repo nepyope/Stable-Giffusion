@@ -374,6 +374,11 @@ def main():
                         "safety_checker": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], safety_checker.params)),
                     },
                 )
+
+                del pipeline
+                del scheduler
+                del safety_checker
+                
         
         fetch.join()
         data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
