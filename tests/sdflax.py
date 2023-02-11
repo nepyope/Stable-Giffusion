@@ -17,7 +17,7 @@ import logging
 import threading
 import os
 import random
-
+import typer
 import gdown
 from PIL import Image
  
@@ -53,7 +53,10 @@ check_min_version("0.10.0.dev0")
 
 logger = logging.getLogger(__name__)
 
-def main():
+app = typer.Typer(pretty_exceptions_enable=False)
+
+@app.command()
+def main(lr: float =1e-6, overwrite: bool =False):
 
     # create the directory if it does not exist
     if not os.path.exists("surl"):
@@ -65,7 +68,7 @@ def main():
 
     resolution = (128,128)
     batch_per_device = 16
-    lr = 1e-5#4/(batch_per_device*jax.device_count())#i guess
+    lr = 1e-6#4/(batch_per_device*jax.device_count())#i guess
 
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -99,7 +102,7 @@ def main():
 
     #if there's a folder named sd-model, it will load the model from there
     model_path = 'flax/stable-diffusion-2-1'
-    if os.path.exists("sd-model"):
+    if overwrite and os.path.exists("sd-model"):
         model_path = 'sd-model'
 
     tokenizer = CLIPTokenizer.from_pretrained(model_path, subfolder="tokenizer")
@@ -387,4 +390,4 @@ def main():
         data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
 
 if __name__ == "__main__":
-    main()
+    app()
