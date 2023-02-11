@@ -25,7 +25,7 @@ from transformers import CLIPTokenizer, FlaxCLIPTextModel
 from data import DataLoader
 
 global base_seed
-base_seed = jax.random.PRNGKey(0)
+base_seed = 0
 app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")
 _UPLOAD_RETRIES = 8
