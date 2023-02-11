@@ -97,8 +97,11 @@ def main():
 
     weight_dtype = jnp.float32
 
-    # Load models and create wrapper for stable diffusion
+    #if there's a folder named sd-model, it will load the model from there
     model_path = 'flax/stable-diffusion-2-1'
+    if os.path.exists("sd-model"):
+        model_path = 'sd-model'
+
     tokenizer = CLIPTokenizer.from_pretrained(model_path, subfolder="tokenizer")
     text_encoder = FlaxCLIPTextModel.from_pretrained(
         model_path, subfolder="text_encoder", dtype=weight_dtype
@@ -378,7 +381,7 @@ def main():
                 del pipeline
                 del scheduler
                 del safety_checker
-                
+
         
         fetch.join()
         data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
