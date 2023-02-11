@@ -59,7 +59,7 @@ def _take_0th(x):
     return x[0]
 
 
-def to_host(k, index_fn: Callable[[jax.Array], jax.Array] = _take_0th):
+def to_host(k, index_fn: Callable[[jnp.ndarray], jnp.ndarray] = _take_0th):
     return jax.device_get(jax.tree_util.tree_map(index_fn, k))
 
 
@@ -74,11 +74,11 @@ def bias_correction(moment, decay, count):
     return jax.tree_map(lambda t: t / bias_correction.astype(t.dtype), moment)
 
 
-def promote(inp: jax.Array) -> jax.Array:
+def promote(inp: jnp.ndarray) -> jnp.ndarray:
     return jnp.asarray(inp, jnp.promote_types(jnp.float64, jnp.result_type(inp)))
 
 
-def clip_norm(val: jax.Array, min_norm: float) -> jax.Array:
+def clip_norm(val: jnp.ndarray, min_norm: float) -> jnp.ndarray:
     return jnp.maximum(jnp.sqrt(lax.square(val).sum()), min_norm)
 
 
@@ -119,7 +119,7 @@ def deep_replace(d, value):
     return value
 
 
-def load(path: str, prototype: Dict[str, jax.Array]):
+def load(path: str, prototype: Dict[str, jnp.ndarray]):
     try:
         with smart_open.open(path + ".np", 'rb') as f:
             params = list(zip(*sorted([(int(i), v) for i, v in np.load(f).items()])))[1]
@@ -172,7 +172,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np")
     local_batch = 1
 
-    def get_encoded(input_ids: jax.Array, attention_mask: jax.Array):
+    def get_encoded(input_ids: jnp.ndarray, attention_mask: jnp.ndarray):
         return text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
 
     def unet_fn(noise, encoded, timesteps, unet_params):
@@ -181,7 +181,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     def vae_apply(*args, method=vae.__call__, **kwargs):
         return vae.apply(*args, method=method, **kwargs)
 
-    def sample_vae(params: Any, inp: jax.Array):
+    def sample_vae(params: Any, inp: jnp.ndarray):
         return jnp.transpose(vae_apply({"params": params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
 
     def all_to_all(x, split=2):
@@ -193,7 +193,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 "input_ids": lax.all_gather(batch["input_ids"], "batch"),
                 "attention_mask": lax.all_gather(batch["attention_mask"], "batch")}
 
-    def rng(idx: jax.Array):
+    def rng(idx: jnp.ndarray):
         return jax.random.PRNGKey(idx * jax.device_count() + device_id())
 
     def sample(params, batch: Dict[str, Union[np.ndarray, int]]):
@@ -240,7 +240,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         return dist_sq, dist_abs
 
     def train_step(all_states: Union[Tuple[TrainState], Tuple[TrainState, TrainState]],
-                   batch: Dict[str, jax.Array]):
+                   batch: Dict[str, jnp.ndarray]):
         unet_state, v_state, = all_states
 
         if unet_mode:
@@ -328,7 +328,7 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                       jax.local_device_count(), prefetch, parallel_videos, tokenizer, clip_tokens)
     start_time = time.time()
 
-    def to_img(x: jax.Array) -> wandb.Image:
+    def to_img(x: jnp.ndarray) -> wandb.Image:
         return wandb.Image(x.reshape(-1, resolution, 3))
 
     global_step = 0
