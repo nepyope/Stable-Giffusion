@@ -16,7 +16,6 @@ from diffusers.utils import check_min_version
 from flax import jax_utils
 from flax.training.train_state import TrainState
 from jax import lax
-from jax.experimental.compilation_cache import compilation_cache
 from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
@@ -135,13 +134,13 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 @app.command()
 def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float = 1e-16, downloaders: int = 2,
          resolution: int = 128, fps: int = 1, context: int = 16, workers: int = 16, prefetch: int = 6,
-         base_model: str = "flax/stable-diffusion-2-1", data_path: str = "./urls", sample_interval: int = 1024,
-         parallel_videos: int = 128, tracing_start_step: int = 10**9, tracing_stop_step: int = 10**9,
+         base_model: str = "flax/stable-diffusion-2-1", data_path: str = "./urls", sample_interval: int = 512,
+         parallel_videos: int = 128, tracing_start_step: int = 10 ** 9, tracing_stop_step: int = 10 ** 9,
          schedule_length: int = 1024, guidance: float = 7.5, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, pos_embd_scale: float = 1e-3,
          save_interval: int = 2048, overwrite: bool = True, unet_mode: bool = True,
          base_path: str = "gs://video-us/checkpoint/", unet_init_steps: int = 0, conv_init_steps: int = 0,
-         local_iterations: int = 16):
+         local_iterations: int = 32):
     unet_init_steps -= conv_init_steps * unet_mode
     conv_init_steps *= 1 - unet_mode
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
@@ -194,7 +193,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 "attention_mask": lax.all_gather(batch["attention_mask"], "batch")}
 
     def rng(idx: jax.Array):
-        return jax.random.PRNGKey(idx * jax.device_count() + device_id())
+        return jax.random.PRNGKey(idx + device_id())
 
     def sample(params, batch: Dict[str, Union[np.ndarray, int]]):
         unet_params, vae_params, = params
@@ -234,7 +233,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     p_sample = jax.pmap(sample, "batch")
 
     def distance(x, y):
-        dist = (x - y).reshape(local_batch, context, -1)
+        dist = x - y
         dist_sq = lax.square(dist).mean()
         dist_abs = lax.abs(dist).mean()
         return dist_sq, dist_abs
@@ -243,10 +242,12 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                    batch: Dict[str, jax.Array]):
         unet_state, v_state, = all_states
 
+        img = batch["pixel_values"].astype(jnp.float32) / 255
+        inp = jnp.transpose(img, (0, 3, 1, 2))
         if unet_mode:
-            img = batch["pixel_values"].astype(jnp.float32) / 255
-            inp = jnp.transpose(img, (0, 3, 1, 2))
-            vae_out = vae_apply({"params": vae_params}, inp, deterministic=True, method=vae.encode)
+            gauss0, drop0 = jax.random.split(rng(batch["idx"]), 2)
+            vae_out = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gauss0, "dropout": drop0},
+                                deterministic=False, method=vae.encode)
         encoded = get_encoded(batch["input_ids"], batch["attention_mask"])
 
         def compute_loss(params, itr):
@@ -255,8 +256,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 unet_params, = params
             else:
                 unet_params, vae_params, = params
-            itr = rng(itr + batch["idx"])
-            gauss0, gauss1, drop0, drop1, sample_rng, noise_rng, step_rng = jax.random.split(itr, 7)
+            gauss0, gauss1, drop0, drop1, sample_rng, noise_rng, step_rng = jax.random.split(rng(itr + batch["idx"]), 7)
 
             if unet_mode:
                 vae_outputs = vae_out
@@ -291,7 +291,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 vae_pred = jnp.transpose(vae_pred, (0, 2, 3, 1))
                 vae_dist_sq, vae_dist_abs = distance(vae_pred, img)
 
-            return unet_dist_sq.mean() + vae_dist_sq.mean(), (unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs)
+            return unet_dist_sq + vae_dist_sq, (unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs)
 
         if unet_mode:
             inp = (unet_state.params,)
@@ -300,12 +300,12 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
 
         (loss, scalars), grads = jax.value_and_grad(lambda x: compute_loss(x, 0), has_aux=True)(inp)
         if local_iterations > 1:
-            def _inner(state, itr):
-                prev = state
+            def _inner(prev, itr):
                 grad_fn = jax.value_and_grad(lambda x: compute_loss(x, itr * 2 ** 20), has_aux=True)
                 return jax.tree_util.tree_map(lambda x, y: x / local_iterations + y, grad_fn(inp), prev), None
 
-            ((loss, scalars), grads), _ = lax.scan(_inner, ((loss, scalars), grads), jnp.arange(1, local_iterations))
+            prev = jax.tree_util.tree_map(lambda x: x / local_iterations, ((loss, scalars), grads))
+            ((loss, scalars), grads), _ = lax.scan(_inner, prev, jnp.arange(1, local_iterations))
 
         scalars, grads = lax.pmean((scalars, grads), "batch")
         new_unet_state = lax.switch((batch["idx"] > unet_init_steps).astype(jnp.int32),
@@ -341,7 +341,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             batch = {"pixel_values": vid.reshape(jax.local_device_count(), -1, *vid.shape[1:]),
                      "input_ids": ids.reshape(jax.local_device_count(), 1, -1),
                      "attention_mask": msk.reshape(jax.local_device_count(), 1, -1),
-                     "idx": jnp.full((jax.local_device_count(),), i, jnp.int32)}
+                     "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
             if i % sample_interval == 0:
