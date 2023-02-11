@@ -185,7 +185,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         shape = list(x.shape)
         shape[split] //= jax.device_count()
         shape.insert(split, jax.device_count())
-        return x.reshape(*shape).transpose(split, 0, *range(1, split), *range(split, len(shape)))
+        return x.reshape(*shape).transpose(split, 0, *range(1, split), *range(split + 1, len(shape)))
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": all_to_all(batch["pixel_values"], 1),
