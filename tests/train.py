@@ -184,7 +184,15 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         return jnp.transpose(vae_apply({"params": params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
 
     def all_to_all(x, split=2):
-        return lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
+        out = lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
+
+        def _roll(i: int):
+            def _fn(a: jax.Array):
+                return jnp.roll(a, i, 0)
+
+            return _fn
+
+        return lax.switch(device_id(), [_roll(k) for k in range(jax.device_count())], out)
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": all_to_all(batch["pixel_values"], 1),
