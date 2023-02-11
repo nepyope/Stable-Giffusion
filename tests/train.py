@@ -147,9 +147,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
-    text_encoder = FlaxCLIPTextModel.from_pretrained(
-        base_model, subfolder="text_encoder", dtype=jnp.float32
-    )
+    text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
     vae: FlaxAutoencoderKL = vae
     unet: FlaxUNet2DConditionModel = unet
@@ -187,7 +185,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         shape = list(x.shape)
         shape[split] //= jax.device_count()
         shape.insert(split, jax.device_count())
-        return x.reshape(*shape).transpose(split, 0)
+        return x.reshape(*shape).transpose(split, 0, *range(1, split), *range(split, len(shape)))
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": all_to_all(batch["pixel_values"], 1),
@@ -241,8 +239,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         dist_abs = lax.abs(dist).mean()
         return dist_sq, dist_abs
 
-    def train_step(all_states: Union[Tuple[TrainState], Tuple[TrainState, TrainState]],
-                   batch: Dict[str, jax.Array]):
+    def train_step(all_states: Union[Tuple[TrainState], Tuple[TrainState, TrainState]], batch: Dict[str, jax.Array]):
         unet_state, v_state, = all_states
 
         img = batch["pixel_values"].astype(jnp.float32) / 255
