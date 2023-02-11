@@ -354,10 +354,15 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 extra[f"Samples/Reconstruction (U-Net, Guidance 8) {pid}"] = to_img(g8)
                 extra[f"Samples/Ground Truth {pid}"] = to_img(batch["pixel_values"].astype(jnp.float32) / 255)
 
+            print("Before train step", datetime.datetime.now())
             (unet_state, vae_state), scalars = p_train_step((unet_state, vae_state), batch)
+            print("After train step", datetime.datetime.now())
 
             timediff = time.time() - start_time
-            for offset, (unet_sq, unet_abs, vae_sq, vae_abs) in enumerate(zip(*to_host(scalars))):
+            sclr = to_host(scalars)
+            print("To host", datetime.datetime.now())
+            for offset, (unet_sq, unet_abs, vae_sq, vae_abs) in enumerate(zip(*sclr)):
+                print("loop step", datetime.datetime.now())
                 vid_per_day = i / timediff * 24 * 3600
                 log = {"U-Net MSE/Total": float(unet_sq), "U-Net MAE/Total": float(unet_abs),
                        "VAE MSE/Total": float(vae_sq), "VAE MAE/Total": float(vae_abs),
