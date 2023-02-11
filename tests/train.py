@@ -316,8 +316,8 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             ((loss, scalars), grads), _ = lax.scan(_inner, prev, jnp.arange(1, local_iterations))
 
         scalars, grads = lax.pmean((scalars, grads), "batch")
-        new_unet_state = lax.switch((batch["idx"] > unet_init_steps).astype(jnp.int32),
-                                    [lambda: unet_state, lambda: unet_state.apply_gradients(grads=grads[0])])
+        new_unet_state = unet_state.apply_gradients(grads=grads[0])
+
         if unet_mode:
             return (new_unet_state, v_state), scalars
 
