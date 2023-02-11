@@ -184,21 +184,16 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         return jnp.transpose(vae_apply({"params": params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
 
     def all_to_all(x, split=2):
-        out = lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
-
-        def _roll(i: int):
-            def _fn(a: jax.Array):
-                return jnp.roll(a, i, 0)
-
-            return _fn
-
-        return lax.switch(device_id(), [_roll(k) for k in range(jax.device_count())], out)
+        shape = list(x.shape)
+        shape[split] //= jax.device_count()
+        shape.insert(split, jax.device_count())
+        return x.reshape(*shape).transpose(split, 0)
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": all_to_all(batch["pixel_values"], 1),
                 "idx": batch["idx"] + jnp.arange(jax.device_count()),
-                "input_ids": lax.all_gather(batch["input_ids"], "batch"),
-                "attention_mask": lax.all_gather(batch["attention_mask"], "batch")}
+                "input_ids": jnp.stack([batch["input_ids"]] * jax.device_count(), 0),
+                "attention_mask": jnp.stack([batch["attention_mask"]] * jax.device_count(), 0)}
 
     def rng(idx: jax.Array):
         return jax.random.PRNGKey(idx + device_id())
