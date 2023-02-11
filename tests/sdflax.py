@@ -17,7 +17,7 @@ import logging
 import threading
 import os
 import random
-
+import typer
 import gdown
 from PIL import Image
  
@@ -53,7 +53,10 @@ check_min_version("0.10.0.dev0")
 
 logger = logging.getLogger(__name__)
 
-def main():
+app = typer.Typer(pretty_exceptions_enable=False)
+
+@app.command()
+def main(lr: float =1e-6, overwrite: bool =False):
 
     # create the directory if it does not exist
     if not os.path.exists("surl"):
@@ -65,7 +68,7 @@ def main():
 
     resolution = (128,128)
     batch_per_device = 16
-    lr = 1e-5#4/(batch_per_device*jax.device_count())#i guess
+    lr = 1e-6#4/(batch_per_device*jax.device_count())#i guess
 
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -97,8 +100,11 @@ def main():
 
     weight_dtype = jnp.float32
 
-    # Load models and create wrapper for stable diffusion
+    #if there's a folder named sd-model, it will load the model from there
     model_path = 'flax/stable-diffusion-2-1'
+    if overwrite and os.path.exists("sd-model"):
+        model_path = 'sd-model'
+
     tokenizer = CLIPTokenizer.from_pretrained(model_path, subfolder="tokenizer")
     text_encoder = FlaxCLIPTextModel.from_pretrained(
         model_path, subfolder="text_encoder", dtype=weight_dtype
@@ -293,59 +299,58 @@ def main():
         fetch = threading.Thread(target=get_data, name="Downloader", args=(ids,batch_per_device,new_data, new_n_batches, new_batch_size, new_caption))
         fetch.start()
 
-        for _ in range(5):
-            iters = tqdm(range(n_batches), desc="Iter ... ", position=1)
-            ######UNET TRAINING
-            for i in iters:#maybe repeat this multiple times, sample afterwards
-                ####LOAD DATA
-                d = data[i*batch_size:(i+1)*batch_size]
-                images = []
-                captions = []
+        iters = tqdm(range(n_batches), desc="Iter ... ", position=1)
+        ######UNET TRAINING
+        for i in iters:#maybe repeat this multiple times, sample afterwards
+            ####LOAD DATA
+            d = data[i*batch_size:(i+1)*batch_size]
+            images = []
+            captions = []
 
-                l_d = i*batch_size
-                for n, im in enumerate(d):
-                    #load image from cv2
-                    img = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-                    images.append(Image.fromarray(img))
-                    captions.append(f'{caption}')
+            l_d = i*batch_size
+            for n, im in enumerate(d):
+                #load image from cv2
+                img = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+                images.append(Image.fromarray(img))
+                captions.append(f'{caption}')
 
-                inputs = tokenizer(captions, truncation=True)
-                input_ids = inputs.input_ids
-                images = [image.convert("RGB") for image in images]
-                images = [train_transforms(image) for image in images]
+            inputs = tokenizer(captions, truncation=True)
+            input_ids = inputs.input_ids
+            images = [image.convert("RGB") for image in images]
+            images = [train_transforms(image) for image in images]
 
-                examples = []#this is all correct so far
-                for im in range(len(images)):
-                    example = {}
-                    example["pixel_values"] = (torch.tensor(images[im])).float() 
-                    example["input_ids"] = input_ids[im]
-                    examples.append(example)
-                pixel_values = torch.stack([example["pixel_values"] for example in examples])
+            examples = []#this is all correct so far
+            for im in range(len(images)):
+                example = {}
+                example["pixel_values"] = (torch.tensor(images[im])).float() 
+                example["input_ids"] = input_ids[im]
+                examples.append(example)
+            pixel_values = torch.stack([example["pixel_values"] for example in examples])
 
-                pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
-                input_ids = [example["input_ids"] for example in examples]
+            pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
+            input_ids = [example["input_ids"] for example in examples]
 
-                padded_tokens = tokenizer.pad(
-                    {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
-                )
+            padded_tokens = tokenizer.pad(
+                {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
+            )
 
-                batch = {
-                    "pixel_values": pixel_values,
-                    "input_ids": padded_tokens.input_ids,
-                }
+            batch = {
+                "pixel_values": pixel_values,
+                "input_ids": padded_tokens.input_ids,
+            }
 
-                batch = {k: v.numpy() for k, v in batch.items()}#ids are correct
+            batch = {k: v.numpy() for k, v in batch.items()}#ids are correct
 
-                batch = {"pixel_values": batch['pixel_values'].reshape(jax.local_device_count(), -1, *batch['pixel_values'].shape[1:]),
-                        "input_ids": batch['input_ids'].reshape(jax.local_device_count(), -1, *batch['input_ids'].shape[1:])}
+            batch = {"pixel_values": batch['pixel_values'].reshape(jax.local_device_count(), -1, *batch['pixel_values'].shape[1:]),
+                    "input_ids": batch['input_ids'].reshape(jax.local_device_count(), -1, *batch['input_ids'].shape[1:])}
 
-                ####TRAIN
-                unet_state, unet_loss, train_rngs = unet_p_train_step(unet_state, text_encoder_params, vae_params, batch, train_rngs)
-                unet_loss = sum(unet_loss['loss'])/jax.device_count()
+            ####TRAIN
+            unet_state, unet_loss, train_rngs = unet_p_train_step(unet_state, text_encoder_params, vae_params, batch, train_rngs)
+            unet_loss = sum(unet_loss['loss'])/jax.device_count()
 
-                run.log({"UNET loss": unet_loss})
+            run.log({"UNET loss": unet_loss})
 
-        if epoch % 30 == 0:#save every 10 epochs. don't log anything
+        if epoch % 50 == 0:#save every 10 epochs. don't log anything
 
             if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
                 print('saving model...')
@@ -378,10 +383,10 @@ def main():
                 del pipeline
                 del scheduler
                 del safety_checker
-                
+
         
         fetch.join()
         data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
 
 if __name__ == "__main__":
-    main()
+    app()
