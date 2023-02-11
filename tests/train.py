@@ -133,7 +133,7 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 
 
 @app.command()
-def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float = 1e-16, downloaders: int = 2,
+def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float = 1e-16, downloaders: int = 2,
          resolution: int = 128, fps: int = 1, context: int = 16, workers: int = 16, prefetch: int = 6,
          base_model: str = "flax/stable-diffusion-2-1", data_path: str = "./urls", sample_interval: int = 1024,
          parallel_videos: int = 128, tracing_start_step: int = 10**9, tracing_stop_step: int = 10**9,
@@ -372,10 +372,6 @@ def main(lr: float = 1e-5, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                     log.update({"Runtime": timediff, "Speed/Videos per Day": vid_per_day,
                                 "Speed/Frames per Day": vid_per_day * context * jax.device_count()})
                 run.log(log, step=(global_step - 1) * jax.device_count() + offset)
-            if i == tracing_start_step * jax.device_count():
-                jax.profiler.start_trace("trace")
-            if i == tracing_stop_step * jax.device_count():
-                jax.profiler.stop_trace()
             if i % save_interval == 0 and jax.process_index() == 0:
                 states = ("unet", unet_state),
                 for n, s in [("vae", vae_state)] * (not unet_mode) + list(states):
