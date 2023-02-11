@@ -181,14 +181,8 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     def sample_vae(params: Any, inp: jax.Array):
         return jnp.transpose(vae_apply({"params": params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
 
-    def all_to_all(x, split=2):
-        shape = list(x.shape)
-        shape[split] //= jax.device_count()
-        shape.insert(split, jax.device_count())
-        return x.reshape(*shape).transpose(split, 0, *range(1, split), *range(split + 1, len(shape)))
-
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
-        return {"pixel_values": all_to_all(batch["pixel_values"], 1),
+        return {"pixel_values": batch["pixel_values"],
                 "idx": batch["idx"] + jnp.arange(jax.device_count()),
                 "input_ids": jnp.stack([batch["input_ids"]] * jax.device_count(), 0),
                 "attention_mask": jnp.stack([batch["attention_mask"]] * jax.device_count(), 0)}
@@ -338,7 +332,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             if global_step <= 2:
                 print(f"Step {global_step}", datetime.datetime.now())
             i *= jax.device_count()
-            batch = {"pixel_values": vid.reshape(jax.local_device_count(), -1, *vid.shape[1:]),
+            batch = {"pixel_values": vid.reshape(jax.local_device_count(), jax.device_count(), -1, *vid.shape[1:]),
                      "input_ids": ids.reshape(jax.local_device_count(), 1, -1),
                      "attention_mask": msk.reshape(jax.local_device_count(), 1, -1),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
