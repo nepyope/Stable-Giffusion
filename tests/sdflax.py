@@ -386,7 +386,7 @@ def main():
                     'sd-model',
                     params={
                         "text_encoder": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], text_encoder_params)),
-                        "vae": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], unet_state.params)),
+                        "vae": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], vae_state.params)),
                         "unet": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], unet_state.params)),
                         "safety_checker": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], safety_checker.params)),
                     },
