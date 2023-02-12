@@ -24,8 +24,7 @@ from transformers import CLIPTokenizer, FlaxCLIPTextModel
 
 from data import DataLoader
 
-global base_seed
-base_seed = 0
+rng = jax.random.PRNGKey(0)
 app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")
 _UPLOAD_RETRIES = 8
@@ -195,17 +194,13 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 "input_ids": lax.all_gather(batch["input_ids"], "batch"),
                 "attention_mask": lax.all_gather(batch["attention_mask"], "batch")}
 
-    def rng(idx: jax.Array):
-        global base_seed
-        base_seed = base_seed + jax.random.PRNGKey(idx * jax.device_count() + device_id())
-        return base_seed
 
     def sample(params, batch: Dict[str, Union[np.ndarray, int]]):
         unet_params, vae_params, = params
 
         batch = all_to_all_batch(batch)
         batch = jax.tree_map(lambda x: x[0], batch)
-        latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 4)
+        latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(rng, 4)
 
         inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
         posterior = vae_apply({"params": vae_params}, inp, method=vae.encode)
@@ -259,7 +254,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 unet_params, = params
             else:
                 unet_params, vae_params, = params
-            itr = rng(itr + batch["idx"])
+            itr = rng
             gauss0, gauss1, drop0, drop1, sample_rng, noise_rng, step_rng = jax.random.split(itr, 7)
 
             if unet_mode:
@@ -331,13 +326,20 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context * jax.device_count(),
                       jax.local_device_count(), prefetch, parallel_videos, tokenizer, clip_tokens)
     start_time = time.time()
+    #get 1 iteration from dataloader
+    overfit = []
+    for i, (vid, ids, msk) in enumerate(data, 1):
+        k = i, (vid, ids, msk)
+        overfit.append(k)
+        #append to list
+
 
     def to_img(x: jax.Array) -> wandb.Image:
         return wandb.Image(x.reshape(-1, resolution, 3))
 
     global_step = 0
     for epoch in range(10 ** 9):
-        for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 1)):
+        for i, (vid, ids, msk) in overfit:
             global_step += 1
             if global_step <= 2:
                 print(f"Step {global_step}", datetime.datetime.now())
