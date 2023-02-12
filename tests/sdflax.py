@@ -131,6 +131,7 @@ def main():
         def compute_loss(params):
             # Convert images to latent space
             inp = batch["pixel_values"][0]
+            inp = jnp.expand_dims(inp, axis=0)
             
             vae_outputs = vae.apply(
                 {"params": vae_params}, inp, deterministic=True, method=vae.encode
@@ -160,7 +161,7 @@ def main():
             encoder_hidden_states = text_encoder(
                 batch["input_ids"],
                 params=text_encoder_params
-            )[0]
+            )[0][0]
 
             # Predict the noise residual and compute loss
             model_pred = unet.apply(
@@ -195,7 +196,9 @@ def main():
 
         def compute_loss(params):
             inp = batch["pixel_values"][0]
+            inp = jnp.expand_dims(inp, axis=0)
             tar = batch["pixel_values"][1]
+            tar = jnp.expand_dims(tar, axis=0)
             gaussian, dropout = jax.random.split(jax.random.PRNGKey(0), 2)
             out = vae.apply({"params": params}, inp, rngs={"gaussian": gaussian, "dropout": dropout},
                             sample_posterior=True, deterministic=False).sample
