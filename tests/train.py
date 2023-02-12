@@ -216,10 +216,15 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
 
         lshape = latents.shape
         shape = (1, lshape[1], lshape[0] * lshape[2], lshape[3])
-        latents = jax.random.normal(latent_rng, shape, latents.dtype)
-        latents = lax.broadcast_in_dim(latents, (4, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
+        noise = jax.random.normal(latent_rng, shape, latents.dtype)
+        noise = lax.broadcast_in_dim(noise, (4, *noise.shape), (1, 2, 3, 4)).reshape(-1, *noise.shape[1:])
+        latents = lax.broadcast_in_dim(latents, (4, *latents.shape), (1, 2, 3, 4)).reshape(*noise.shape)
         state = noise_scheduler.set_timesteps(sched_state, schedule_length, latents.shape)
-        (out, _), _ = lax.scan(_step, (latents, state), jnp.arange(schedule_length)[::-1])
+        start_step = round(schedule_length * 0.9)
+        t0 = jnp.full((), start_step, jnp.int32)
+        latents = noise_scheduler.add_noise(sched_state, latents, noise, t0)
+
+        (out, _), _ = lax.scan(_step, (latents, state), jnp.arange(start_step)[::-1])
         out = out.reshape(4, lshape[1], lshape[0], lshape[2], lshape[3])
         out = out.transpose(0, 2, 3, 4, 1) / 0.18215  # NCHW -> NHWC + remove latent folding
         return jnp.concatenate([sample_vae(vae_params, x) for x in [hidden_mode] + list(out)])
