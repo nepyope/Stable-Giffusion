@@ -188,7 +188,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                 "attention_mask": jnp.stack([batch["attention_mask"]] * jax.device_count(), 0)}
 
     def rng(idx: jax.Array):
-        return jax.random.PRNGKey(idx + device_id())
+        return jax.random.PRNGKey(idx * jax.device_count() + device_id())
 
     def sample(params, batch: Dict[str, Union[np.ndarray, int]]):
         unet_params, vae_params, = params
