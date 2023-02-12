@@ -134,7 +134,7 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 @app.command()
 def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float = 1e-16, downloaders: int = 2,
          resolution: int = 128, fps: int = 1, context: int = 16, workers: int = 16, prefetch: int = 6,
-         base_model: str = "flax/stable-diffusion-2-1", data_path: str = "./urls", sample_interval: int = 512,
+         base_model: str = "flax/stable-diffusion-2-1", data_path: str = "./urls", sample_interval: int = 1024,
          parallel_videos: int = 128, tracing_start_step: int = 10 ** 9, tracing_stop_step: int = 10 ** 9,
          schedule_length: int = 1024, guidance: float = 7.5, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, pos_embd_scale: float = 1e-3,
@@ -355,6 +355,14 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             timediff = time.time() - start_time
             sclr = to_host(scalars)
             print("To host", datetime.datetime.now())
+            if i % sample_interval == 0:
+                sample_out = p_sample((unet_state.params, vae_state.params), batch)
+                s_mode, g1, g2, g4, g8 = np.split(to_host(sample_out, lambda x: x), 5, 1)
+                extra[f"Samples/Post-Step Reconstruction (U-Net, Guidance 1) {pid}"] = to_img(g1)
+                extra[f"Samples/Post-Step Reconstruction (U-Net, Guidance 2) {pid}"] = to_img(g2)
+                extra[f"Samples/Post-Step Reconstruction (U-Net, Guidance 4) {pid}"] = to_img(g4)
+                extra[f"Samples/Post-Step Reconstruction (U-Net, Guidance 8) {pid}"] = to_img(g8)
+
             for offset, (unet_sq, unet_abs, vae_sq, vae_abs) in enumerate(zip(*sclr)):
                 print("loop step", datetime.datetime.now())
                 vid_per_day = i / timediff * 24 * 3600
