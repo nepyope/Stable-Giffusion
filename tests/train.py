@@ -136,7 +136,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
          resolution: int = 128, fps: int = 1, context: int = 16, workers: int = 16, prefetch: int = 6,
          base_model: str = "flax/stable-diffusion-2-1", data_path: str = "./urls", sample_interval: int = 2048,
          parallel_videos: int = 128, tracing_start_step: int = 10 ** 9, tracing_stop_step: int = 10 ** 9,
-         schedule_length: int = 8192, guidance: float = 7.5, warmup_steps: int = 1024,
+         schedule_length: int = 1024, guidance: float = 7.5, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, pos_embd_scale: float = 1e-3,
          save_interval: int = 2048, overwrite: bool = True, unet_mode: bool = True,
          base_path: str = "gs://video-us/checkpoint/", unet_init_steps: int = 0, conv_init_steps: int = 0,
@@ -163,7 +163,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     vae_state = TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
     unet_state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
-    noise_scheduler = FlaxPNDMScheduler(beta_start=0.00085 / 2, beta_end=0.012 / 2, beta_schedule="scaled_linear",
+    noise_scheduler = FlaxPNDMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear",
                                         num_train_timesteps=schedule_length)
     sched_state = noise_scheduler.create_state()
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np")
