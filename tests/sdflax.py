@@ -308,15 +308,16 @@ def main():
                 ####LOAD DATA
                 d = data[i*batch_size:(i+1)*batch_size]
 
-                d = d[shift%2:] + d[:shift%2]#this is done so that the transition is learned from frame 0 to 1, 1 to 2, 2 to 3.. instead of 0 to 1, 2 to 3, 4 to 5
-                
-
                 images = []
                 captions = []
+                l_d = i*batch_size
                 for n,image in enumerate(d):
                     img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                     images.append(Image.fromarray(img))
-                    captions.append(f'{caption}')
+                    captions.append(f'{l_d+n} {caption}')
+
+                images = images[shift%2:] + images[:shift%2]#this is done so that the transition is learned from frame 0 to 1, 1 to 2, 2 to 3.. instead of 0 to 1, 2 to 3, 4 to 5
+                captions = captions[shift%2:] + captions[:shift%2]
 
                 #append captions[0] to text file
                 with open('text.txt', 'a') as file:
@@ -364,6 +365,7 @@ def main():
                 run.log({"VAE loss": vae_loss})
 
         if epoch % 25 == 0:#save every 10 epochs
+
             if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
                 print('saving model...')
                 scheduler = FlaxPNDMScheduler(
