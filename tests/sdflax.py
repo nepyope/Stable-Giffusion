@@ -315,9 +315,9 @@ def main():
                 d = data[i*batch_size:(i+1)*batch_size]
                 images = []
                 captions = []
-                for n, i in enumerate(d):
+                for n,image in enumerate(d):
                     #load image from cv2
-                    img = cv2.cvtColor(i, cv2.COLOR_BGR2RGB)
+                    img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                     images.append(Image.fromarray(img))
                     captions.append(f'{caption}')
 
@@ -361,88 +361,17 @@ def main():
 
                 run.log({"UNET loss": unet_loss})
 
-            iters = tqdm(range(n_batches), desc="Iter ... ", position=1)
-            ######VAE TRAINING
-            for i in iters:#maybe repeat this multiple times, sample afterwards
-
-                ####LOAD DATA
-                d = data[i*batch_size:(i+1)*batch_size]
-                images = []
-                captions = []
-                for n, i in enumerate(d):
-                    #load image from cv2
-                    img = cv2.cvtColor(i, cv2.COLOR_BGR2RGB)
-                    images.append(Image.fromarray(img))
-                    captions.append(f'{caption}')
-
-                inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
-                input_ids = inputs.input_ids
-                images = [image.convert("RGB") for image in images]
-                images = [train_transforms(image) for image in images]
-
-                examples = []
-                for i in range(len(images)):
-                    example = {}
-                    example["pixel_values"] = (torch.tensor(images[i])).float()
-                    example["input_ids"] = input_ids[i]
-                    examples.append(example)
-                pixel_values = torch.stack([example["pixel_values"] for example in examples])
-
-
-                pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
-                input_ids = [example["input_ids"] for example in examples]
-
-                padded_tokens = tokenizer.pad(
-                    {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
-                )
-                batch = {
-                    "pixel_values": pixel_values,
-                    "input_ids": padded_tokens.input_ids,
-                }
-                batch = {k: v.numpy() for k, v in batch.items()}
-
-                batch = {"pixel_values": batch['pixel_values'].reshape(jax.local_device_count(), -1, *batch['pixel_values'].shape[1:]),
-                        "input_ids": batch['input_ids'].reshape(jax.local_device_count(), -1, *batch['input_ids'].shape[1:])}
-
                 vae_state, vae_loss = vae_p_train_step(vae_state, batch)
                 vae_loss = sum(vae_loss['loss'])/jax.device_count()
 
                 run.log({"VAE loss": vae_loss})
 
         if epoch % 100 == 0:#save every 10 epochs
-
+            #generate samples using stuff i've already loaded 
             if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
                 print('saving model...')
-                scheduler = FlaxPNDMScheduler(
-                    beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
-                )
-                safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
-                    "CompVis/stable-diffusion-safety-checker", from_pt=True
-                )
-                pipeline = FlaxStableDiffusionPipeline(
-                    text_encoder=text_encoder,
-                    vae=vae,
-                    unet=unet,
-                    tokenizer=tokenizer,
-                    scheduler=scheduler,
-                    safety_checker=safety_checker,
-                    feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
-                )
-
-                pipeline.save_pretrained(
-                    'sd-model',
-                    params={
-                        "text_encoder": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], text_encoder_params)),
-                        "vae": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], vae_state.params)),
-                        "unet": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], unet_state.params)),
-                        "safety_checker": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], safety_checker.params)),
-                    },
-                )
-                #get rid of pipeline
-                del pipeline
-                del images
-                del safety_checker
-                del scheduler
+                unet.save_pretrained('unet', params=unet_state.params)
+                vae.save_pretrained('vae', params=vae_state.params)
                 print('resuming training')      
 
         fetch.join()
