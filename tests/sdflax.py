@@ -87,9 +87,14 @@ def main():
     # Load models and create wrapper for stable diffusion
     model_path = 'flax/stable-diffusion-2-1'
     tokenizer = CLIPTokenizer.from_pretrained(model_path, subfolder="tokenizer")
-
+    text_encoder = FlaxCLIPTextModel.from_pretrained(
+        model_path, subfolder="text_encoder", dtype=weight_dtype
+    )
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
         model_path, subfolder="vae", dtype=weight_dtype
+    )
+    unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
+        model_path, subfolder="unet", dtype=weight_dtype
     )
 
 
@@ -108,7 +113,83 @@ def main():
         adamw,
     )
 
+    unet_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
     vae_state = train_state.TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
+
+    noise_scheduler = FlaxDDPMScheduler(
+        beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=1000
+    )
+    sched = noise_scheduler.create_state()
+
+    # Initialize our training
+    rng = jax.random.PRNGKey(0) 
+    train_rngs = jax.random.split(rng, jax.local_device_count())
+
+    def unet_train_step(state, text_encoder_params, vae_params, batch, train_rng):
+        dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
+
+        def compute_loss(params):
+            # Convert images to latent space
+            inp = batch["pixel_values"]
+            #inp = jnp.expand_dims(inp, axis=0)
+            
+            vae_outputs = vae.apply(
+                {"params": vae_params}, inp, deterministic=True, method=vae.encode
+            )
+            latents = vae_outputs.latent_dist.sample(sample_rng)
+            # (NHWC) -> (NCHW)
+            latents = jnp.transpose(latents, (0, 3, 1, 2))
+            latents = latents * 0.18215
+
+            # Sample noise that we'll add to the latents
+            noise_rng, timestep_rng = jax.random.split(sample_rng)
+            noise = jax.random.normal(noise_rng, latents.shape)
+            # Sample a random timestep for each image
+            bsz = latents.shape[0]
+            timesteps = jax.random.randint(
+                timestep_rng,
+                (bsz,),
+                0,
+                noise_scheduler.config.num_train_timesteps,
+            )
+
+            noisy_latents = noise_scheduler.add_noise(sched,latents, noise, timesteps)
+
+            # Get the text embedding for conditioning
+            encoder_hidden_states = text_encoder(
+                batch["input_ids"],
+                params=text_encoder_params
+            )[0]
+
+            #encoder_hidden_states = jnp.expand_dims(encoder_hidden_states, axis=0)
+
+            model_pred = unet.apply(
+                {"params": params}, noisy_latents, timesteps, encoder_hidden_states
+            ).sample
+
+            # Get the target for loss depending on the prediction type
+            if noise_scheduler.config.prediction_type == "epsilon":
+                target = noise
+            elif noise_scheduler.config.prediction_type == "v_prediction":
+                target = noise_scheduler.get_velocity(latents, noise, timesteps)
+            else:
+                raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
+
+            loss = (target - model_pred) ** 2
+            loss = loss.mean()
+
+            return loss
+
+        grad_fn = jax.value_and_grad(compute_loss)
+        loss, grad = grad_fn(state.params)
+        grad = jax.lax.pmean(grad, "batch")
+
+        new_state = state.apply_gradients(grads=grad)
+
+        metrics = {"loss": loss}
+        metrics = jax.lax.pmean(metrics, axis_name="batch")
+
+        return new_state, metrics, new_train_rng
 
     def vae_train_step(state, batch):
 
@@ -139,10 +220,15 @@ def main():
 
         return new_state, metrics
 
+    # Create parallel version of the train step
+    unet_p_train_step = jax.pmap(unet_train_step, "batch", donate_argnums=(0,))
     vae_p_train_step = jax.pmap(vae_train_step, "batch", donate_argnums=(0,))
 
+    # Replicate the train state on each device
+    unet_state = jax_utils.replicate(unet_state)
     vae_state = jax_utils.replicate(vae_state)
 
+    text_encoder_params = jax_utils.replicate(text_encoder.params)
     vae_params = jax_utils.replicate(vae_params)
 
     ####LOAD DATA
@@ -177,7 +263,7 @@ def main():
         video = cv2.VideoCapture('video.mp4')
 
         # Get the total number of frames in the video
-        total_frames = 256
+        total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 
         data.append([])
 
@@ -206,17 +292,17 @@ def main():
     fetch.start()
     fetch.join()
 
-    data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0] #overfit vae on this one example
-
+    data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
+    print(caption)
     for epoch in epochs:
 
         #fetch = threading.Thread(target=get_data, name="Downloader", args=(ids,batch_per_device,new_data, new_n_batches, new_batch_size, new_caption))
         #fetch.start()
-        #print(caption)
+
         for shift in range(10):#shift batch y 1 so that all transitions are learned 
 
             iters = tqdm(range(n_batches), desc="Iter ... ", position=1)
-
+            ######UNET TRAINING
             for i in iters:#maybe repeat this multiple times, sample afterwards
 
                 ####LOAD DATA
@@ -235,6 +321,7 @@ def main():
                 #append captions[0] to text file
                 with open('text.txt', 'a') as file:
                     file.write(f'{caption[0]}')
+
 
                 inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
                 input_ids = inputs.input_ids
@@ -265,13 +352,21 @@ def main():
                 batch = {"pixel_values": batch['pixel_values'].reshape(jax.local_device_count(), -1, *batch['pixel_values'].shape[1:]),
                         "input_ids": batch['input_ids'].reshape(jax.local_device_count(), -1, *batch['input_ids'].shape[1:])}
 
+                ####TRAIN
+                unet_state, unet_loss, train_rngs = unet_p_train_step(unet_state, text_encoder_params, vae_params, batch, train_rngs)
+                unet_loss = sum(unet_loss['loss'])/jax.device_count()
+
+                run.log({"UNET loss": unet_loss})
+
                 vae_state, vae_loss = vae_p_train_step(vae_state, batch)
                 vae_loss = sum(vae_loss['loss'])/jax.device_count()
 
                 run.log({"VAE loss": vae_loss})
 
         if epoch % 25 == 0:#save every 10 epochs
+            #generate samples using stuff i've already loaded 
             print('saving model...')
+            unet.save_pretrained('unet', params=jax.device_get(jax.tree_util.tree_map(lambda x: x[0], unet_state.params)))
             vae.save_pretrained('vae', params=jax.device_get(jax.tree_util.tree_map(lambda x: x[0], vae_state.params)))
             print('resuming training')      
 
