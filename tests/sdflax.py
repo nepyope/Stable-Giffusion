@@ -153,8 +153,6 @@ def main():
                 noise_scheduler.config.num_train_timesteps,
             )
 
-            # Add noise to the latents according to the noise magnitude at each timestep
-            # (this is the forward diffusion process)
             noisy_latents = noise_scheduler.add_noise(sched,latents, noise, timesteps)
 
             # Get the text embedding for conditioning
@@ -242,26 +240,22 @@ def main():
     random.shuffle(ids)
     ids = iter(ids)
 
-    ######TRAIN LOOP    
-
-    epochs = 10000000 #5 at most? depends on resolution. 5*256*256 seems the max, 2 for widescreen. this is also the number of videos. 
+    ######TRAIN LOOP
+    epochs = 10000000 
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
     epochs = tqdm(range(epochs), desc="Epoch ... ", position=0)    
 
     n_batches = 0
     caption = ""
 
-
     def get_data(ids,batch_per_device,data, n_batches, batch_size, caption):
         id = next(ids)
         print('downloading video...')
         url = id[0]
-        duration = id[1]
 
         caption.append([])
         caption[-1].append(id[2])
         caption.pop(0)
-
 
         r = requests.get(url, allow_redirects=True)
         open('video.mp4', 'wb').write(r.content)
@@ -305,7 +299,7 @@ def main():
         fetch = threading.Thread(target=get_data, name="Downloader", args=(ids,batch_per_device,new_data, new_n_batches, new_batch_size, new_caption))
         fetch.start()
         print(caption)
-        for _ in range(10):#repeat training 10 times. how low can i get this?
+        for shift in range(2):#shift dataset by 1 so that all transitions are learned
 
             iters = tqdm(range(n_batches), desc="Iter ... ", position=1)
             ######UNET TRAINING
@@ -313,10 +307,13 @@ def main():
 
                 ####LOAD DATA
                 d = data[i*batch_size:(i+1)*batch_size]
+
+                d = d[shift:] + d[:shift]#this is done so that the transition is learned from frame 0 to 1, 1 to 2, 2 to 3.. instead of 0 to 1, 2 to 3, 4 to 5
+                
+
                 images = []
                 captions = []
                 for n,image in enumerate(d):
-                    #load image from cv2
                     img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                     images.append(Image.fromarray(img))
                     captions.append(f'{caption}')
