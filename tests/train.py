@@ -134,9 +134,9 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 @app.command()
 def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float = 1e-16, downloaders: int = 2,
          resolution: int = 128, fps: int = 1, context: int = 16, workers: int = 16, prefetch: int = 6,
-         base_model: str = "flax/stable-diffusion-2-1", data_path: str = "./urls", sample_interval: int = 1024,
+         base_model: str = "flax/stable-diffusion-2-1", data_path: str = "./urls", sample_interval: int = 2048,
          parallel_videos: int = 128, tracing_start_step: int = 10 ** 9, tracing_stop_step: int = 10 ** 9,
-         schedule_length: int = 1024, guidance: float = 7.5, warmup_steps: int = 1024,
+         schedule_length: int = 8192, guidance: float = 7.5, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, pos_embd_scale: float = 1e-3,
          save_interval: int = 2048, overwrite: bool = True, unet_mode: bool = True,
          base_path: str = "gs://video-us/checkpoint/", unet_init_steps: int = 0, conv_init_steps: int = 0,
@@ -163,7 +163,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
     vae_state = TrainState.create(apply_fn=vae.__call__, params=vae_params, tx=optimizer)
     unet_state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
-    noise_scheduler = FlaxPNDMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear",
+    noise_scheduler = FlaxPNDMScheduler(beta_start=0.00085 / 2, beta_end=0.012 / 2, beta_schedule="scaled_linear",
                                         num_train_timesteps=schedule_length)
     sched_state = noise_scheduler.create_state()
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np")
@@ -182,8 +182,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         return jnp.transpose(vae_apply({"params": params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
-        return {"pixel_values": batch["pixel_values"],
-                "idx": batch["idx"] + jnp.arange(jax.device_count()),
+        return {"pixel_values": batch["pixel_values"], "idx": batch["idx"] + jnp.arange(jax.device_count()),
                 "input_ids": jnp.stack([batch["input_ids"]] * jax.device_count(), 0),
                 "attention_mask": jnp.stack([batch["attention_mask"]] * jax.device_count(), 0)}
 
@@ -262,17 +261,15 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             latents = jnp.transpose(vae_outputs, (0, 3, 1, 2))
             latents = lax.stop_gradient(latents * 0.18215)
 
+            latents = jnp.transpose(latents, (1, 0, 2, 3))
+            latents = latents.reshape(1, latents.shape[0], -1, latents.shape[-1])
+
             noise = jax.random.normal(noise_rng, latents.shape)
             t0 = jax.random.randint(step_rng, (), 0, noise_scheduler.config.num_train_timesteps)
-            timesteps = jnp.full((latents.shape[0],), t0, t0.dtype)
-            noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, timesteps)
-            noisy_latents = jnp.transpose(noisy_latents, (1, 0, 2, 3))
-            noisy_latents = noisy_latents.reshape(1, noisy_latents.shape[0], -1, noisy_latents.shape[-1])
+            noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, t0)
 
             unet_pred = unet_fn(noisy_latents, encoded, t0, unet_params)
 
-            noise = jnp.transpose(noise, (1, 0, 2, 3))
-            noise = noisy_latents.reshape(1, noise.shape[0], -1, noise.shape[-1])
             unet_dist_sq, unet_dist_abs = distance(unet_pred, noise)
 
             if unet_mode:
