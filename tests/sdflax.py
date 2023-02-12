@@ -194,7 +194,7 @@ def main():
     def vae_train_step(state, batch):
 
         def compute_loss(params):
-            inp = batch["pixel_values"][0]
+            inp = batch["pixel_values"][0]#i might be teaching it that time goes backwards? whatever if it doesnt work, just lower the framerate
             inp = jnp.expand_dims(inp, axis=0)
             tar = batch["pixel_values"][1]
             tar = jnp.expand_dims(tar, axis=0)
@@ -364,11 +364,39 @@ def main():
                 run.log({"VAE loss": vae_loss})
 
         if epoch % 25 == 0:#save every 10 epochs
-            #generate samples using stuff i've already loaded 
-            print('saving model...')
-            unet.save_pretrained('unet', params=jax.device_get(jax.tree_util.tree_map(lambda x: x[0], unet_state.params)))
-            vae.save_pretrained('vae', params=jax.device_get(jax.tree_util.tree_map(lambda x: x[0], vae_state.params)))
-            print('resuming training')      
+            if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
+                print('saving model...')
+                scheduler = FlaxPNDMScheduler(
+                    beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
+                )
+                safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
+                    "CompVis/stable-diffusion-safety-checker", from_pt=True
+                )
+                pipeline = FlaxStableDiffusionPipeline(
+                    text_encoder=text_encoder,
+                    vae=vae,
+                    unet=unet,
+                    tokenizer=tokenizer,
+                    scheduler=scheduler,
+                    safety_checker=safety_checker,
+                    feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
+                )
+
+                pipeline.save_pretrained(
+                    'sd-model',
+                    params={
+                        "text_encoder": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], text_encoder_params)),
+                        "vae": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], vae_params)),
+                        "unet": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], unet_state.params)),
+                        "safety_checker": jax.device_get(jax.tree_util.tree_map(lambda x: x[0], safety_checker.params)),
+                    },
+                )
+
+                del pipeline
+                del scheduler
+                del safety_checker
+
+                print('model saved')
 
         #fetch.join()
         #data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
