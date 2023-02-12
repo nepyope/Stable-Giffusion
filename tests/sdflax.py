@@ -271,14 +271,9 @@ def main():
                 run.log({"VAE loss": vae_loss})
 
         if epoch % 25 == 0:#save every 10 epochs
-            #generate samples using stuff i've already loaded 
-            if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
-                print('saving model...')
-                vae = FlaxAutoencoderKL.from_pretrained(
-                    model_path, subfolder="vae", dtype=weight_dtype
-                )
-                vae.save_pretrained('vae', params=jax.device_get(jax.tree_util.tree_map(lambda x: x[0], vae_state.params)))
-                print('resuming training')      
+            print('saving model...')
+            vae.save_pretrained('vae', params=jax.device_get(jax.tree_util.tree_map(lambda x: x[0], vae_state.params)))
+            print('resuming training')      
 
         #fetch.join()
         #data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
