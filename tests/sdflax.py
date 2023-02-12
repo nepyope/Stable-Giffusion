@@ -163,7 +163,8 @@ def main():
                 params=text_encoder_params
             )[0][0]
 
-            # Predict the noise residual and compute loss
+            encoder_hidden_states = jnp.expand_dims(encoder_hidden_states, axis=0)
+
             model_pred = unet.apply(
                 {"params": params}, noisy_latents, timesteps, encoder_hidden_states
             ).sample
