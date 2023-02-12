@@ -270,7 +270,7 @@ def main():
         for i in range(0, total_frames):
             video.set(cv2.CAP_PROP_POS_FRAMES, i)
             ret, frame = video.read()
-            if ret:
+            if ret and i%2==0:#halve the framerate
                 data[-1].append(frame)
 
         data.pop(0)
@@ -314,7 +314,7 @@ def main():
                 for n,image in enumerate(d):
                     img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                     images.append(Image.fromarray(img))
-                    captions.append(f'{l_d+n} {caption}')
+                    captions.append(f'{caption}')#{l_d+n} 
 
                 images = images[shift%2:] + images[:shift%2]#this is done so that the transition is learned from frame 0 to 1, 1 to 2, 2 to 3.. instead of 0 to 1, 2 to 3, 4 to 5
                 captions = captions[shift%2:] + captions[:shift%2]
