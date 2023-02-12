@@ -364,7 +364,7 @@ def main():
 
                 run.log({"VAE loss": vae_loss})
 
-        if epoch % 25 == 0:#save every 10 epochs
+        if epoch % 5 == 0:#save every 10 epochs
 
             if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
                 print('saving model...')
