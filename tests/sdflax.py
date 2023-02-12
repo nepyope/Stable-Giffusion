@@ -274,6 +274,9 @@ def main():
             #generate samples using stuff i've already loaded 
             if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
                 print('saving model...')
+                vae = FlaxAutoencoderKL.from_pretrained(
+                    model_path, subfolder="vae", dtype=weight_dtype
+                )
                 vae.save_pretrained('vae', params=jax.device_get(jax.tree_util.tree_map(lambda x: x[0], vae_state.params)))
                 print('resuming training')      
 
