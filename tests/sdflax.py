@@ -270,11 +270,11 @@ def main():
 
                 run.log({"VAE loss": vae_loss})
 
-        if epoch % 100 == 0:#save every 10 epochs
+        if epoch % 25 == 0:#save every 10 epochs
             #generate samples using stuff i've already loaded 
             if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
                 print('saving model...')
-                vae.save_pretrained('vae', params=vae_state.params)
+                vae.save_pretrained('vae', params=jax.device_get(jax.tree_util.tree_map(lambda x: x[0], vae_state.params)))
                 print('resuming training')      
 
         #fetch.join()
