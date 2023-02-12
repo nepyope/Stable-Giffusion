@@ -263,7 +263,7 @@ def main():
         video = cv2.VideoCapture('video.mp4')
 
         # Get the total number of frames in the video
-        total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+        total_frames = 256
 
         data.append([])
 
