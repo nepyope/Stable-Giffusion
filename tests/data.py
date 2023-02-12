@@ -13,20 +13,19 @@ import uuid
 from multiprocessing import managers
 from multiprocessing import shared_memory
 from queue import Empty
-from typing import List, Callable, Tuple, Dict
+from typing import List, Callable
 
 import ffmpeg
-import ftfy
 import jax
 import numpy as np
 import requests
 import transformers
-import urllib3.exceptions
 import youtube_dl
 
 _DEBUG = False
 _DONE = "DONE"
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
+
 
 @dataclasses.dataclass
 class Share:
@@ -102,8 +101,9 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
 def get_proxies():
     while True:
         try:
+            key = os.environ.get("WEBSHARE_KEY", "sudl99m2vcl0kf6x1wyh7pa8nnatg378lo9ltwct")
             r = requests.get("https://proxy.webshare.io/api/proxy/list/?mode=backbone&page_size=1000",
-                             headers={"Authorization": "sudl99m2vcl0kf6x1wyh7pa8nnatg378lo9ltwct"})
+                             headers={"Authorization": key})
             return [f"{r['username']}:{r['password']}" + '@' + f"{r['proxy_address']}:{r['ports']['socks5']}"
                     for r in r.json()['results']]
         except:
@@ -126,8 +126,8 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
         except Exception:  # skipcq: PYL-W0703
             continue  # Broken URL, next might work
         aspect_ratio = video_url["width"] / video_url["height"]
-        w = round(target_image_size*aspect_ratio) if aspect_ratio > 1 else target_image_size
-        h = target_image_size if aspect_ratio > 1 else round(target_image_size/aspect_ratio) 
+        w = round(target_image_size * aspect_ratio) if aspect_ratio > 1 else target_image_size
+        h = target_image_size if aspect_ratio > 1 else round(target_image_size / aspect_ratio)
         try:
             out, _ = ffmpeg.input(path) \
                 .filter("scale", w=w, h=h) \
@@ -166,7 +166,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             continue
 
         title = video_urls[0]["title"]
-        
+
         frames = frames[:frames.shape[0] // context_size * context_size]
         frames = frames.reshape(-1, context_size, *frames.shape[1:])
         queue.put((to_share(frames, smm), title))
@@ -175,7 +175,8 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
 class DataLoader:
     def __init__(self, workers: int, url_dir: str, video_downloaders: int, resolution: int, fps: int, context: int,
-                 batch_size: int, prefetch: int, parallel_videos: int, tokenizer: transformers.BertTokenizer,  clip_tokens: int, seed: int = 0):
+                 batch_size: int, prefetch: int, parallel_videos: int, tokenizer: transformers.BertTokenizer,
+                 clip_tokens: int, seed: int = 0):
         self.workers = workers
         self.video_downloaders = video_downloaders
         self.resolution = resolution
