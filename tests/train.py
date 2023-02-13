@@ -123,14 +123,20 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
          resolution: int = 128, fps: int = 1, context: int = 16, workers: int = 16, prefetch: int = 6,
          base_model: str = "flax/stable-diffusion-2-1", data_path: str = "./urls", sample_interval: int = 2048,
-         parallel_videos: int = 128, schedule_length: int = 1024, warmup_steps: int = 1024,
+         parallel_videos: int = 512, schedule_length: int = 1024, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77,
          save_interval: int = 2048, overwrite: bool = True, unet_mode: bool = True,
-         base_path: str = "gs://video-us/checkpoint/", local_iterations: int = 4, unet_batch: int = 8):
+         base_path: str = "gs://video-us/checkpoint/", local_iterations: int = 4, unet_batch: int = 8,
+         device_steps: int = 4):
+
+    tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
+    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch,
+                      parallel_videos, tokenizer, clip_tokens, device_steps)
+
+
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
-    tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
     vae: FlaxAutoencoderKL = vae
@@ -166,12 +172,12 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": batch["pixel_values"],
-                "idx": batch["idx"] + jnp.arange(jax.device_count()),
-                "input_ids": jnp.stack([batch["input_ids"]] * jax.device_count(), 0),
-                "attention_mask": jnp.stack([batch["attention_mask"]] * jax.device_count(), 0)}
+                "idx": batch["idx"] + jnp.arange(device_steps),
+                "input_ids": jnp.stack([batch["input_ids"]] * device_steps, 0),
+                "attention_mask": jnp.stack([batch["attention_mask"]] * device_steps, 0)}
 
     def rng(idx: jax.Array):
-        return jax.random.PRNGKey(idx * jax.device_count() + device_id())
+        return jax.random.PRNGKey(idx * device_steps + device_id())
 
     def sample(params, batch: Dict[str, Union[np.ndarray, int]]):
         unet_params, vae_params, = params
@@ -304,8 +310,6 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     vae_state = jax_utils.replicate(vae_state)
     unet_state = jax_utils.replicate(unet_state)
 
-    data = DataLoader(workers, data_path, downloaders, resolution, fps, context,
-                      jax.local_device_count(), prefetch, parallel_videos, tokenizer, clip_tokens)
     start_time = time.time()
 
     def to_img(x: jax.Array) -> wandb.Image:
@@ -317,8 +321,8 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             global_step += 1
             if global_step <= 2:
                 print(f"Step {global_step}", datetime.datetime.now())
-            i *= jax.device_count()
-            batch = {"pixel_values": vid.reshape(jax.local_device_count(), jax.device_count(), -1, *vid.shape[1:]),
+            i *= device_steps
+            batch = {"pixel_values": vid.reshape(jax.local_device_count(), device_steps, -1, *vid.shape[1:]),
                      "input_ids": ids.reshape(jax.local_device_count(), 1, -1),
                      "attention_mask": msk.reshape(jax.local_device_count(), 1, -1),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
@@ -344,15 +348,15 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
             for offset, (unet_sq, unet_abs, vae_sq, vae_abs) in enumerate(zip(*sclr)):
                 print("loop step", datetime.datetime.now())
-                vid_per_day = i / timediff * 24 * 3600
+                vid_per_day = i / timediff * 24 * 3600 * jax.device_count()
                 log = {"U-Net MSE/Total": float(unet_sq), "U-Net MAE/Total": float(unet_abs),
                        "VAE MSE/Total": float(vae_sq), "VAE MAE/Total": float(vae_abs),
-                       "Step": i + offset - jax.device_count(), "Epoch": epoch}
-                if offset == jax.device_count() - 1:
+                       "Step": i + offset - device_steps, "Epoch": epoch}
+                if offset == device_steps - 1:
                     log.update(extra)
                     log.update({"Runtime": timediff, "Speed/Videos per Day": vid_per_day,
-                                "Speed/Frames per Day": vid_per_day * context * jax.device_count()})
-                run.log(log, step=(global_step - 1) * jax.device_count() + offset)
+                                "Speed/Frames per Day": vid_per_day * context})
+                run.log(log, step=(global_step - 1) * device_steps + offset)
             if i % save_interval == 0 and jax.process_index() == 0:
                 states = ("unet", unet_state),
                 for n, s in [("vae", vae_state)] * (not unet_mode) + list(states):

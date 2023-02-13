@@ -98,16 +98,6 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
     return sorted(video_urls, key=lambda x: (x['ext'] != 'mp4', x['width'], x['height']))
 
 
-def get_proxies():
-    while True:
-        try:
-            key = os.environ.get("WEBSHARE_KEY", "sudl99m2vcl0kf6x1wyh7pa8nnatg378lo9ltwct")
-            r = requests.get("https://proxy.webshare.io/api/proxy/list/?mode=backbone&page_size=1000",
-                             headers={"Authorization": key})
-            return [f"{r['username']}:{r['password']}" + '@' + f"{r['proxy_address']}:{r['ports']['socks5']}"
-                    for r in r.json()['results']]
-        except:
-            pass
 
 
 def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps: int,
@@ -145,7 +135,7 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
 
 def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_image_size: int, target_fps: int,
                  context_size: int, queue: multiprocessing.Queue, smm: managers.SharedMemoryManager,
-                 ip_addresses: List[str]):
+                 device_steps: int):
     youtube_base = 'https://www.youtube.com/watch?v='
     youtube_getter = youtube_dl.YoutubeDL(
         {'writeautomaticsub': False, 'socket_timeout': 600, "quiet": True, "verbose": False, "no_warnings": True,
@@ -155,7 +145,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
     rng = random.Random(worker_id)
     rng.shuffle(work)
 
-    group = context_size * jax.device_count()
+    group = context_size * device_steps
     for i, wor in enumerate(work, worker_id):
         video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
 
@@ -177,7 +167,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 class DataLoader:
     def __init__(self, workers: int, url_dir: str, video_downloaders: int, resolution: int, fps: int, context: int,
                  batch_size: int, prefetch: int, parallel_videos: int, tokenizer: transformers.BertTokenizer,
-                 clip_tokens: int, seed: int = 0):
+                 clip_tokens: int, device_steps: int, seed: int = 0):
         self.workers = workers
         self.video_downloaders = video_downloaders
         self.resolution = resolution
@@ -190,6 +180,7 @@ class DataLoader:
         self.tokenizer = tokenizer
         self.clip_tokens = clip_tokens
         self.ids = ids = []
+        self.device_steps = device_steps
         for path in os.listdir(url_dir):
             with open(f'{url_dir}/{path}', 'rb') as f:
                 vals = json.load(f)
@@ -206,10 +197,9 @@ class DataLoader:
         queue = multiprocessing.Queue(self.prefetch)
         workers = []
         with managers.SharedMemoryManager() as smm:
-            proxies = get_proxies()
             for i in range(self.workers):
                 work = self.ids[int(len(self.ids) * i / self.workers):int(len(self.ids) * (i + 1) / self.workers)]
-                args = work, i, lock, self.resolution, self.fps, self.context, queue, smm, proxies
+                args = work, i, lock, self.resolution, self.fps, self.context, queue, smm, self.device_steps
                 workers.append(multiprocessing.Process(args=args, daemon=True, target=frame_worker))
             for w in workers:
                 w.start()
@@ -245,7 +235,7 @@ class DataLoader:
                         del samples[idx]
                     if len(samples) <= idx:
                         break
-                    np_batch.append(np.stack([samples[idx][0].pop(0) for _ in range(jax.device_count())]))
+                    np_batch.append(np.stack([samples[idx][0].pop(0) for _ in range(self.device_steps)]))
                     titles.append(samples[idx][1])
                     idx = (idx + 1) % self.parallel_videos
 
