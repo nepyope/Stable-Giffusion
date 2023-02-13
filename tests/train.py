@@ -259,7 +259,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             latents = latents.reshape(latents.shape[0], -1, latents.shape[-1])
             latents = lax.broadcast_in_dim(latents, (unet_batch, *latents.shape), (1, 2, 3))
 
-            noise = jax.random.normal(noise_rng, ĺatents.shape[1:])
+            noise = jax.random.normal(noise_rng, latents.shape[1:])
             t0 = jax.random.randint(step_rng, (unet_batch,), 0, noise_scheduler.config.num_train_timesteps)
             noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, t0)
 
