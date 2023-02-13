@@ -13,6 +13,7 @@ import jax
 import jax.numpy as jnp
 import optax
 import transformers
+from PIL import ImageDraw
 from diffusers import (
     FlaxAutoencoderKL,
     FlaxDDPMScheduler,
@@ -270,7 +271,7 @@ def main():
         for i in range(0, total_frames):
             video.set(cv2.CAP_PROP_POS_FRAMES, i)
             ret, frame = video.read()
-            if ret and i%2==0:#halve the framerate
+            if ret:#halve the framerate
                 data[-1].append(frame)
 
         data.pop(0)
@@ -293,6 +294,18 @@ def main():
     fetch.join()
 
     data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
+
+    for n,im in enumerate(data):
+        data[n] = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+        draw = ImageDraw.Draw(data[n])
+        L = [int(x) for x in list('{0:08b}'.format(i))]
+        L.append(0)
+        L = np.array_split(L, 3)
+        scale = 20
+        draw.rectangle(((512-scale, 256-scale), (512, 256)), fill=tuple(L[0]*255))
+        draw.rectangle(((512-scale*2, 256-scale), (512-scale, 256)), fill=tuple(L[1]*255))
+        draw.rectangle(((512-scale*3, 256-scale), (512-scale*2, 256)), fill=tuple(L[2]*255))
+
     print(caption)
     for epoch in epochs:
 
@@ -310,11 +323,10 @@ def main():
 
                 images = []
                 captions = []
-                l_d = i*batch_size
+
                 for n,image in enumerate(d):
-                    img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                    images.append(Image.fromarray(img))
-                    captions.append(f'FRAME{l_d+n} {caption}')#
+                    images.append(image)
+                    captions.append(f'{caption}')
 
                 images = images[shift%2:] + images[:shift%2]#this is done so that the transition is learned from frame 0 to 1, 1 to 2, 2 to 3.. instead of 0 to 1, 2 to 3, 4 to 5
                 captions = captions[shift%2:] + captions[:shift%2]
