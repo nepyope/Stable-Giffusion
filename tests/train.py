@@ -85,6 +85,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: 
         count = safe_int32_increment(state.count)
 
         def get_update(grad: jax.Array, param: jax.Array, nu: jax.Array, mu: jax.Array):
+            dtype = nu.dtype
             grad, param, nu, mu = jax.tree_map(promote, (grad, param, nu, mu))
             g_norm = clip_norm(grad, 1e-16)
             p_norm = clip_norm(param, 1e-3)
@@ -93,7 +94,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: 
             nuc, nu = ema(lax.square(grad), nu, b2, count)
             grad /= lax.max(lax.sqrt(nuc), eps)
             muc, mu = ema(grad, mu, b1, count)
-            return muc * -lr(count), nu, mu
+            return muc * -lr(count), nu.astype(dtype), mu.astype(dtype)
 
         leaves, treedef = jax.tree_util.tree_flatten(updates)
         all_leaves = [leaves] + [treedef.flatten_up_to(r) for r in (params, state.nu, state.mu)]
