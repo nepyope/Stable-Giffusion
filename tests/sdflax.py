@@ -295,7 +295,7 @@ def main():
 
     data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
 
-    cs = []
+
     for n,im in enumerate(data):
         data[n] = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
         draw = ImageDraw.Draw(data[n])
@@ -309,7 +309,7 @@ def main():
         draw.rectangle(((w-scale, h-scale), (w, h)), fill=tuple(L[0]*brightness))
         draw.rectangle(((w-scale*2, h-scale), (w-scale, h)), fill=tuple(L[1]*brightness))
         draw.rectangle(((w-scale*3, h-scale), (w-scale*2, h)), fill=tuple(L[2]*brightness))
-        cs.append(f'{n} {caption}')
+
 
     print(caption)
     for epoch in epochs:
@@ -332,7 +332,7 @@ def main():
                 l_d = i*batch_size
                 for n,image in enumerate(d):
                     images.append(image)
-                    captions.append(cs[l_d+n])
+                    captions.append(f'{l_d+n} {caption}')
 
                 images = images[shift%2:] + images[:shift%2]#this is done so that the transition is learned from frame 0 to 1, 1 to 2, 2 to 3.. instead of 0 to 1, 2 to 3, 4 to 5
                 captions = captions[shift%2:] + captions[:shift%2]
