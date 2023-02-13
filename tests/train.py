@@ -95,8 +95,9 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: 
             muc, mu = ema(grad, mu, b1, count)
             return muc * -lr(count), nu, mu
 
-        updates = jax.tree_util.tree_map(get_update, updates, params, state.nu, state.mu)
-        updates, nu, mu = [jax.tree_util.tree_map(lambda x: x[i], updates) for i in range(3)]
+        leaves, treedef = jax.tree_util.tree_flatten(updates)
+        all_leaves = [leaves] + [treedef.flatten_up_to(r) for r in (params, state.nu, state.mu)]
+        updates, nu, mu = [treedef.unflatten(leaf) for leaf in zip(*[get_update(*xs) for xs in zip(*all_leaves)])]
         return updates, ScaleByAdamState(count=count, mu=mu, nu=nu)
 
     return GradientTransformation(init_fn, update_fn)
