@@ -81,21 +81,22 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: 
                                 nu=jax.tree_map(jnp.zeros_like, params),  # Second Moment
                                 count=jnp.zeros([], jnp.int32))
 
-    def get_update(grad: jax.Array, param: jax.Array, nu: jax.Array, mu: jax.Array, count: jax.Array):
-        grad, param, nu, mu = jax.tree_map(promote, (grad, param, nu, mu))
-        g_norm = clip_norm(grad, 1e-16)
-        p_norm = clip_norm(param, 1e-3)
-        grad *= lax.min(p_norm / g_norm * clip, 1.)
-
-        nuc, nu = ema(lax.square(grad), nu, b2, count)
-        grad /= lax.max(lax.sqrt(nuc), eps)
-        muc, mu = ema(grad, mu, b1, count)
-        return muc * -lr(count), nu, mu
-
     def update_fn(updates, state, params=None):
-        count_inc = safe_int32_increment(state.count)
-        updates, nu, mu = jax.tree_map(lambda *x: get_update(*x, count_inc), updates, params, state.nu, state.mu)
-        return updates, ScaleByAdamState(count=count_inc, mu=mu, nu=nu)
+        count = safe_int32_increment(state.count)
+
+        def get_update(grad: jax.Array, param: jax.Array, nu: jax.Array, mu: jax.Array):
+            grad, param, nu, mu = jax.tree_map(promote, (grad, param, nu, mu))
+            g_norm = clip_norm(grad, 1e-16)
+            p_norm = clip_norm(param, 1e-3)
+            grad *= lax.min(p_norm / g_norm * clip, 1.)
+
+            nuc, nu = ema(lax.square(grad), nu, b2, count)
+            grad /= lax.max(lax.sqrt(nuc), eps)
+            muc, mu = ema(grad, mu, b1, count)
+            return muc * -lr(count), nu, mu
+
+        updates, nu, mu = jax.tree_map(get_update, updates, params, state.nu, state.mu)
+        return updates, ScaleByAdamState(count=count, mu=mu, nu=nu)
 
     return GradientTransformation(init_fn, update_fn)
 
@@ -323,10 +324,11 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             if global_step <= 2:
                 print(f"Step {global_step}", datetime.datetime.now())
             i *= device_steps
-            batch = {"pixel_values": vid.reshape(jax.local_device_count(), device_steps, context, resolution, resolution, 3),
-                     "input_ids": ids.reshape(jax.local_device_count(), 1, -1),
-                     "attention_mask": msk.reshape(jax.local_device_count(), 1, -1),
-                     "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
+            batch = {
+                "pixel_values": vid.reshape(jax.local_device_count(), device_steps, context, resolution, resolution, 3),
+                "input_ids": ids.reshape(jax.local_device_count(), 1, -1),
+                "attention_mask": msk.reshape(jax.local_device_count(), 1, -1),
+                "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
             if i % sample_interval == 0:
