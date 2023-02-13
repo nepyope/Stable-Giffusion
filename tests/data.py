@@ -155,6 +155,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
     rng = random.Random(worker_id)
     rng.shuffle(work)
 
+    group = context_size * jax.device_count()
     for i, wor in enumerate(work, worker_id):
         video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
 
@@ -162,12 +163,12 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             continue
 
         frames = get_video_frames(video_urls, target_image_size, target_fps)
-        if frames is None or not frames.size or frames.shape[0] < context_size:
+        if frames is None or not frames.size or frames.shape[0] < group:
             continue
 
         title = video_urls[0]["title"]
 
-        frames = frames[:frames.shape[0] // context_size * context_size]
+        frames = frames[:frames.shape[0] // group * group]
         frames = frames.reshape(-1, context_size, *frames.shape[1:])
         queue.put((to_share(frames, smm), title))
     queue.put(_DONE)
@@ -192,13 +193,15 @@ class DataLoader:
         for path in os.listdir(url_dir):
             with open(f'{url_dir}/{path}', 'rb') as f:
                 vals = json.load(f)
-                ids.extend([x for i, d in zip(vals["id"], vals["duration"]) for x, z in zip(i, d) if z > context / fps])
-        random.Random(self.seed).shuffle(self.ids)
+                ids.extend([x for i, d in zip(vals["id"], vals["duration"])
+                            for x, z in zip(i, d) if z > context * jax.device_count() / fps])
+        self.rng = random.Random(self.seed)
+        self.rng.shuffle(self.ids)
         self.ids = ids[int(len(ids) * jax.process_index() / jax.process_count()):
                        int(len(ids) * (jax.process_index() + 1) / jax.process_count())]
 
     def __iter__(self):
-        random.Random(self.seed).shuffle(self.ids)
+        self.rng.shuffle(self.ids)
         lock = multiprocessing.Semaphore(self.video_downloaders)
         queue = multiprocessing.Queue(self.prefetch)
         workers = []
@@ -213,10 +216,13 @@ class DataLoader:
 
             done = 0
             samples = []
+            np_batch = []
+            titles = []
             idx = 0
             while True:
                 if done == self.workers:
                     break
+
                 if len(samples) <= idx + self.batch_size and len(samples) < self.parallel_videos:
                     try:
                         out = queue.get(timeout=120)
@@ -227,29 +233,37 @@ class DataLoader:
                         done += 1
                         continue
                     try:
-                        samples.append((list(from_share(out[0])), out[1]))
+                        share = list(from_share(out[0]))
+                        self.rng.shuffle(share)
+                        samples.append((share, out[1]))
                     except:
                         print("failed to load share")
-                else:
-                    np_batch = []
-                    titles = []
-                    for _ in range(self.batch_size):
-                        while len(samples) > idx and not samples[idx][0]:
-                            del samples[idx]
-                        if len(samples) <= idx:
-                            break
-                        np_batch.append(samples[idx][0].pop(0))
-                        titles.append(samples[idx][1])
-                        idx = (idx + 1) % self.parallel_videos
-                    if len(np_batch) == self.batch_size:
-                        if _DEBUG:
-                            yield [hashlib.sha3_512(s.encode()).hexdigest() for s in titles]
-                            continue
-                        tokens = self.tokenizer(titles, return_tensors="np", padding="max_length", truncation=True,
-                                                max_length=self.clip_tokens)
-                        input_ids = tokens["input_ids"].reshape(self.batch_size, -1)
-                        attention_mask = tokens["attention_mask"].reshape(self.batch_size, -1)
-                        yield np.concatenate(np_batch, axis=0), input_ids, attention_mask
+                    continue
+
+                for _ in range(len(np_batch), self.batch_size):
+                    while len(samples) > idx and not samples[idx][0]:
+                        del samples[idx]
+                    if len(samples) <= idx:
+                        break
+                    np_batch.append(np.stack([samples[idx][0].pop(0) for _ in range(jax.device_count())]))
+                    titles.append(samples[idx][1])
+                    idx = (idx + 1) % self.parallel_videos
+
+                if len(np_batch) != self.batch_size:
+                    continue
+
+                if _DEBUG:
+                    yield [hashlib.sha3_512(s.encode()).hexdigest() for s in titles]
+                    continue
+
+                tokens = self.tokenizer(titles, return_tensors="np", padding="max_length", truncation=True,
+                                        max_length=self.clip_tokens)
+                input_ids = tokens["input_ids"].reshape(self.batch_size, -1)
+                attention_mask = tokens["attention_mask"].reshape(self.batch_size, -1)
+                yield np.concatenate(np_batch, axis=0), input_ids, attention_mask
+                np_batch.clear()
+                titles.clear()
+
             for w in workers:
                 w.join()
         raise StopIteration

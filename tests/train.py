@@ -304,7 +304,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     vae_state = jax_utils.replicate(vae_state)
     unet_state = jax_utils.replicate(unet_state)
 
-    data = DataLoader(workers, data_path, downloaders, resolution, fps, context * jax.device_count(),
+    data = DataLoader(workers, data_path, downloaders, resolution, fps, context,
                       jax.local_device_count(), prefetch, parallel_videos, tokenizer, clip_tokens)
     start_time = time.time()
 
