@@ -271,7 +271,7 @@ def main():
         for i in range(0, total_frames):
             video.set(cv2.CAP_PROP_POS_FRAMES, i)
             ret, frame = video.read()
-            if ret:#halve the framerate
+            if ret and i%2 == 0:#halve the framerate
                 data[-1].append(frame)
 
         data.pop(0)
@@ -308,21 +308,9 @@ def main():
 
         for n,im in enumerate(data):
             data[n] = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
-            draw = ImageDraw.Draw(data[n])
-            L = [int(x) for x in list('{0:08b}'.format(n))]
-            L.append(0)
-            L = np.array_split(L, 3)
-            scale = 40
-            h = 256
-            w = 512
-            brightness = int(np.mean(data[n]))
-            draw.rectangle(((w-scale, h-scale), (w, h)), fill=tuple(L[0]*brightness))
-            draw.rectangle(((w-scale*2, h-scale), (w-scale, h)), fill=tuple(L[1]*brightness))
-            draw.rectangle(((w-scale*3, h-scale), (w-scale*2, h)), fill=tuple(L[2]*brightness))
+            data[n] = (data[n], f'{caption}, frame {n} of {len(data)}')
 
-            data[n] = (data[n], f'{n} {caption}')
-
-        for shift in range(2):#shift batch y 1 so that all transitions are learned 
+        for shift in range(4):#shift batch y 1 so that all transitions are learned 
 
             iters = tqdm(range(n_batches), desc="Iter ... ", position=1)
             ######UNET TRAINING
@@ -385,7 +373,7 @@ def main():
 
                 run.log({"VAE loss": vae_loss})
 
-        if epoch % 50 == 0:#save every 10 epochs
+        if epoch % 100 == 0:
 
             if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
                 print('saving model...')
