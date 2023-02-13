@@ -305,9 +305,9 @@ def main():
         scale = 40
         h = 256
         w = 512
-        draw.rectangle(((w-scale, h-scale), (w, h)), fill=tuple(L[0]*255))
-        draw.rectangle(((w-scale*2, h-scale), (w-scale, h)), fill=tuple(L[1]*255))
-        draw.rectangle(((w-scale*3, h-scale), (w-scale*2, h)), fill=tuple(L[2]*255))
+        draw.rectangle(((w-scale, h-scale), (w, h)), fill=tuple(L[0]*np.mean(data[n])))
+        draw.rectangle(((w-scale*2, h-scale), (w-scale, h)), fill=tuple(L[1]*np.mean(data[n])))
+        draw.rectangle(((w-scale*3, h-scale), (w-scale*2, h)), fill=tuple(L[2]*np.mean(data[n])))
 
         cs.append(f'{n} {caption}')
 
