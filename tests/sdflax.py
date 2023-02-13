@@ -296,30 +296,33 @@ def main():
     data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
 
 
-    for n,im in enumerate(data):
-        data[n] = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
-        draw = ImageDraw.Draw(data[n])
-        L = [int(x) for x in list('{0:08b}'.format(n))]
-        L.append(0)
-        L = np.array_split(L, 3)
-        scale = 40
-        h = 256
-        w = 512
-        brightness = int(np.mean(data[n]))
-        draw.rectangle(((w-scale, h-scale), (w, h)), fill=tuple(L[0]*brightness))
-        draw.rectangle(((w-scale*2, h-scale), (w-scale, h)), fill=tuple(L[1]*brightness))
-        draw.rectangle(((w-scale*3, h-scale), (w-scale*2, h)), fill=tuple(L[2]*brightness))
 
-        data[n] = (data[n], f'{n} {caption}')
 
 
     print(caption)
+    
     for epoch in epochs:
 
-        #fetch = threading.Thread(target=get_data, name="Downloader", args=(ids,batch_per_device,new_data, new_n_batches, new_batch_size, new_caption))
-        #fetch.start()
+        fetch = threading.Thread(target=get_data, name="Downloader", args=(ids,batch_per_device,new_data, new_n_batches, new_batch_size, new_caption))
+        fetch.start()
 
-        for shift in range(10):#shift batch y 1 so that all transitions are learned 
+        for n,im in enumerate(data):
+            data[n] = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+            draw = ImageDraw.Draw(data[n])
+            L = [int(x) for x in list('{0:08b}'.format(n))]
+            L.append(0)
+            L = np.array_split(L, 3)
+            scale = 40
+            h = 256
+            w = 512
+            brightness = int(np.mean(data[n]))
+            draw.rectangle(((w-scale, h-scale), (w, h)), fill=tuple(L[0]*brightness))
+            draw.rectangle(((w-scale*2, h-scale), (w-scale, h)), fill=tuple(L[1]*brightness))
+            draw.rectangle(((w-scale*3, h-scale), (w-scale*2, h)), fill=tuple(L[2]*brightness))
+
+            data[n] = (data[n], f'{n} {caption}')
+
+        for shift in range(2):#shift batch y 1 so that all transitions are learned 
 
             iters = tqdm(range(n_batches), desc="Iter ... ", position=1)
             ######UNET TRAINING
@@ -356,7 +359,6 @@ def main():
                     examples.append(example)
                 pixel_values = torch.stack([example["pixel_values"] for example in examples])
 
-
                 pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
                 input_ids = [example["input_ids"] for example in examples]
 
@@ -383,7 +385,7 @@ def main():
 
                 run.log({"VAE loss": vae_loss})
 
-        if epoch % 20 == 0:#save every 10 epochs
+        if epoch % 50 == 0:#save every 10 epochs
 
             if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
                 print('saving model...')
@@ -419,8 +421,8 @@ def main():
 
                 print('model saved')
 
-        #fetch.join()
-        #data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
+        fetch.join()
+        data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
 
 if __name__ == "__main__":
     main()
