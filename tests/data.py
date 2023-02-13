@@ -250,7 +250,7 @@ class DataLoader:
                                         max_length=self.clip_tokens)
                 input_ids = tokens["input_ids"].reshape(self.batch_size, -1)
                 attention_mask = tokens["attention_mask"].reshape(self.batch_size, -1)
-                yield np.concatenate(np_batch, axis=0), input_ids, attention_mask
+                yield np.stack(np_batch), input_ids, attention_mask
                 np_batch.clear()
                 titles.clear()
 

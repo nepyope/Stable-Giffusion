@@ -320,7 +320,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             if global_step <= 2:
                 print(f"Step {global_step}", datetime.datetime.now())
             i *= device_steps
-            batch = {"pixel_values": vid.reshape(jax.local_device_count(), device_steps, -1, *vid.shape[1:]),
+            batch = {"pixel_values": vid.reshape(jax.local_device_count(), device_steps, resolution, resolution, 3),
                      "input_ids": ids.reshape(jax.local_device_count(), 1, -1),
                      "attention_mask": msk.reshape(jax.local_device_count(), 1, -1),
                      "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
