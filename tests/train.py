@@ -236,6 +236,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             vae_out = vae_apply({"params": vae_params}, inp, rngs={"gaussian": gauss0, "dropout": drop0},
                                 deterministic=False, method=vae.encode)
         encoded = get_encoded(batch["input_ids"], batch["attention_mask"])
+        encoded = lax.broadcast_in_dim(encoded, (unet_batch, *encoded.shape[1:]), tuple(range(encoded.ndim)))
 
         def compute_loss(params, itr):
             if unet_mode:
