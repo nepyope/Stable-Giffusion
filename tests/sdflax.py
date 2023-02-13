@@ -310,6 +310,8 @@ def main():
         draw.rectangle(((w-scale*2, h-scale), (w-scale, h)), fill=tuple(L[1]*brightness))
         draw.rectangle(((w-scale*3, h-scale), (w-scale*2, h)), fill=tuple(L[2]*brightness))
 
+        data[n] = np.array([data[n], f'{n} {caption}'])
+
 
     print(caption)
     for epoch in epochs:
@@ -329,10 +331,9 @@ def main():
 
                 images = []
                 captions = []
-                l_d = i*batch_size
-                for n,image in enumerate(d):
-                    images.append(image)
-                    captions.append(f'{l_d+n} {caption}')
+                for n,dt in enumerate(d):
+                    images.append(dt[0])
+                    captions.append(dt[1])
 
                 images = images[shift%2:] + images[:shift%2]#this is done so that the transition is learned from frame 0 to 1, 1 to 2, 2 to 3.. instead of 0 to 1, 2 to 3, 4 to 5
                 captions = captions[shift%2:] + captions[:shift%2]
@@ -382,7 +383,7 @@ def main():
 
                 run.log({"VAE loss": vae_loss})
 
-        if epoch % 15 == 0:#save every 10 epochs
+        if epoch % 20 == 0:#save every 10 epochs
 
             if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
                 print('saving model...')
