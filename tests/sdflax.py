@@ -308,7 +308,7 @@ def main():
 
         for n,im in enumerate(data):
             data[n] = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
-            data[n] = (data[n], f'{caption}, frame {n} of {len(data)}')
+            data[n] = (data[n], f'{caption}')
 
         for shift in range(4):#shift batch y 1 so that all transitions are learned 
 
