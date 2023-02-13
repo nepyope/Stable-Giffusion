@@ -94,7 +94,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: 
 
     def update_fn(updates, state, params=None):
         count_inc = safe_int32_increment(state.count)
-        updates, nu, mu = jax.tree_map(get_update, updates, params, state.nu, state.mu)
+        updates, nu, mu = jax.tree_map(lambda *x: get_update(*x, count_inc), updates, params, state.nu, state.mu)
         return updates, ScaleByAdamState(count=count_inc, mu=mu, nu=nu)
 
     return GradientTransformation(init_fn, update_fn)
