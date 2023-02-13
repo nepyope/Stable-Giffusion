@@ -143,7 +143,8 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     run = wandb.init(entity="homebrewnlp", project="stable-giffusion")
 
     if not overwrite:
-        vae_params = load(base_path + "vae", vae_params)
+        if not unet_mode:
+            vae_params = load(base_path + "vae", vae_params)
         unet_params = load(base_path + "unet", unet_params)
 
     lr_sched = optax.warmup_exponential_decay_schedule(0, lr, warmup_steps, lr_halving_every_n_steps, 0.5)
