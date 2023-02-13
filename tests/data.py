@@ -185,7 +185,7 @@ class DataLoader:
             with open(f'{url_dir}/{path}', 'rb') as f:
                 vals = json.load(f)
                 ids.extend([x for i, d in zip(vals["id"], vals["duration"])
-                            for x, z in zip(i, d) if z > context * jax.device_count() / fps])
+                            for x, z in zip(i, d) if z > context * self.device_steps / fps])
         self.rng = random.Random(self.seed)
         self.rng.shuffle(self.ids)
         self.ids = ids[int(len(ids) * jax.process_index() / jax.process_count()):
