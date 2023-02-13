@@ -62,17 +62,6 @@ def to_host(k, index_fn: Callable[[jax.Array], jax.Array] = _take_0th):
     return jax.device_get(jax.tree_util.tree_map(index_fn, k))
 
 
-def update_moment(updates, moments, decay, order):
-    """Compute the exponential moving average of the `order-th` moment."""
-    return jax.tree_map(lambda g, t: (1 - decay) * (g ** order) + decay * t, updates, moments)
-
-
-def bias_correction(moment, decay, count):
-    """Perform bias correction. This becomes a no-op as count goes to infinity."""
-    bias_correction = 1 - decay ** count
-    return jax.tree_map(lambda t: t / bias_correction.astype(t.dtype), moment)
-
-
 def promote(inp: jax.Array) -> jax.Array:
     return jnp.asarray(inp, jnp.promote_types(jnp.float64, jnp.result_type(inp)))
 
@@ -81,33 +70,32 @@ def clip_norm(val: jax.Array, min_norm: float) -> jax.Array:
     return jnp.maximum(jnp.sqrt(lax.square(val).sum()), min_norm)
 
 
-def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: float = 1e-3) -> GradientTransformation:
+def ema(x, y, beta, step):
+    out = (1 - beta) * x + beta * y
+    return out / (1 - beta ** step), out
+
+
+def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: float = 1e-2) -> GradientTransformation:
     def init_fn(params):
-        mu = jax.tree_map(jnp.zeros_like, params)  # First moment
-        nu = jax.tree_map(jnp.zeros_like, params)  # Second moment
-        return ScaleByAdamState(count=jnp.zeros([], jnp.int32), mu=mu, nu=nu)
+        return ScaleByAdamState(mu=jax.tree_map(jnp.zeros_like, params),  # First Moment
+                                nu=jax.tree_map(jnp.zeros_like, params),  # Second Moment
+                                count=jnp.zeros([], jnp.int32))
+
+    def get_update(grad: jax.Array, param: jax.Array, nu: jax.Array, mu: jax.Array, count: jax.Array):
+        grad, param, nu, mu = jax.tree_map(promote, (grad, param, nu, mu))
+        g_norm = clip_norm(grad, 1e-16)
+        p_norm = clip_norm(param, 1e-3)
+        grad *= lax.min(p_norm / g_norm * clip, 1.)
+
+        nuc, nu = ema(lax.square(grad), nu, b2, count)
+        grad /= lax.max(lax.sqrt(nuc), eps)
+        muc, mu = ema(grad, mu, b1, count)
+        return muc * -lr(count), nu, mu
 
     def update_fn(updates, state, params=None):
-        updates = jax.tree_map(promote, updates)
-        params = jax.tree_map(promote, params)
-        nu = jax.tree_map(promote, state.nu)
-        mu = jax.tree_map(promote, state.mu)
-
-        g_norm = jax.tree_util.tree_map(lambda x: clip_norm(x, 1e-16), updates)
-        p_norm = jax.tree_util.tree_map(lambda x: clip_norm(x, 1e-3), params)
-        updates = jax.tree_util.tree_map(lambda x, pn, gn: x * lax.min(pn / gn * clip, 1.), updates, p_norm, g_norm)
-
-        nu = update_moment(updates, nu, b2, 2)
         count_inc = safe_int32_increment(state.count)
-        nu_hat = bias_correction(nu, b2, count_inc)
-        updates = jax.tree_map(lambda m, v: m / lax.max(lax.sqrt(v), eps), updates, nu_hat)
-        mu = update_moment(updates, mu, b1, 1)
-        scale = -lr(count_inc)
-        mu_hat = bias_correction(mu, b1, count_inc)
-        mu_hat = jax.tree_map(lambda x: x * scale, mu_hat)
-        mu = jax.tree_map(lambda x, o: x.astype(o.dtype), mu, state.mu)
-        nu = jax.tree_map(lambda x, o: x.astype(o.dtype), nu, state.nu)
-        return mu_hat, ScaleByAdamState(count=count_inc, mu=mu, nu=nu)
+        updates, nu, mu = jax.tree_map(get_update, updates, params, state.nu, state.mu)
+        return updates, ScaleByAdamState(count=count_inc, mu=mu, nu=nu)
 
     return GradientTransformation(init_fn, update_fn)
 
@@ -132,17 +120,13 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 
 
 @app.command()
-def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float = 1e-16, downloaders: int = 2,
+def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
          resolution: int = 128, fps: int = 1, context: int = 16, workers: int = 16, prefetch: int = 6,
          base_model: str = "flax/stable-diffusion-2-1", data_path: str = "./urls", sample_interval: int = 2048,
-         parallel_videos: int = 128, tracing_start_step: int = 10 ** 9, tracing_stop_step: int = 10 ** 9,
-         schedule_length: int = 1024, guidance: float = 7.5, warmup_steps: int = 1024,
-         lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, pos_embd_scale: float = 1e-3,
+         parallel_videos: int = 128, schedule_length: int = 1024, warmup_steps: int = 1024,
+         lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77,
          save_interval: int = 2048, overwrite: bool = True, unet_mode: bool = True,
-         base_path: str = "gs://video-us/checkpoint/", unet_init_steps: int = 0, conv_init_steps: int = 0,
-         local_iterations: int = 4, unet_batch: int = 8):
-    unet_init_steps -= conv_init_steps * unet_mode
-    conv_init_steps *= 1 - unet_mode
+         base_path: str = "gs://video-us/checkpoint/", local_iterations: int = 4, unet_batch: int = 8):
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
@@ -181,7 +165,8 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
         return jnp.transpose(vae_apply({"params": params}, inp, method=vae.decode).sample, (0, 2, 3, 1))
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
-        return {"pixel_values": batch["pixel_values"], "idx": batch["idx"] + jnp.arange(jax.device_count()),
+        return {"pixel_values": batch["pixel_values"],
+                "idx": batch["idx"] + jnp.arange(jax.device_count()),
                 "input_ids": jnp.stack([batch["input_ids"]] * jax.device_count(), 0),
                 "attention_mask": jnp.stack([batch["attention_mask"]] * jax.device_count(), 0)}
 
