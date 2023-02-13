@@ -301,10 +301,12 @@ def main():
         L = [int(x) for x in list('{0:08b}'.format(n))]
         L.append(0)
         L = np.array_split(L, 3)
-        scale = 20
-        draw.rectangle(((512-scale, 256-scale), (512, 256)), fill=tuple(L[0]*255))
-        draw.rectangle(((512-scale*2, 256-scale), (512-scale, 256)), fill=tuple(L[1]*255))
-        draw.rectangle(((512-scale*3, 256-scale), (512-scale*2, 256)), fill=tuple(L[2]*255))
+        scale = 40
+        h = data[n].height
+        w = data[n].width
+        draw.rectangle(((w-scale, h-scale), (w, h)), fill=tuple(L[0]*255))
+        draw.rectangle(((w-scale*2, h-scale), (w-scale, h)), fill=tuple(L[1]*255))
+        draw.rectangle(((w-scale*3, h-scale), (w-scale*2, h)), fill=tuple(L[2]*255))
 
     print(caption)
     for epoch in epochs:
@@ -316,6 +318,7 @@ def main():
 
             iters = tqdm(range(n_batches), desc="Iter ... ", position=1)
             ######UNET TRAINING
+            
             for i in iters:#maybe repeat this multiple times, sample afterwards
 
                 ####LOAD DATA
@@ -323,10 +326,10 @@ def main():
 
                 images = []
                 captions = []
-
+                l_d = i*batch_size
                 for n,image in enumerate(d):
                     images.append(image)
-                    captions.append(f'{caption}')
+                    captions.append(f'{l_d+n} {caption}')
 
                 images = images[shift%2:] + images[:shift%2]#this is done so that the transition is learned from frame 0 to 1, 1 to 2, 2 to 3.. instead of 0 to 1, 2 to 3, 4 to 5
                 captions = captions[shift%2:] + captions[:shift%2]
@@ -376,7 +379,7 @@ def main():
 
                 run.log({"VAE loss": vae_loss})
 
-        if epoch % 5 == 0:#save every 10 epochs
+        if epoch % 15 == 0:#save every 10 epochs
 
             if jax.process_index() == 0:#need to work on this, it has to cylcle a bunch in order to work 
                 print('saving model...')
