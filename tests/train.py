@@ -140,7 +140,7 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, pos_embd_scale: float = 1e-3,
          save_interval: int = 2048, overwrite: bool = True, unet_mode: bool = True,
          base_path: str = "gs://video-us/checkpoint/", unet_init_steps: int = 0, conv_init_steps: int = 0,
-         local_iterations: int = 32):
+         local_iterations: int = 4, unet_batch: int = 8):
     unet_init_steps -= conv_init_steps * unet_mode
     conv_init_steps *= 1 - unet_mode
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
@@ -167,7 +167,6 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
                                         num_train_timesteps=schedule_length)
     sched_state = noise_scheduler.create_state()
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np")
-    local_batch = 1
 
     def get_encoded(input_ids: jax.Array, attention_mask: jax.Array):
         return text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
@@ -269,8 +268,8 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             latents = jnp.transpose(latents, (1, 0, 2, 3))
             latents = latents.reshape(1, latents.shape[0], -1, latents.shape[-1])
 
-            noise = jax.random.normal(noise_rng, latents.shape)
-            t0 = jax.random.randint(step_rng, (), 0, noise_scheduler.config.num_train_timesteps)
+            noise = jax.random.normal(noise_rng, (unet_batch, *latents.shape[1:]))
+            t0 = jax.random.randint(step_rng, (unet_batch,), 0, noise_scheduler.config.num_train_timesteps)
             noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, t0)
 
             unet_pred = unet_fn(noisy_latents, encoded, t0, unet_params)
@@ -357,13 +356,6 @@ def main(lr: float = 1e-4, beta1: float = 0.95, beta2: float = 0.95, eps: float 
             timediff = time.time() - start_time
             sclr = to_host(scalars)
             print("To host", datetime.datetime.now())
-            if i % sample_interval == 0:
-                sample_out = p_sample((unet_state.params, vae_state.params), batch)
-                s_mode, g1, g2, g4, g8 = np.split(to_host(sample_out, lambda x: x), 5, 1)
-                extra[f"Samples/Post-Step Reconstruction (U-Net, Guidance 1) {pid}"] = to_img(g1)
-                extra[f"Samples/Post-Step Reconstruction (U-Net, Guidance 2) {pid}"] = to_img(g2)
-                extra[f"Samples/Post-Step Reconstruction (U-Net, Guidance 4) {pid}"] = to_img(g4)
-                extra[f"Samples/Post-Step Reconstruction (U-Net, Guidance 8) {pid}"] = to_img(g8)
 
             for offset, (unet_sq, unet_abs, vae_sq, vae_abs) in enumerate(zip(*sclr)):
                 print("loop step", datetime.datetime.now())
