@@ -310,7 +310,7 @@ def main():
         draw.rectangle(((w-scale*2, h-scale), (w-scale, h)), fill=tuple(L[1]*brightness))
         draw.rectangle(((w-scale*3, h-scale), (w-scale*2, h)), fill=tuple(L[2]*brightness))
 
-        data[n] = np.array([data[n], f'{n} {caption}'])
+        data[n] = (data[n], f'{n} {caption}')
 
 
     print(caption)
