@@ -298,7 +298,7 @@ def main():
     for n,im in enumerate(data):
         data[n] = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
         draw = ImageDraw.Draw(data[n])
-        L = [int(x) for x in list('{0:08b}'.format(i))]
+        L = [int(x) for x in list('{0:08b}'.format(n))]
         L.append(0)
         L = np.array_split(L, 3)
         scale = 20
