@@ -31,7 +31,7 @@ _UPLOAD_RETRIES = 8
 
 
 def attention(query: jax.Array, key: jax.Array, value: jax.Array, scale: float):
-    ctx_dims = f'{"b" * (query.ndim > 3)}zhf'
+    ctx_dims = f'{"b" * (key.ndim > 3)}zhf'
 
     def _softmax(q: jax.Array, k: jax.Array) -> jax.Array:
         lgt = jnp.einsum(f"bshf,{ctx_dims}->bhsz", q, k) * scale
