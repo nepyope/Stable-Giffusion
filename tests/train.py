@@ -44,9 +44,8 @@ def attention(query: jax.Array, key: jax.Array, value: jax.Array, scale: float):
 
         def _grad(dy: jax.Array):
             lgt = _softmax(q, k)
-            prod = lgt * dy.reshape(out.shape)
-            dx = prod - prod.sum(-1, keepdims=True) * lgt
-            d_lgt = dx * scale
+            prod = jnp.einsum(f"bhsz,{ctx_dims},bshf->bhsz", lgt, v, dy.reshape(out.shape)) * scale
+            d_lgt = prod - prod.sum(-1, keepdims=True) * lgt
 
             d_v = jnp.einsum(f"bshf,bhsz->{ctx_dims}", dy, lgt)
             d_q = jnp.einsum(f"bhsz,{ctx_dims}->bshf", d_lgt, k)
