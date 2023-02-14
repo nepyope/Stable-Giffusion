@@ -81,7 +81,7 @@ def _new_normalize(mdl: nn.Module, x: jax.Array, mean: jax.Array, var: jax.Array
     base_shape = x.shape
     if isinstance(mdl, nn.GroupNorm):
         reduction_axes = list(range(1, x.ndim - 1)) + [-1]
-        feature_axes = (-1,)
+        feature_axes = (-2, -1)
         channels = x.shape[-1]
         if mdl.group_size is not None:
             num_groups = channels // mdl.group_size
@@ -93,14 +93,14 @@ def _new_normalize(mdl: nn.Module, x: jax.Array, mean: jax.Array, var: jax.Array
 
     reduction_axes = _canonicalize_axes(x.ndim, reduction_axes)
     feature_axes = _canonicalize_axes(x.ndim, feature_axes)
-    stats_shape = list(base_shape)
+    stats_shape = list(x.shape)
     for axis in reduction_axes:
         stats_shape[axis] = 1
-    feature_shape = [1] * len(base_shape)
+    feature_shape = [1] * len(x.shape)
     reduced_feature_shape = []
     for ax in feature_axes:
-        feature_shape[ax] = base_shape[ax]
-        reduced_feature_shape.append(base_shape[ax])
+        feature_shape[ax] = x.shape[ax]
+        reduced_feature_shape.append(x.shape[ax])
     if use_scale:
         scale = mdl.param('scale', scale_init, reduced_feature_shape, param_dtype)
     else:
@@ -110,6 +110,7 @@ def _new_normalize(mdl: nn.Module, x: jax.Array, mean: jax.Array, var: jax.Array
     else:
         bias = jnp.zeros(feature_shape)
 
+    @jax.custom_gradient
     def _fn(src, scl, bs):
         mean = src.mean(reduction_axes)
         mean2 = lax.square(src).mean(reduction_axes)
@@ -130,7 +131,7 @@ def _new_normalize(mdl: nn.Module, x: jax.Array, mean: jax.Array, var: jax.Array
 
         return y.astype(x.dtype), _grad
 
-    return _fn(x, scale, bias)
+    return _fn(x, scale, bias).reshape(base_shape)
 
 
 nn.normalization._normalize = _new_normalize
