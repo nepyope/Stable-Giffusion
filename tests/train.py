@@ -51,9 +51,9 @@ def attention(query: jax.Array, key: jax.Array, value: jax.Array, scale: float):
             d_v = jnp.einsum(f"bshf,bhsz->{ctx_dims}", dy, lgt)
             d_q = jnp.einsum(f"bhsz,{ctx_dims}->bshf", d_lgt, k)
             d_k = jnp.einsum(f"bhsz,bshf->{ctx_dims}", d_lgt, q)
-            return d_v, d_q, d_k
+            return d_q, d_k, d_v
 
-        return out.reshape(*out.shape[:2], -1), _grad
+        return out.reshape(*out.shape[:-2], -1), _grad
 
     return _fn(query, key, value)
 
