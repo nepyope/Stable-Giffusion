@@ -275,7 +275,7 @@ class DataLoader:
         self._start()
         while self.running:
             try:
-                yield self.batch_queue.get(60)
+                yield self.batch_queue.get(timeout=60)
             except queue.Empty:
                 continue
         raise StopIteration
