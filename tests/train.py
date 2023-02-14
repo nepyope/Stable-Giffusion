@@ -1,7 +1,7 @@
 import datetime
 import time
 import traceback
-from typing import Union, Dict, Callable, Optional, List
+from typing import Union, Dict, Callable, Optional, List, Tuple, Iterable
 
 import jax
 import jax.numpy as jnp
@@ -67,7 +67,7 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
 FlaxAttentionBlock.__call__ = _new_attention
 
 
-def _canonicalize_axes(rank: int, axes: Axes) -> Tuple[int, ...]:
+def _canonicalize_axes(rank: int, axes: List[int]) -> Tuple[int, ...]:
     """Returns a tuple of deduplicated, sorted, and positive axes."""
     if not isinstance(axes, Iterable):
         axes = (axes,)
