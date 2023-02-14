@@ -202,7 +202,6 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         return text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
 
     def unet_fn(noise, encoded, timesteps, unet_params):
-        unet.__call__()
         return unet.apply({"params": unet_params}, noise, timesteps, encoded).sample
 
     def vae_apply(*args, method=vae.__call__, **kwargs):
