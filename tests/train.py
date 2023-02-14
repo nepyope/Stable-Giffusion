@@ -101,6 +101,8 @@ def _new_normalize(mdl: nn.Module, x: jax.Array, mean: jax.Array, var: jax.Array
     for ax in feature_axes:
         feature_shape[ax] = x.shape[ax]
         reduced_feature_shape.append(x.shape[ax])
+    if isinstance(mdl, nn.GroupNorm):
+        reduced_feature_shape = (reduced_feature_shape[0] * reduced_feature_shape[1],)
     if use_scale:
         scale = mdl.param('scale', scale_init, reduced_feature_shape, param_dtype)
     else:
