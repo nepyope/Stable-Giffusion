@@ -85,7 +85,7 @@ def _new_geglu(self: FlaxGEGLU, hidden_states: jax.Array, deterministic=True):
             t1 = t + 1
             gelu = x * t1 * 0.5
             gelu_grad = 0.5 * (t1 + (1 - t ** 2) * (0.134145 * x3 + xpi))
-            return jnp.concatenate([gelu * dy, gelu_grad * scale * dy], 2, axis=2)
+            return jnp.concatenate([gelu * dy, gelu_grad * scale * dy], axis=2)
 
         scale, x = jnp.split(hidden_states, 2, axis=2)
         return scale * nn.gelu(x), _grad
