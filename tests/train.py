@@ -198,8 +198,8 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     def get_encoded(input_ids: jax.Array, attention_mask: jax.Array):
         return text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
 
-    def unet_fn(noise, encoded, timesteps, unet_params):
-        return unet.apply({"params": unet_params}, noise, timesteps, encoded).sample
+    def unet_fn(noise, encoded, timesteps, params):
+        return unet.apply({"params": params}, lax.stop_gradient(noise), timesteps, lax.stop_gradient(encoded)).sample
 
     def vae_apply(*args, method=vae.__call__, **kwargs):
         return vae.apply({"params": vae_params}, *args, method=method, **kwargs)
@@ -264,20 +264,20 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     def train_step(unet_state: TrainState, batch: Dict[str, jax.Array]):
         img = batch["pixel_values"].astype(jnp.float32) / 255
         inp = jnp.transpose(img, (0, 3, 1, 2))
-        gauss0, drop0 = jax.random.split(rng(batch["idx"]), 2)
+        gauss0, drop0 = jax.random.split(rng(batch["idx"] + 1), 2)
         vae_out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode)
         encoded = get_encoded(batch["input_ids"], batch["attention_mask"])
         encoded = encoded.reshape(*encoded.shape[1:])  # remove batch dim for einsum
 
         def compute_loss(unet_params, itr):
-            gauss0, gauss1, drop0, drop1, sample_rng, noise_rng, step_rng = jax.random.split(rng(itr + batch["idx"]), 7)
+            sample_rng, noise_rng, step_rng = jax.random.split(rng(itr + batch["idx"]), 3)
 
             latents = jnp.stack([vae_out.latent_dist.sample(r) for r in jax.random.split(sample_rng, unet_batch)])
             latents = latents.reshape(unet_batch, context * latents.shape[2], latents.shape[3], latents.shape[4])
             latents = latents.transpose(0, 3, 1, 2)
-            latents = lax.stop_gradient(latents * 0.18215)
+            latents = latents * 0.18215
 
-            noise = jax.random.normal(noise_rng, latents.shape[1:])
+            noise = jax.random.normal(noise_rng, latents.shape)
             t0 = jax.random.randint(step_rng, (unet_batch,), 0, noise_scheduler.config.num_train_timesteps)
             noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, t0)
 
@@ -290,9 +290,8 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         (loss, scalars), grads = jax.value_and_grad(lambda x: compute_loss(x, 0), has_aux=True)(unet_state.params)
         if local_iterations > 1:
             def _inner(prev, itr):
-                grad_fn = jax.value_and_grad(lambda x: compute_loss(x, itr * 2 ** 20), has_aux=True)
-                return jax.tree_util.tree_map(lambda x, y: x / local_iterations + y, grad_fn(unet_state.params),
-                                              prev), None
+                grads = jax.value_and_grad(lambda x: compute_loss(x, itr * 2 ** 20), has_aux=True)(unet_state.params)
+                return jax.tree_util.tree_map(lambda x, y: x / local_iterations + y, grads, prev), None
 
             prev = jax.tree_util.tree_map(lambda x: x / local_iterations, ((loss, scalars), grads))
             ((loss, scalars), grads), _ = lax.scan(_inner, prev, jnp.arange(1, local_iterations))
