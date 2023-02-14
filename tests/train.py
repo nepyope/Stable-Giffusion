@@ -289,8 +289,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
             unet_dist_sq, unet_dist_abs = distance(unet_pred, noise)
 
-            vae_dist_sq = vae_dist_abs = jnp.zeros(())
-            return unet_dist_sq + vae_dist_sq, (unet_dist_sq, unet_dist_abs, vae_dist_sq, vae_dist_abs)
+            return unet_dist_sq, (unet_dist_sq, unet_dist_abs)
 
         (loss, scalars), grads = jax.value_and_grad(lambda x: compute_loss(x, 0), has_aux=True)(unet_state.params)
         if local_iterations > 1:
@@ -350,11 +349,10 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             sclr = to_host(scalars)
             print("To host", datetime.datetime.now())
 
-            for offset, (unet_sq, unet_abs, vae_sq, vae_abs) in enumerate(zip(*sclr)):
+            for offset, (unet_sq, unet_abs) in enumerate(zip(*sclr)):
                 print("loop step", datetime.datetime.now())
                 vid_per_day = i / timediff * 24 * 3600 * jax.device_count()
                 log = {"U-Net MSE/Total": float(unet_sq), "U-Net MAE/Total": float(unet_abs),
-                       "VAE MSE/Total": float(vae_sq), "VAE MAE/Total": float(vae_abs),
                        "Step": i + offset - device_steps, "Epoch": epoch}
                 if offset == device_steps - 1:
                     log.update(extra)
