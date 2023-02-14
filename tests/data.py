@@ -213,7 +213,8 @@ class DataLoader:
                 if done == self.workers:
                     break
 
-                if len(samples) <= idx + self.batch_size and len(samples) < self.parallel_videos:
+                distance = self.batch_size - len(np_batch)
+                if len(samples) <= idx + distance and len(samples) < self.parallel_videos:
                     try:
                         out = queue.get(timeout=120)
                     except Empty:
@@ -230,7 +231,7 @@ class DataLoader:
                         print("failed to load share")
                     continue
 
-                for _ in range(len(np_batch), self.batch_size):
+                for _ in range(distance):
                     while len(samples) > idx and not samples[idx][0]:
                         del samples[idx]
                     if len(samples) <= idx:
