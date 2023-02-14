@@ -1,7 +1,7 @@
 import datetime
 import time
 import traceback
-from typing import Union, Dict, Callable, Optional
+from typing import Union, Dict, Callable, Optional, List
 
 import jax
 import jax.numpy as jnp
@@ -15,6 +15,7 @@ from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel, FlaxPNDMSched
 from diffusers.models.attention_flax import FlaxAttentionBlock
 from diffusers.utils import check_min_version
 from flax import jax_utils
+from flax import linen as nn
 from flax.training.train_state import TrainState
 from jax import lax
 from optax import GradientTransformation
@@ -64,6 +65,75 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
 
 
 FlaxAttentionBlock.__call__ = _new_attention
+
+
+def _canonicalize_axes(rank: int, axes: Axes) -> Tuple[int, ...]:
+    """Returns a tuple of deduplicated, sorted, and positive axes."""
+    if not isinstance(axes, Iterable):
+        axes = (axes,)
+    return tuple(set([rank + axis if axis < 0 else axis for axis in axes]))
+
+
+def _new_normalize(mdl: nn.Module, x: jax.Array, mean: jax.Array, var: jax.Array, reduction_axes: int,
+                   feature_axes: int, dtype: jnp.dtype, param_dtype: jnp.dtype, epsilon: float, use_bias: bool,
+                   use_scale: bool, bias_init: Callable[[jax.random.PRNGKey, List[int], jnp.dtype], jax.Array],
+                   scale_init: Callable[[jax.random.PRNGKey, List[int], jnp.dtype], jax.Array]):
+    base_shape = x.shape
+    if isinstance(mdl, nn.GroupNorm):
+        reduction_axes = list(range(1, x.ndim - 1)) + [-1]
+        feature_axes = (-1,)
+        channels = x.shape[-1]
+        if mdl.group_size is not None:
+            num_groups = channels // mdl.group_size
+        else:
+            num_groups = mdl.num_groups
+        group_size = x.shape[-1] // num_groups
+        group_shape = x.shape[:-1] + (num_groups, group_size)
+        x = x.reshape(group_shape)
+
+    reduction_axes = _canonicalize_axes(x.ndim, reduction_axes)
+    feature_axes = _canonicalize_axes(x.ndim, feature_axes)
+    stats_shape = list(base_shape)
+    for axis in reduction_axes:
+        stats_shape[axis] = 1
+    feature_shape = [1] * len(base_shape)
+    reduced_feature_shape = []
+    for ax in feature_axes:
+        feature_shape[ax] = base_shape[ax]
+        reduced_feature_shape.append(base_shape[ax])
+    if use_scale:
+        scale = mdl.param('scale', scale_init, reduced_feature_shape, param_dtype)
+    else:
+        scale = jnp.ones(feature_shape)
+    if use_bias:
+        bias = mdl.param('bias', bias_init, reduced_feature_shape, param_dtype)
+    else:
+        bias = jnp.zeros(feature_shape)
+
+    def _fn(src, scl, bs):
+        mean = src.mean(reduction_axes)
+        mean2 = lax.square(src).mean(reduction_axes)
+        std = jnp.maximum(lax.sqrt(jnp.maximum(mean - mean2, 0)), epsilon)
+        mean = mean.reshape(stats_shape)
+        std = std.reshape(stats_shape)
+        y = (src - mean.reshape(stats_shape)) / std * scl.reshape(feature_shape) + bs.reshape(feature_shape)
+
+        def _grad(dy: jax.Array):
+            summed = tuple(i for i, s in enumerate(feature_shape) if s == 1)
+            norm_out = (src - mean.reshape(stats_shape)) / std
+            d_std = (dy * src).sum(reduction_axes, keepdims=True) * std ** 3 * src / np.prod(reduced_feature_shape)
+            dx = dy * std - d_std
+            dx -= dx.mean(reduction_axes, keepdims=True)
+            bias_grad = dy.sum(summed).astype(bias.dtype).reshape(bias.shape)
+            scale_grad = (norm_out * dy).sum(summed).astype(scale.dtype).reshape(scale.shape)
+            return dx.astype(src.dtype), scale_grad, bias_grad
+
+        return y.astype(x.dtype), _grad
+
+    return _fn(x, scale, bias)
+
+
+nn.normalization._normalize = _new_normalize
 
 
 def device_id():
