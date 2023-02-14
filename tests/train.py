@@ -274,7 +274,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
             latents = jnp.stack([vae_out.latent_dist.sample(r) for r in jax.random.split(sample_rng, unet_batch)])
             latents = latents.reshape(unet_batch, context * latents.shape[2], latents.shape[3], latents.shape[4])
-            latents = latents.transpose(latents, (0, 3, 1, 2))
+            latents = latents.transpose(0, 3, 1, 2)
             latents = lax.stop_gradient(latents * 0.18215)
 
             noise = jax.random.normal(noise_rng, latents.shape[1:])
