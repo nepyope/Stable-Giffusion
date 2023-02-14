@@ -1,4 +1,5 @@
 import datetime
+import math
 import time
 import traceback
 from typing import Union, Dict, Callable, Optional, List, Tuple, Iterable
@@ -12,12 +13,13 @@ import tqdm
 import typer
 import wandb
 from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel, FlaxPNDMScheduler
-from diffusers.models.attention_flax import FlaxAttentionBlock
+from diffusers.models.attention_flax import FlaxAttentionBlock, FlaxGEGLU
 from diffusers.utils import check_min_version
 from flax import jax_utils
 from flax import linen as nn
 from flax.training.train_state import TrainState
 from jax import lax
+from jax._src.nn import functions as nn_functions
 from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
@@ -72,11 +74,48 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
 FlaxAttentionBlock.__call__ = _new_attention
 
 
+def _new_geglu(self: FlaxGEGLU, hidden_states: jax.Array, deterministic=True):
+    @jax.custom_gradient
+    def _fn(hidden_states: jax.Array):
+        def _grad(dy: jax.Array):
+            scale, x = jnp.split(hidden_states, 2, axis=2)
+            x3 = x ** 3
+            xpi = x * (2 / math.pi) ** 0.5
+            t = jnp.tanh(0.044715 * x3 + xpi)
+            t1 = t + 1
+            gelu = x * t1 * 0.5
+            gelu_grad = 0.5 * (t1 + (1 - t ** 2) * (0.134145 * x3 + xpi))
+            return jnp.concatenate([gelu * dy, gelu_grad * scale * dy], 2, axis=2)
+
+        scale, x = jnp.split(hidden_states, 2, axis=2)
+        return scale * nn.gelu(x), _grad
+
+    return _fn(self.proj(hidden_states))
+
+
+FlaxGEGLU.__call__ = _new_geglu
+
+
 def _canonicalize_axes(rank: int, axes: List[int]) -> Tuple[int, ...]:
     """Returns a tuple of deduplicated, sorted, and positive axes."""
     if not isinstance(axes, Iterable):
         axes = (axes,)
     return tuple(set([rank + axis if axis < 0 else axis for axis in axes]))
+
+
+def _new_silu(x: jax.Array):
+    @jax.custom_gradient
+    def _fn(src: jax.Array):
+        def _grad(dy: jax.Array):
+            gate = jax.nn.sigmoid(src)
+            return dy * (gate + src * gate * (1 - gate))
+
+        return src * jax.nn.sigmoid(src), _grad
+
+    return _fn(x)
+
+
+nn_functions.swish = nn_functions.silu = _new_silu
 
 
 def _new_normalize(mdl: nn.Module, x: jax.Array, mean: jax.Array, var: jax.Array, reduction_axes: int,
