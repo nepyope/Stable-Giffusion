@@ -1,7 +1,7 @@
 import datetime
 import time
 import traceback
-from typing import Union, Dict, Callable
+from typing import Union, Dict, Callable, Optional
 
 import jax
 import jax.numpy as jnp
@@ -12,6 +12,7 @@ import tqdm
 import typer
 import wandb
 from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel, FlaxPNDMScheduler
+from diffusers.models.attention_flax import FlaxAttentionBlock
 from diffusers.utils import check_min_version
 from flax import jax_utils
 from flax.training.train_state import TrainState
@@ -26,6 +27,45 @@ from data import DataLoader
 app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")
 _UPLOAD_RETRIES = 8
+
+_original_attention = FlaxAttentionBlock.__call__
+
+
+def softmax(inp: jax.Array, scale: float) -> jax.Array:
+    @jax.custom_gradient
+    def _fn(lgt: jax.Array):
+        lgt = lgt * scale
+        lgt = jnp.exp(lgt - lgt.max(-1, keepdims=True))
+        lgt /= lgt.sum(-1, keepdims=True)
+
+        def _grad(dy: jax.Array) -> jax.Array:
+            prod = lgt * dy
+            dx = prod - prod.sum(-1, keepdims=True) * lgt
+            return dx * scale
+
+        return lgt, _grad
+
+    return _fn(inp)
+
+
+def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: Optional[jax.Array] = None,
+                   deterministic=True):
+    context = hidden_states if context is None else context
+
+    query_proj = self.query(hidden_states).reshape(*hidden_states.shape[:-1], self.heads, -1)
+    key_proj = self.key(context).reshape(*context.shape[:-1], self.heads, -1)
+    value_proj = self.value(context).reshape(*context.shape[:-1], self.heads, -1)
+    ctx_dims = f'{"b" * (context.ndim > 2)}zhf'
+
+    attention_scores = jnp.einsum(f"bshf,{ctx_dims}->bhsz", query_proj, key_proj)
+    attention_probs = softmax(attention_scores, self.scale)
+
+    hidden_states = jnp.einsum(f"bhsz,{ctx_dims}->bshf", attention_probs, value_proj)
+    hidden_states = hidden_states.reshape(*hidden_states.shape[:2], -1)
+    return self.proj_attn(hidden_states)
+
+
+FlaxAttentionBlock.__call__ = _new_attention
 
 
 def device_id():
@@ -162,6 +202,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         return text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
 
     def unet_fn(noise, encoded, timesteps, unet_params):
+        unet.__call__()
         return unet.apply({"params": unet_params}, noise, timesteps, encoded).sample
 
     def vae_apply(*args, method=vae.__call__, **kwargs):
@@ -231,7 +272,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         gauss0, drop0 = jax.random.split(rng(batch["idx"]), 2)
         vae_out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode)
         encoded = get_encoded(batch["input_ids"], batch["attention_mask"])
-        encoded = lax.broadcast_in_dim(encoded, (unet_batch, *encoded.shape[1:]), tuple(range(encoded.ndim)))
+        encoded = encoded.reshape(*encoded.shape[1:])  # remove batch dim for einsum
 
         def compute_loss(unet_params, itr):
             gauss0, gauss1, drop0, drop1, sample_rng, noise_rng, step_rng = jax.random.split(rng(itr + batch["idx"]), 7)
@@ -256,7 +297,8 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         if local_iterations > 1:
             def _inner(prev, itr):
                 grad_fn = jax.value_and_grad(lambda x: compute_loss(x, itr * 2 ** 20), has_aux=True)
-                return jax.tree_util.tree_map(lambda x, y: x / local_iterations + y, grad_fn(unet_state.params), prev), None
+                return jax.tree_util.tree_map(lambda x, y: x / local_iterations + y, grad_fn(unet_state.params),
+                                              prev), None
 
             prev = jax.tree_util.tree_map(lambda x: x / local_iterations, ((loss, scalars), grads))
             ((loss, scalars), grads), _ = lax.scan(_inner, prev, jnp.arange(1, local_iterations))
