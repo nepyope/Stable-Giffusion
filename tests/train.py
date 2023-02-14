@@ -28,8 +28,6 @@ app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")
 _UPLOAD_RETRIES = 8
 
-_original_attention = FlaxAttentionBlock.__call__
-
 
 def softmax(inp: jax.Array, scale: float) -> jax.Array:
     @jax.custom_gradient
@@ -168,10 +166,9 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
          resolution: int = 128, fps: int = 1, context: int = 16, workers: int = 16, prefetch: int = 6,
          base_model: str = "flax/stable-diffusion-2-1", data_path: str = "./urls", sample_interval: int = 2048,
          parallel_videos: int = 512, schedule_length: int = 1024, warmup_steps: int = 1024,
-         lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77,
-         save_interval: int = 2048, overwrite: bool = True,
-         base_path: str = "gs://video-us/checkpoint/", local_iterations: int = 4, unet_batch: int = 8,
-         device_steps: int = 4):
+         lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, save_interval: int = 2048,
+         overwrite: bool = True, base_path: str = "gs://video-us/checkpoint/", local_iterations: int = 4,
+         unet_batch: int = 8, device_steps: int = 4):
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch,
                       parallel_videos, tokenizer, clip_tokens, device_steps)
@@ -211,8 +208,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         return jnp.transpose(vae_apply(inp, method=vae.decode).sample, (0, 2, 3, 1))
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
-        return {"pixel_values": batch["pixel_values"],
-                "idx": batch["idx"] + jnp.arange(device_steps),
+        return {"pixel_values": batch["pixel_values"], "idx": batch["idx"] + jnp.arange(device_steps),
                 "input_ids": jnp.stack([batch["input_ids"]] * device_steps, 0),
                 "attention_mask": jnp.stack([batch["attention_mask"]] * device_steps, 0)}
 
