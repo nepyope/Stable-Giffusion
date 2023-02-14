@@ -170,7 +170,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
          parallel_videos: int = 512, schedule_length: int = 1024, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77,
          save_interval: int = 2048, overwrite: bool = True,
-         base_path: str = "gs://video-us/checkpoint/", local_iterations: int = 8, unet_batch: int = 4,
+         base_path: str = "gs://video-us/checkpoint/", local_iterations: int = 4, unet_batch: int = 8,
          device_steps: int = 4):
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch,
