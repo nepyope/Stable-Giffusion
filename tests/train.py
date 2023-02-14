@@ -30,21 +30,32 @@ check_min_version("0.10.0.dev0")
 _UPLOAD_RETRIES = 8
 
 
-def softmax(inp: jax.Array, scale: float) -> jax.Array:
-    @jax.custom_gradient
-    def _fn(lgt: jax.Array):
-        lgt = lgt * scale
-        lgt = jnp.exp(lgt - lgt.max(-1, keepdims=True))
-        lgt /= lgt.sum(-1, keepdims=True)
+def attention(query: jax.Array, key: jax.Array, value: jax.Array, scale: float):
+    ctx_dims = f'{"b" * (query.ndim > 3)}zhf'
 
-        def _grad(dy: jax.Array) -> jax.Array:
+    def _softmax(q: jax.Array, k: jax.Array) -> jax.Array:
+        lgt = jnp.einsum(f"bshf,{ctx_dims}->bhsz", q, k) * scale
+        lgt = jnp.exp(lgt - lgt.max(-1, keepdims=True))
+        return lgt / lgt.sum(-1, keepdims=True)
+
+    @jax.custom_gradient
+    def _fn(q: jax.Array, k: jax.Array, v: jax.Array):
+        out = jnp.einsum(f"bhsz,{ctx_dims}->bshf", _softmax(q, k), v)
+
+        def _grad(dy: jax.Array):
+            lgt = _softmax(q, k)
             prod = lgt * dy
             dx = prod - prod.sum(-1, keepdims=True) * lgt
-            return dx * scale
+            d_lgt = dx * scale
 
-        return lgt, _grad
+            d_v = jnp.einsum(f"bshf,bhsz->{ctx_dims}", dy, lgt)
+            d_q = jnp.einsum(f"bhsz,{ctx_dims}->bshf", d_lgt, k)
+            d_k = jnp.einsum(f"bhsz,bshf->{ctx_dims}", d_lgt, q)
+            return d_v, d_q, d_k
 
-    return _fn(inp)
+        return out, _grad
+
+    return _fn(query, key, value)
 
 
 def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: Optional[jax.Array] = None,
@@ -54,13 +65,7 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
     query_proj = self.query(hidden_states).reshape(*hidden_states.shape[:-1], self.heads, -1)
     key_proj = self.key(context).reshape(*context.shape[:-1], self.heads, -1)
     value_proj = self.value(context).reshape(*context.shape[:-1], self.heads, -1)
-    ctx_dims = f'{"b" * (context.ndim > 2)}zhf'
-
-    attention_scores = jnp.einsum(f"bshf,{ctx_dims}->bhsz", query_proj, key_proj)
-    attention_probs = softmax(attention_scores, self.scale)
-
-    hidden_states = jnp.einsum(f"bhsz,{ctx_dims}->bshf", attention_probs, value_proj)
-    hidden_states = hidden_states.reshape(*hidden_states.shape[:2], -1)
+    hidden_states = attention(query_proj, key_proj, value_proj, self.scale)
     return self.proj_attn(hidden_states)
 
 
