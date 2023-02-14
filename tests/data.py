@@ -248,7 +248,7 @@ class DataLoader:
             while True:
                 if done == self.workers:
                     break
-                if len(samples) >= self.batch_size:
+                if len(samples) >= self.parallel_videos:
                     time.sleep(30)
                     continue
                 try:
