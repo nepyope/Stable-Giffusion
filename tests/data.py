@@ -5,15 +5,17 @@ import hashlib
 import json
 import multiprocessing
 import os
+import queue
 import random
 import shutil
 import threading
+import time
 import traceback
 import uuid
 from multiprocessing import managers
 from multiprocessing import shared_memory
 from queue import Empty
-from typing import List, Callable
+from typing import List, Callable, Optional, Tuple
 
 import ffmpeg
 import jax
@@ -64,8 +66,8 @@ def try_except(fn: Callable, default=None):
 
 
 @try_except
-def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.Semaphore, target_image_size: int
-                   ) -> List[dict]:
+def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.Semaphore, target_image_size: int) -> \
+        List[dict]:
     # We have to lock this part because it can lead to errors if multiple thread try to scrape video Information at
     # the same time.
 
@@ -81,9 +83,9 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
         ext = f.get('ext')
         format_note = f.get('format_note')
 
-        if ('automatic_captions' not in info or "en" not in info["automatic_captions"]
-                or not info['automatic_captions']['en'] or "url" not in info['automatic_captions']['en'][0]
-                or not info['automatic_captions']['en'][0]["url"]):
+        if ('automatic_captions' not in info or "en" not in info["automatic_captions"] or not
+        info['automatic_captions']['en'] or "url" not in info['automatic_captions']['en'][0] or not
+        info['automatic_captions']['en'][0]["url"]):
             continue
 
         if any(x is None for x in (width, height, url, ext, format_note)):
@@ -98,10 +100,7 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
     return sorted(video_urls, key=lambda x: (x['ext'] != 'mp4', x['width'], x['height']))
 
 
-
-
-def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps: int,
-                     ) -> np.ndarray:
+def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps: int, ) -> np.ndarray:
     filename = uuid.uuid4()
     path = str(filename)
     for video_url in video_urls:
@@ -119,12 +118,11 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
         w = round(target_image_size * aspect_ratio) if aspect_ratio > 1 else target_image_size
         h = target_image_size if aspect_ratio > 1 else round(target_image_size / aspect_ratio)
         try:
-            out, _ = ffmpeg.input(path) \
-                .filter("scale", w=w, h=h) \
-                .filter("crop", w=target_image_size, h=target_image_size).filter("fps", target_fps) \
-                .output("pipe:", format="rawvideo", pix_fmt="rgb24", loglevel="error", preset="ultrafast",
-                        threads=target_image_size // 40) \
-                .run(capture_stdout=True)
+            out, _ = ffmpeg.input(path).filter("scale", w=w, h=h).filter("crop", w=target_image_size,
+                                                                         h=target_image_size).filter("fps",
+                                                                                                     target_fps).output(
+                "pipe:", format="rawvideo", pix_fmt="rgb24", loglevel="error", preset="ultrafast",
+                threads=target_image_size // 40).run(capture_stdout=True)
         except ffmpeg.Error:  # Broken Video, next might work
             continue
 
@@ -134,13 +132,11 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
 
 
 def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_image_size: int, target_fps: int,
-                 context_size: int, queue: multiprocessing.Queue, smm: managers.SharedMemoryManager,
-                 device_steps: int):
+                 context_size: int, queue: multiprocessing.Queue, smm: managers.SharedMemoryManager, device_steps: int):
     youtube_base = 'https://www.youtube.com/watch?v='
     youtube_getter = youtube_dl.YoutubeDL(
         {'writeautomaticsub': False, 'socket_timeout': 600, "quiet": True, "verbose": False, "no_warnings": True,
-         "ignoreerrors": True
-         })
+         "ignoreerrors": True})
     youtube_getter.add_default_info_extractors()
     rng = random.Random(worker_id)
     rng.shuffle(work)
@@ -167,7 +163,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 class DataLoader:
     def __init__(self, workers: int, url_dir: str, video_downloaders: int, resolution: int, fps: int, context: int,
                  batch_size: int, prefetch: int, parallel_videos: int, tokenizer: transformers.BertTokenizer,
-                 clip_tokens: int, device_steps: int, seed: int = 0):
+                 clip_tokens: int, device_steps: int, batch_prefetch: int, seed: int = 0):
         self.workers = workers
         self.video_downloaders = video_downloaders
         self.resolution = resolution
@@ -184,18 +180,64 @@ class DataLoader:
         for path in os.listdir(url_dir):
             with open(f'{url_dir}/{path}', 'rb') as f:
                 vals = json.load(f)
-                ids.extend([x for i, d in zip(vals["id"], vals["duration"])
-                            for x, z in zip(i, d) if z > context * self.device_steps / fps])
+                ids.extend([x for i, d in zip(vals["id"], vals["duration"]) for x, z in zip(i, d) if
+                            z > context * self.device_steps / fps])
         self.rng = random.Random(self.seed)
         self.rng.shuffle(self.ids)
         self.ids = ids[int(len(ids) * jax.process_index() / jax.process_count()):
                        int(len(ids) * (jax.process_index() + 1) / jax.process_count())]
 
-    def __iter__(self):
+        self.running = False
+        self.batch_queue = queue.Queue(batch_prefetch)
+        self.thread: Optional[threading.Thread] = None
+        self.batch_thread: Optional[threading.Thread] = None
+        self._start()
+
+    def _start(self):
+        if self.running:
+            return
+
+        self.running = True
+        self.thread = threading.Thread(target=self._worker)
+        self.thread.start()
+        return
+
+    def _batch(self, samples: List[Tuple[List[np.ndarray], str]]):
+        idx = 0
+        np_batch = []
+        titles = []
+        while self.running:
+            if len(np_batch) == self.batch_size:
+                if _DEBUG:
+                    self.batch_queue.put([hashlib.sha3_512(s.encode()).hexdigest() for s in titles])
+                    continue
+
+                tokens = self.tokenizer(titles, return_tensors="np", padding="max_length", truncation=True,
+                                        max_length=self.clip_tokens)
+                input_ids = tokens["input_ids"].reshape(self.batch_size, -1)
+                attention_mask = tokens["attention_mask"].reshape(self.batch_size, -1)
+                self.batch_queue.put((np.stack(np_batch), input_ids, attention_mask))
+                np_batch.clear()
+                titles.clear()
+                time.sleep(30)
+
+            while len(samples) > idx and not samples[idx][0]:
+                del samples[idx]
+            if len(samples) <= idx:
+                continue
+            np_batch.append(np.stack([samples[idx][0].pop(0) for _ in range(self.device_steps)]))
+            titles.append(samples[idx][1])
+            idx = (idx + 1) % self.parallel_videos
+
+    def _worker(self):
         self.rng.shuffle(self.ids)
         lock = multiprocessing.Semaphore(self.video_downloaders)
         queue = multiprocessing.Queue(self.prefetch)
         workers = []
+        samples = []
+        self.thread = threading.Thread(target=self._batch, args=(samples,))
+        self.thread.start()
+        done = 0
         with managers.SharedMemoryManager() as smm:
             for i in range(self.workers):
                 work = self.ids[int(len(self.ids) * i / self.workers):int(len(self.ids) * (i + 1) / self.workers)]
@@ -203,60 +245,39 @@ class DataLoader:
                 workers.append(multiprocessing.Process(args=args, daemon=True, target=frame_worker))
             for w in workers:
                 w.start()
-
-            done = 0
-            samples = []
-            np_batch = []
-            titles = []
-            idx = 0
             while True:
                 if done == self.workers:
                     break
-
-                distance = self.batch_size - len(np_batch)
-                if len(samples) <= idx + distance and len(samples) < self.parallel_videos:
-                    try:
-                        out = queue.get(timeout=120)
-                    except Empty:
-                        print(datetime.datetime.now(), "Queue empty. Waiting another 120 seconds.")
-                        continue
-                    if out == _DONE:
-                        done += 1
-                        continue
-                    try:
-                        share = list(from_share(out[0]))
-                        self.rng.shuffle(share)
-                        samples.append((share, out[1]))
-                    except:
-                        print("failed to load share")
+                if len(samples) >= self.batch_size:
+                    time.sleep(30)
                     continue
-
-                for _ in range(distance):
-                    while len(samples) > idx and not samples[idx][0]:
-                        del samples[idx]
-                    if len(samples) <= idx:
-                        break
-                    np_batch.append(np.stack([samples[idx][0].pop(0) for _ in range(self.device_steps)]))
-                    titles.append(samples[idx][1])
-                    idx = (idx + 1) % self.parallel_videos
-
-                if len(np_batch) != self.batch_size:
+                try:
+                    out = queue.get(timeout=120)
+                except Empty:
+                    print(datetime.datetime.now(), "Queue empty. Waiting another 120 seconds.")
                     continue
-
-                if _DEBUG:
-                    yield [hashlib.sha3_512(s.encode()).hexdigest() for s in titles]
+                if out == _DONE:
+                    done += 1
                     continue
-
-                tokens = self.tokenizer(titles, return_tensors="np", padding="max_length", truncation=True,
-                                        max_length=self.clip_tokens)
-                input_ids = tokens["input_ids"].reshape(self.batch_size, -1)
-                attention_mask = tokens["attention_mask"].reshape(self.batch_size, -1)
-                yield np.stack(np_batch), input_ids, attention_mask
-                np_batch.clear()
-                titles.clear()
+                try:
+                    share = list(from_share(out[0]))
+                    self.rng.shuffle(share)
+                    samples.append((share, out[1]))
+                except:
+                    print("failed to load share")
+                continue
 
             for w in workers:
                 w.join()
+        self.running = False
+
+    def __iter__(self):
+        self._start()
+        while self.running:
+            try:
+                yield self.batch_queue.get(60)
+            except queue.Empty:
+                continue
         raise StopIteration
 
 
