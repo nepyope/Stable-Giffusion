@@ -236,15 +236,10 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         def compute_loss(unet_params, itr):
             gauss0, gauss1, drop0, drop1, sample_rng, noise_rng, step_rng = jax.random.split(rng(itr + batch["idx"]), 7)
 
-            vae_outputs = vae_out
-
-            vae_outputs = vae_outputs.latent_dist.sample(sample_rng)
-            latents = jnp.transpose(vae_outputs, (0, 3, 1, 2))
+            latents = jnp.stack([vae_out.latent_dist.sample(r) for r in jax.random.split(sample_rng, unet_batch)])
+            latents = latents.reshape(unet_batch, context * latents.shape[2], latents.shape[3], latents.shape[4])
+            latents = latents.transpose(latents, (0, 3, 1, 2))
             latents = lax.stop_gradient(latents * 0.18215)
-
-            latents = jnp.transpose(latents, (1, 0, 2, 3))
-            latents = latents.reshape(latents.shape[0], -1, latents.shape[-1])
-            latents = lax.broadcast_in_dim(latents, (unet_batch, *latents.shape), (1, 2, 3))
 
             noise = jax.random.normal(noise_rng, latents.shape[1:])
             t0 = jax.random.randint(step_rng, (unet_batch,), 0, noise_scheduler.config.num_train_timesteps)
