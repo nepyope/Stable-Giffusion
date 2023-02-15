@@ -235,7 +235,7 @@ class DataLoader:
         queue = multiprocessing.Queue(self.prefetch)
         workers = []
         samples = []
-        self.thread = threading.Thread(target=self._batch, args=(samples,))
+        self.thread = threading.Thread(target=self.batch_thread, args=(samples,))
         self.thread.start()
         done = 0
         with managers.SharedMemoryManager() as smm:
