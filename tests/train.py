@@ -325,7 +325,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     start_time = time.time()
 
     def to_img(x: jax.Array) -> wandb.Image:
-        return wandb.Image(x.reshape(-1, resolution, 3))
+        return wandb.Image(x.reshape(jax.local_device_count(), context * resolution, resolution, 3).transpose(1, 0, 2, 3).reshape(context * resolution, jax.local_device_count() * resolution, 3))
 
     global_step = 0
     for epoch in range(10 ** 9):
