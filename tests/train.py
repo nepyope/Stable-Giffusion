@@ -228,7 +228,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 "attention_mask": jnp.stack([batch["attention_mask"]] * device_steps, 0)}
 
     def rng(idx: jax.Array):
-        return jax.random.PRNGKey(idx * device_steps + device_id())
+        return jax.random.PRNGKey(idx * jax.device_count() + device_id())
 
     def sample(unet_params, batch: Dict[str, Union[np.ndarray, int]]):
         batch = all_to_all_batch(batch)
@@ -305,7 +305,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         (loss, scalars), grads = jax.value_and_grad(lambda x: compute_loss(x, 0), has_aux=True)(unet_state.params)
         if local_iterations > 1:
             def _inner(prev, itr):
-                grads = jax.value_and_grad(lambda x: compute_loss(x, itr * 2 ** 20), has_aux=True)(unet_state.params)
+                grads = jax.value_and_grad(lambda x: compute_loss(x, itr * 257), has_aux=True)(unet_state.params)
                 return jax.tree_util.tree_map(lambda x, y: x / local_iterations + y, grads, prev), None
 
             prev = jax.tree_util.tree_map(lambda x: x / local_iterations, ((loss, scalars), grads))
