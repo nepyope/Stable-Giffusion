@@ -349,7 +349,6 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 extra[f"Samples/Reconstruction (U-Net, Guidance 2) {pid}"] = to_img(g2)
                 extra[f"Samples/Reconstruction (U-Net, Guidance 4) {pid}"] = to_img(g4)
                 extra[f"Samples/Reconstruction (U-Net, Guidance 8) {pid}"] = to_img(g8)
-                extra[f"Samples/Ground Truth {pid}"] = to_img(batch["pixel_values"].astype(jnp.float32) / 255)
 
             print("Before train step", datetime.datetime.now())
             unet_state, scalars = p_train_step(unet_state, batch)
