@@ -113,6 +113,36 @@ def get_proxies():
 
 @try_except
 def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
+
+
+    def get_sentences(subtitles, fps):
+        sentences = []
+        timestamp = 0
+        for subtitle in subtitles:
+            if 'aAppend' in subtitle:
+                timestamp = subtitle['tStartMs']
+                sentences.append(['', timestamp])
+                continue
+            if 'segs' in subtitle:
+                segs = subtitle['segs']
+                start = subtitle['tStartMs']
+                for seg in segs:
+                    word = seg['utf8']
+                    if 'tOffsetMs' in seg:
+                        start += seg['tOffsetMs']
+                    sentences.append([word, timestamp])
+        s = []
+        for i in range(len(sentences)):
+            if i == 0:
+                s.append(sentences[i])
+                continue
+            if sentences[i][1] == sentences[i-1][1]:
+                s[-1][0] += sentences[i][0]
+            else:
+                s.append([sentences[i][0], round(fps*sentences[i][1]/1000)])
+        return np.array(s)
+
+
     while True:
         for _ in range(len(proxies)):
             p = proxies.pop(0)
@@ -122,27 +152,8 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                 subs = requests.get(video_urls[0]["sub_url"],
                                     proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
                 events = json.loads(subs)['events']
-                subs = events[1]['segs']
-                subs = [s['utf8']for s in subs]
 
-                timestamps = []
-
-                for i, e in enumerate(events):
-                    if i < 2:
-                        continue
-                    if e['segs'][0]['utf8'] == '\n':
-                        timestamps.append(e['tStartMs'])
-
-                sentences = ['' for _ in range(len(timestamps))]
-
-                s = ''.join(subs)
-                for i,_ in enumerate(sentences):
-                    sentences[i] += s[:s.find('  ')]
-                    s = s[s.find('  ')+2:]
-
-                if sentences[-1] != '': #this should be the last sentence, if there's nothing something went wrong
-                    print(sentences, timestamps)
-                    return ''.join(subs)
+                return ''.join(get_sentences(events, 8)[:, 0])
 
             except urllib3.exceptions.HTTPError:
                 pass
@@ -212,11 +223,10 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
             if not subs:
                 continue
-
+            print(subs)
             frames = get_video_frames(video_urls, target_image_size, target_fps)
             if frames is None or not frames.size or frames.shape[0] < group:
                 continue
-
 
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
@@ -284,7 +294,6 @@ class DataLoader:
                 self.batch_queue.put((np.stack(np_batch), input_ids, attention_mask))
                 np_batch.clear()
                 subs.clear()
-                time.sleep(30)
 
             while len(samples) > idx and not samples[idx][0]:
                 del samples[idx]
@@ -315,7 +324,6 @@ class DataLoader:
                 if done == self.workers:
                     break
                 if len(samples) >= self.parallel_videos:
-                    time.sleep(30)
                     continue
                 try:
                     out = queue.get(timeout=120)
