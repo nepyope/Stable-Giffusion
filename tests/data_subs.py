@@ -104,7 +104,7 @@ def get_proxies():
     while True:
         try:
             r = requests.get("https://proxy.webshare.io/api/proxy/list/?mode=backbone&page_size=1000",
-                             headers={"Authorization": "sudl99m2vcl0kf6x1wyh7pa8nnatg378lo9ltwct"})
+                             headers={"Authorization": os.environ["WEBSHARE_KEY"]})
             return [f"{r['username']}:{r['password']}" + '@' + f"{r['proxy_address']}:{r['ports']['socks5']}"
                     for r in r.json()['results']]
         except:
