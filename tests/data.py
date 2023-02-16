@@ -135,7 +135,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
                  context_size: int, queue: multiprocessing.Queue, smm: managers.SharedMemoryManager, device_steps: int):
     youtube_base = 'https://www.youtube.com/watch?v='
     youtube_getter = youtube_dl.YoutubeDL(
-        {'writeautomaticsub': False, 'socket_timeout': 600, "quiet": True, "verbose": False, "no_warnings": True,
+        {'writeautomaticsub': False, 'socket_timeout': 600, "quiet": True, "verbose": True, "no_warnings": True,
          "ignoreerrors": True})
     youtube_getter.add_default_info_extractors()
     rng = random.Random(worker_id)
