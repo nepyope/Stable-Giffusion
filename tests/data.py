@@ -22,7 +22,7 @@ import jax
 import numpy as np
 import requests
 import transformers
-import yt_dlp
+import yt_dlp as youtube_dl
 
 _DEBUG = False
 _DONE = "DONE"
