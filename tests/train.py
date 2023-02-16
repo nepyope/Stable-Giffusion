@@ -25,7 +25,7 @@ from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
 from transformers import CLIPTokenizer, FlaxCLIPTextModel
 
-from data import DataLoader
+from data_subs import DataLoader
 
 app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")
@@ -178,9 +178,9 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 
 @app.command()
 def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
-         resolution: int = 128, fps: int = 1, context: int = 8, workers: int = 64, prefetch: int = 32,
-         batch_prefetch: int = 4, base_model: str = "flax/stable-diffusion-2-1", data_path: str = "./urls",
-         sample_interval: int = 2048, parallel_videos: int = 1024, schedule_length: int = 1024, warmup_steps: int = 1024,
+         resolution: int = 128, fps: int = 1, context: int = 8, workers: int = 8, prefetch: int = 8,
+         batch_prefetch: int = 2, base_model: str = "flax/stable-diffusion-2-1", data_path: str = "./urls",
+         sample_interval: int = 2048, parallel_videos: int = 128, schedule_length: int = 1024, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, save_interval: int = 2048,
          overwrite: bool = True, base_path: str = "gs://video-us/checkpoint/", local_iterations: int = 4,
          unet_batch: int = 8, device_steps: int = 4):
@@ -330,57 +330,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     global_step = 0
     for epoch in range(10 ** 9):
         for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 1)):
-            global_step += 1
-            if global_step <= 2:
-                print(f"Step {global_step}", datetime.datetime.now())
-            i *= device_steps
-            batch = {
-                "pixel_values": vid.reshape(jax.local_device_count(), device_steps, context, resolution, resolution, 3),
-                "input_ids": ids.reshape(jax.local_device_count(), 1, -1),
-                "attention_mask": msk.reshape(jax.local_device_count(), 1, -1),
-                "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
-            extra = {}
-            pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
-            if i % sample_interval == 0:
-                sample_out = p_sample(unet_state.params, batch)
-                s_mode, g1, g2, g4, g8 = np.split(to_host(sample_out, lambda x: x), 5, 1)
-                extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
-                extra[f"Samples/Reconstruction (U-Net, Guidance 1) {pid}"] = to_img(g1)
-                extra[f"Samples/Reconstruction (U-Net, Guidance 2) {pid}"] = to_img(g2)
-                extra[f"Samples/Reconstruction (U-Net, Guidance 4) {pid}"] = to_img(g4)
-                extra[f"Samples/Reconstruction (U-Net, Guidance 8) {pid}"] = to_img(g8)
-
-            print("Before train step", datetime.datetime.now())
-            unet_state, scalars = p_train_step(unet_state, batch)
-            print("After train step", datetime.datetime.now())
-
-            timediff = time.time() - start_time
-            sclr = to_host(scalars)
-            print("To host", datetime.datetime.now())
-
-            for offset, (unet_sq, unet_abs) in enumerate(zip(*sclr)):
-                print("loop step", datetime.datetime.now())
-                vid_per_day = i / timediff * 24 * 3600 * jax.device_count()
-                log = {"U-Net MSE/Total": float(unet_sq), "U-Net MAE/Total": float(unet_abs),
-                       "Step": i + offset - device_steps, "Epoch": epoch}
-                if offset == device_steps - 1:
-                    log.update(extra)
-                    log.update({"Runtime": timediff, "Speed/Videos per Day": vid_per_day,
-                                "Speed/Frames per Day": vid_per_day * context})
-                run.log(log, step=(global_step - 1) * device_steps + offset)
-            if i % save_interval == 0 and jax.process_index() == 0:
-                states = ("unet", unet_state),
-                for n, s in list(states):
-                    p = to_host(s.params)
-                    flattened, jax_structure = jax.tree_util.tree_flatten(p)
-                    for _ in range(_UPLOAD_RETRIES):
-                        try:
-                            with smart_open.open(base_path + n + ".np", "wb") as f:
-                                np.savez(f, **{str(i): v for i, v in enumerate(flattened)})
-                            break
-                        except:
-                            print("failed to write", n, "checkpoint")
-                            traceback.print_exc()
+            print(f"Epoch {epoch} Step {i}")
 
 
 if __name__ == "__main__":
