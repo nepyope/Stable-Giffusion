@@ -121,7 +121,7 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                     f.write(str(video_urls))
                 subs = requests.get(video_urls[0]["sub_url"],
                                     proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
-                subs = json.load(subs)['events'][1]['segs']
+                subs = json.loads(subs)['events'][1]['segs']
                 subs = [s['utf8']for s in subs]
                 return ''.join(subs)
             except urllib3.exceptions.HTTPError:
