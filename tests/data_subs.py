@@ -121,18 +121,9 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                     f.write(str(video_urls))
                 subs = requests.get(video_urls[0]["sub_url"],
                                     proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
-                #save subs to file
-                with open("subs.txt", "w") as f:
-                    f.write(subs)
-
-                subs = subs[subs.find("<transcript>") + len("<transcript>"):subs.find('</text>')]
-                subs = subs[subs.find('>') + 1:]
-                subs = ftfy.ftfy(subs)
-                if "but your computer or network may be sending automated queries. To protect our users, we can't process your request right now." in subs:
-                    print("blocked IP")
-                    continue
-                proxies.append(p)
-                return subs
+                subs = json.load(subs)['events'][1]['segs']
+                subs = [s['utf8']for s in subs]
+                return ''.join(subs)
             except urllib3.exceptions.HTTPError:
                 pass
             except requests.exceptions.RequestException:
@@ -200,7 +191,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             if not subs:
                 continue
 
-            #print(subs)
+            print(subs)
 
             frames = get_video_frames(video_urls, target_image_size, target_fps)
             if frames is None or not frames.size or frames.shape[0] < group:
