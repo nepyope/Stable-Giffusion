@@ -151,7 +151,6 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
             except json.decoder.JSONDecodeError:
                 print("IP Blocked")
 
-            print("error")
         proxies.clear()
         proxies.extend(get_proxies())
         print("Refreshing proxies", len(proxies))
