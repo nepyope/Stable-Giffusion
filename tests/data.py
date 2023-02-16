@@ -158,7 +158,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
             queue.put((to_share(frames, smm), title))
-    queue.put(_DONE)
+        queue.put(_DONE)
 
 
 class DataLoader:
