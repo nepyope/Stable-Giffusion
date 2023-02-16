@@ -142,21 +142,22 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
     rng.shuffle(work)
 
     group = context_size * device_steps
-    for i, wor in enumerate(work, worker_id):
-        video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
+    while True:
+        for i, wor in enumerate(work, worker_id):
+            video_urls = get_video_urls(youtube_getter, youtube_base, wor, lock, target_image_size)
 
-        if not video_urls:
-            continue
+            if not video_urls:
+                continue
 
-        frames = get_video_frames(video_urls, target_image_size, target_fps)
-        if frames is None or not frames.size or frames.shape[0] < group:
-            continue
+            frames = get_video_frames(video_urls, target_image_size, target_fps)
+            if frames is None or not frames.size or frames.shape[0] < group:
+                continue
 
-        title = video_urls[0]["title"]
+            title = video_urls[0]["title"]
 
-        frames = frames[:frames.shape[0] // group * group]
-        frames = frames.reshape(-1, context_size, *frames.shape[1:])
-        queue.put((to_share(frames, smm), title))
+            frames = frames[:frames.shape[0] // group * group]
+            frames = frames.reshape(-1, context_size, *frames.shape[1:])
+            queue.put((to_share(frames, smm), title))
     queue.put(_DONE)
 
 
