@@ -23,7 +23,7 @@ import numpy as np
 import requests
 import transformers
 import urllib3.exceptions
-import youtube_dl
+import yt_dlp as youtube_dl
 
 _DEBUG = False
 _DONE = "DONE"
@@ -110,37 +110,39 @@ def get_proxies():
         except:
             pass
 
+def get_sentences(subtitles, fps):
+    sentences = []
+    timestamp = 0
+    for subtitle in subtitles:
+        if 'aAppend' in subtitle:
+            timestamp = subtitle['tStartMs']
+            sentences.append(['', timestamp])
+            continue
+        if 'segs' in subtitle:
+            segs = subtitle['segs']
+            start = subtitle['tStartMs']
+            for seg in segs:
+                word = seg['utf8']
+                if 'tOffsetMs' in seg:
+                    start += seg['tOffsetMs']
+                sentences.append([word, timestamp])
+    s = []
+    for i in range(len(sentences)):
+        if i == 0:
+            s.append(sentences[i])
+            continue
+        if sentences[i][1] == sentences[i-1][1]:
+            s[-1][0] += sentences[i][0]
+        else:
+            s.append([sentences[i][0], round(fps*sentences[i][1]/1000)])
+    return np.array(s)
+
 
 @try_except
 def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
 
 
-    def get_sentences(subtitles, fps):
-        sentences = []
-        timestamp = 0
-        for subtitle in subtitles:
-            if 'aAppend' in subtitle:
-                timestamp = subtitle['tStartMs']
-                sentences.append(['', timestamp])
-                continue
-            if 'segs' in subtitle:
-                segs = subtitle['segs']
-                start = subtitle['tStartMs']
-                for seg in segs:
-                    word = seg['utf8']
-                    if 'tOffsetMs' in seg:
-                        start += seg['tOffsetMs']
-                    sentences.append([word, timestamp])
-        s = []
-        for i in range(len(sentences)):
-            if i == 0:
-                s.append(sentences[i])
-                continue
-            if sentences[i][1] == sentences[i-1][1]:
-                s[-1][0] += sentences[i][0]
-            else:
-                s.append([sentences[i][0], round(fps*sentences[i][1]/1000)])
-        return np.array(s)
+
 
 
     while True:
