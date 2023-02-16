@@ -117,6 +117,8 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
         for _ in range(len(proxies)):
             p = proxies.pop(0)
             try:
+                with open("subs_urls.txt", "w") as f:
+                    f.write(video_urls)
                 subs = requests.get(video_urls[0]["sub_url"],
                                     proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
                 #save subs to file
