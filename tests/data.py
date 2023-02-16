@@ -220,7 +220,6 @@ class DataLoader:
                 self.batch_queue.put((np.stack(np_batch), input_ids, attention_mask))
                 np_batch.clear()
                 titles.clear()
-                time.sleep(30)
 
             while len(samples) > idx and not samples[idx][0]:
                 del samples[idx]
@@ -250,7 +249,6 @@ class DataLoader:
                 if done == self.workers:
                     break
                 if len(samples) >= self.parallel_videos:
-                    time.sleep(30)
                     continue
                 try:
                     out = queue.get(timeout=120)
