@@ -121,13 +121,35 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                     f.write(str(video_urls))
                 subs = requests.get(video_urls[0]["sub_url"],
                                     proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
-                subs = json.loads(subs)['events'][1]['segs']
+                events = json.loads(subs)['events']
+                subs = events[1]['segs']
                 subs = [s['utf8']for s in subs]
+
+                timestamps = []
+
+                for i, e in enumerate(events):
+                    if i < 2:
+                        continue
+                    if e['segs'][0]['utf8'] == '\n':
+                        timestamps.append(e['tStartMs'])
+
+                sentences = ['' for _ in range(len(timestamps))]
+
+                s = ''.join(subs)
+                for i,_ in enumerate(sentences):
+                    sentences[i] += s[:s.find('  ')]
+                    s = s[s.find('  ')+2:]
+
+                print(sentences, timestamps)
+
                 return ''.join(subs)
             except urllib3.exceptions.HTTPError:
                 pass
             except requests.exceptions.RequestException:
                 pass
+            except json.decoder.JSONDecodeError:
+                print("IP Blocked")
+
             print("error")
         proxies.clear()
         proxies.extend(get_proxies())
@@ -190,8 +212,6 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
             if not subs:
                 continue
-
-            print(subs)
 
             frames = get_video_frames(video_urls, target_image_size, target_fps)
             if frames is None or not frames.size or frames.shape[0] < group:
