@@ -119,6 +119,7 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
             try:
                 subs = requests.get(video_urls[0]["sub_url"],
                                     proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
+                print(subs)
                 subs = subs[subs.find("<transcript>") + len("<transcript>"):subs.find('</text>')]
                 subs = subs[subs.find('>') + 1:]
                 subs = ftfy.ftfy(subs)
@@ -194,7 +195,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             if not subs:
                 continue
 
-            print(subs)
+            #print(subs)
 
             frames = get_video_frames(video_urls, target_image_size, target_fps)
             if frames is None or not frames.size or frames.shape[0] < group:
