@@ -140,8 +140,9 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                     sentences[i] += s[:s.find('  ')]
                     s = s[s.find('  ')+2:]
 
-                print(sentences, timestamps)
-                return ''.join(subs)
+                if sentences[-1] != '': #this should be the last sentence, if there's nothing something went wrong
+                    print(sentences, timestamps)
+                    return ''.join(subs)
 
             except urllib3.exceptions.HTTPError:
                 pass
