@@ -140,7 +140,7 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                     sentences[i] += s[:s.find('  ')]
                     s = s[s.find('  ')+2:]
 
-                if s != '': #this should be the last sentence, if there's nothing something went wrong
+                if sentences[-2] != '': #this should be the last sentence, if there's nothing something went wrong
                     print(sentences, timestamps)
                     return ''.join(subs)
 
