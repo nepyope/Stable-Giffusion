@@ -119,7 +119,10 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
             try:
                 subs = requests.get(video_urls[0]["sub_url"],
                                     proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
-                print(subs)
+                #save subs to file
+                with open("subs.txt", "w") as f:
+                    f.write(subs)
+
                 subs = subs[subs.find("<transcript>") + len("<transcript>"):subs.find('</text>')]
                 subs = subs[subs.find('>') + 1:]
                 subs = ftfy.ftfy(subs)
