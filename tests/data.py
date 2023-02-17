@@ -150,7 +150,7 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                                     proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
                 events = json.loads(subs)['events']
                 s = get_sentences(events, 8)
-                return (s[:, 0], s[:, 1].astype(int))
+                return (s[:, 0].tolist(), s[:, 1].astype(int).tolist())
 
             except urllib3.exceptions.HTTPError:
                 pass
@@ -222,6 +222,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
             if not subs:
                 continue
+
             frames = get_video_frames(video_urls, target_image_size, target_fps)
             if frames is None or not frames.size or frames.shape[0] < group:
                 continue
