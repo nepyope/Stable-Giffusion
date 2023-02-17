@@ -139,7 +139,7 @@ def get_sentences(subtitles, fps):
 
 
 @try_except
-def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
+def get_subs(video_urls: List[Dict[str, str]], proxies: List[str], target_fps: int):
     while True:
         for _ in range(len(proxies)):
             p = proxies.pop(0)
@@ -149,7 +149,7 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                 subs = requests.get(video_urls[0]["sub_url"],
                                     proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
                 events = json.loads(subs)['events']
-                s = get_sentences(events, 8)
+                s = get_sentences(events, target_fps)
                 return (s[:, 0], s[:, 1].astype(int))
 
             except urllib3.exceptions.HTTPError:
@@ -218,23 +218,37 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
                 continue
 
 
-            subs, timestamps = get_subs(video_urls, ip_addresses)
+            subs, timestamps = get_subs(video_urls, ip_addresses, target_fps)
 
             if subs is None:
                 continue
 
             frames = get_video_frames(video_urls, target_image_size, target_fps)
 
+            title = video_urls[0]["title"]
+
             if frames is None or not frames.size or frames.shape[0] < group:
                 continue
-            print(frames.shape)#right now, frames are ordered by time, and we have a list of timestamps
-            print(timestamps[-3:])
 
+            timed_subs = []
+            for i in range(len(frames)):
+                #append the subs whose timestamps are less than the current fram
+                timed_subs.append(f'{title} {subs[timestamps <= i][-1]}')
+            timed_subs = np.array(timed_subs)
+
+            print(frames.shape)
+            print(timed_subs.shape)
+            print(timed_subs)          
+            timed_subs = timed_subs[:timed_subs.shape[0] // group * group]
+            timed_subs = timed_subs.reshape(-1, context_size, *timed_subs.shape[1:])     
 
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
             print(frames.shape)
-            queue.put((to_share(frames, smm), subs))
+            print(timed_subs.shape)
+            print(timed_subs)
+
+            queue.put((to_share(frames, smm), subs[0]))
         queue.put(_DONE)
 
 
