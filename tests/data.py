@@ -249,7 +249,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
 
 
-
+            print(batch_timed_subs)
             queue.put((to_share(frames, smm), batch_timed_subs))
         queue.put(_DONE)
 
