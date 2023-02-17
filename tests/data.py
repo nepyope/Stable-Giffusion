@@ -304,6 +304,7 @@ class DataLoader:
                     continue
                 input_ids = []
                 attention_mask = []
+                print(np.stack(subs))
                 tokens = self.tokenizer(subs, return_tensors="np", padding="max_length", truncation=True,
                                         max_length=self.clip_tokens)
                 input_ids.append(tokens["input_ids"].reshape(self.batch_size, -1))
@@ -317,10 +318,8 @@ class DataLoader:
                 del samples[idx]
             if len(samples) <= idx:
                 continue
-            print('samples',samples[idx][1])#this is a whole video's subs. this is ok.
             np_batch.append(np.stack([samples[idx][0].pop(0) for _ in range(self.device_steps)]))
-            subs.append(np.stack([samples[idx][1].pop(0) for _ in range(self.device_steps)]))
-            print(subs[-1])
+            subs.append(np.stack([samples[idx][1].pop(0) for _ in range(self.device_steps)]))#ok
             idx = (idx + 1) % self.parallel_videos
 
     def _worker(self):
