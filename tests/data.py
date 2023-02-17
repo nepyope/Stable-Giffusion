@@ -116,7 +116,7 @@ def get_sentences(subtitles, fps):
     for subtitle in subtitles:
         if 'aAppend' in subtitle:
             timestamp = subtitle['tStartMs']
-            sentences.append(['', timestamp])
+            sentences.append([' ', timestamp])
             continue
         if 'segs' in subtitle:
             segs = subtitle['segs']
@@ -140,11 +140,6 @@ def get_sentences(subtitles, fps):
 
 @try_except
 def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
-
-
-
-
-
     while True:
         for _ in range(len(proxies)):
             p = proxies.pop(0)
@@ -162,8 +157,10 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
             except requests.exceptions.RequestException:
                 pass
             except json.decoder.JSONDecodeError:
-                print("IP Blocked")
+                pass
 
+            print('error')
+            
         proxies.clear()
         proxies.extend(get_proxies())
         print("Refreshing proxies", len(proxies))
@@ -225,7 +222,6 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
             if not subs:
                 continue
-            print(subs)
             frames = get_video_frames(video_urls, target_image_size, target_fps)
             if frames is None or not frames.size or frames.shape[0] < group:
                 continue
@@ -288,7 +284,7 @@ class DataLoader:
                 if _DEBUG:
                     self.batch_queue.put([hashlib.sha3_512(s.encode()).hexdigest() for s in subs])
                     continue
-
+                print(subs)
                 tokens = self.tokenizer(subs, return_tensors="np", padding="max_length", truncation=True,
                                         max_length=self.clip_tokens)
                 input_ids = tokens["input_ids"].reshape(self.batch_size, -1)
