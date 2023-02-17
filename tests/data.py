@@ -309,10 +309,10 @@ class DataLoader:
                 for sub in subs:
                     tokens = self.tokenizer(sub, return_tensors="np", padding="max_length", truncation=True,
                                             max_length=self.clip_tokens)
-                    input_ids.append(tokens["input_ids"])#.reshape(self.batch_size, -1)
-                    attention_mask.append(tokens["attention_mask"])
-                input_ids = np.concatenate(input_ids, axis=0)
-                attention_mask = np.concatenate(attention_mask, axis=0)
+                    input_ids.append(tokens["input_ids"].reshape(self.batch_size, -1))
+                    attention_mask.append(tokens["attention_mask"].reshape(self.batch_size, -1))
+                input_ids = np.concatenate(input_ids, axis=1)
+                attention_mask = np.concatenate(attention_mask, axis=1)
                 self.batch_queue.put((np.stack(np_batch), input_ids, attention_mask))
                 np_batch.clear()
                 subs.clear()
