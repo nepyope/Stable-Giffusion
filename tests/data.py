@@ -245,7 +245,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             batch_timed_subs = []
 
             for i, sub_list in enumerate(timed_subs):
-                concat_subs = f'{title[:30]} | {" ".join(list(dict.fromkeys(sub_list)))}'
+                concat_subs = f'{title[:30]} | {"".join(list(dict.fromkeys(sub_list)))}'
                 batch_timed_subs.append(concat_subs)
 
             batch_timed_subs = np.array(batch_timed_subs)
