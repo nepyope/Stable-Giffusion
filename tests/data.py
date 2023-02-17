@@ -233,7 +233,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             timed_subs = []
             for i in range(len(frames)):
                 #append the subs whose timestamps are less than the current fram
-                timed_subs.append(f'{title[:30]} | {subs[timestamps <= i][-1]}')
+                timed_subs.append(subs[timestamps <= i][-1])
             timed_subs = np.array(timed_subs)
 
             print(frames.shape)
@@ -244,12 +244,10 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
             batch_timed_subs = []
             for i, sub_list in enumerate(timed_subs):
-                concat_subs = ''
-                for j, sub in enumerate(sub_list):
-                    if sub_list[j] != sub_list[j]-1:
-                        concat_subs += sub_list[j]
+                concat_subs = f'{title[:30]} | {" ".join(set(sub_list))}'
+
                 batch_timed_subs.append(concat_subs)
-        #batch_timed_subs = np.array(batch_timed_subs)
+            batch_timed_subs = np.array(batch_timed_subs)
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
             print(frames.shape)
