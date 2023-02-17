@@ -162,7 +162,7 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str], target_fps: i
             print('error')
             
         proxies.clear()
-        proxies.extend(get_proxies())
+        proxies = get_proxies()
         print("Refreshing proxies", len(proxies))
 
 
