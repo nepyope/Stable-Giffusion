@@ -315,6 +315,7 @@ class DataLoader:
                 tokens = self.tokenizer(subs, return_tensors="np", padding="max_length", truncation=True,
                                         max_length=self.clip_tokens)
                 input_ids = tokens["input_ids"].reshape(self.batch_size, -1)
+                print(input_ids.shape)
                 attention_mask = tokens["attention_mask"].reshape(self.batch_size, -1)
                 self.batch_queue.put((np.stack(np_batch), input_ids, attention_mask))
                 np_batch.clear()
