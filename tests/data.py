@@ -242,6 +242,13 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             timed_subs = timed_subs[:timed_subs.shape[0] // group * group]
             timed_subs = timed_subs.reshape(-1, context_size, *timed_subs.shape[1:])     
 
+            batch_timed_subs = []
+            for i, sub_list in enumerate(timed_subs):
+                # Remove duplicate subtitles and join them with a space
+                concat_subs = " ".join(set(sub_list))
+
+                batch_timed_subs.append(concat_subs)
+
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
             print(frames.shape)
