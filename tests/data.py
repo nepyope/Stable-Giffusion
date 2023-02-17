@@ -235,10 +235,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
                 #append the subs whose timestamps are less than the current fram
                 timed_subs.append(subs[timestamps <= i][-1])
             timed_subs = np.array(timed_subs)
-
-            print(frames.shape)
-            print(timed_subs.shape)
-            print(timed_subs)          
+ 
             timed_subs = timed_subs[:timed_subs.shape[0] // group * group]
             timed_subs = timed_subs.reshape(-1, context_size, *timed_subs.shape[1:])     
 
@@ -252,9 +249,6 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
-            print(frames.shape)
-            print(batch_timed_subs.shape)
-            print(batch_timed_subs)
 
             queue.put((to_share(frames, smm), subs[0]))
         queue.put(_DONE)
