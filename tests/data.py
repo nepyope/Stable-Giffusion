@@ -243,11 +243,13 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             timed_subs = timed_subs.reshape(-1, context_size, *timed_subs.shape[1:])     
 
             batch_timed_subs = []
-            for i, sub_list in enumerate(timed_subs):
-                concat_subs = f'{title[:30]} | {" ".join(set(sub_list))}'
 
+            for i, sub_list in enumerate(timed_subs):
+                concat_subs = f'{title[:30]} | {" ".join(list(dict.fromkeys(sub_list)))}'
                 batch_timed_subs.append(concat_subs)
+
             batch_timed_subs = np.array(batch_timed_subs)
+
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
             print(frames.shape)
