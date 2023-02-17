@@ -245,8 +245,6 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
                 concat_subs = f'{title[:30]} | {"".join(list(dict.fromkeys(sub_list)))}'
                 batch_timed_subs.append(concat_subs)
 
-            batch_timed_subs = np.array(batch_timed_subs)#has the same shape as frames 
-
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
 
