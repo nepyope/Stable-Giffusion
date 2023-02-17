@@ -231,7 +231,6 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
                 continue
 
             timed_subs = []
-            print(subs)
             for i in range(len(frames)):
                 #append the subs whose timestamps are less than the current fram
                 timed_subs.append(subs[timestamps <= i][-1])
@@ -241,7 +240,6 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             timed_subs = timed_subs.reshape(-1, context_size, *timed_subs.shape[1:])     
 
             batch_timed_subs = []
-            print(timed_subs)
             for i, sub_list in enumerate(timed_subs):
                 concat_subs = f'{title[:30]} | {"".join(list(dict.fromkeys(sub_list)))}'
                 batch_timed_subs.append(concat_subs)
@@ -249,8 +247,6 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
 
-
-            print(batch_timed_subs)
             queue.put((to_share(frames, smm), batch_timed_subs))
         queue.put(_DONE)
 
@@ -321,9 +317,10 @@ class DataLoader:
                 del samples[idx]
             if len(samples) <= idx:
                 continue
-            print('samples',samples[idx][1])#this is a whole video's subs
+            print('samples',samples[idx][1])#this is a whole video's subs. this is ok.
             np_batch.append(np.stack([samples[idx][0].pop(0) for _ in range(self.device_steps)]))
             subs.append(np.stack([samples[idx][1].pop(0) for _ in range(self.device_steps)]))
+            print(subs[-1])
             idx = (idx + 1) % self.parallel_videos
 
     def _worker(self):
@@ -359,7 +356,7 @@ class DataLoader:
 
                 try:
                     share = list(from_share(out[0]))
-                    self.rng.shuffle(share)
+                    #self.rng.shuffle(share)
                     samples.append((share, out[1]))#is out 1 the text?
                 except:
                     print("failed to load share")
