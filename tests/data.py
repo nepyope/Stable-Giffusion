@@ -298,6 +298,8 @@ class DataLoader:
             if len(samples) <= idx:
                 continue
             np_batch.append(np.stack([samples[idx][0].pop(0) for _ in range(self.device_steps)]))
+            print(samples[idx][1])
+            print(samples[idx][0])
             subs.append(samples[idx][1])
             idx = (idx + 1) % self.parallel_videos
 
