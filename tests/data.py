@@ -252,8 +252,8 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
             print(frames.shape)
-            print(timed_subs.shape)
-            print(timed_subs)
+            print(batch_timed_subs.shape)
+            print(batch_timed_subs)
 
             queue.put((to_share(frames, smm), subs[0]))
         queue.put(_DONE)
