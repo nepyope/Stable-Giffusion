@@ -306,7 +306,7 @@ class DataLoader:
                     continue
                 input_ids = []
                 attention_mask = []
-                subs = np.stack(np_batch)
+                subs = np.stack(subs)
                 print(subs.shape)
                 tokens = self.tokenizer(subs, return_tensors="np", padding="max_length", truncation=True,
                                         max_length=self.clip_tokens)
