@@ -95,7 +95,7 @@ def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.
         if format_note == "tiny" or width <= target_image_size or height <= target_image_size:
             continue
         video_urls.append({'width': width, 'height': height, 'ext': f['ext'], 'url': f['url'],
-                           "sub_url": info['automatic_captions']['en'][0]['url']})
+                           "sub_url": info['automatic_captions']['en'][0]['url'], "title": info["title"]})
 
     return sorted(video_urls, key=lambda x: (x['ext'] != 'mp4', x['width'], x['height']))
 
