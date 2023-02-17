@@ -312,7 +312,6 @@ class DataLoader:
                 if _DEBUG:
                     self.batch_queue.put([hashlib.sha3_512(s.encode()).hexdigest() for s in subs])
                     continue
-                for batch_subs in subs:
                 tokens = self.tokenizer(subs, return_tensors="np", padding="max_length", truncation=True,
                                         max_length=self.clip_tokens)
                 input_ids = tokens["input_ids"].reshape(self.batch_size, -1)
