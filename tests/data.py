@@ -245,12 +245,12 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
                 concat_subs = f'{title[:30]} | {"".join(list(dict.fromkeys(sub_list)))}'
                 batch_timed_subs.append(concat_subs)
 
-            batch_timed_subs = np.array(batch_timed_subs)
+            batch_timed_subs = np.array(batch_timed_subs)#has the same shape as frames 
 
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
 
-            queue.put((to_share(frames, smm), subs[0]))
+            queue.put((to_share(frames, smm), batch_timed_subs))
         queue.put(_DONE)
 
 
@@ -306,11 +306,15 @@ class DataLoader:
                 if _DEBUG:
                     self.batch_queue.put([hashlib.sha3_512(s.encode()).hexdigest() for s in subs])
                     continue
-                tokens = self.tokenizer(subs, return_tensors="np", padding="max_length", truncation=True,
-                                        max_length=self.clip_tokens)
-                input_ids = tokens["input_ids"].reshape(self.batch_size, -1)
-                print(input_ids.shape)
-                attention_mask = tokens["attention_mask"].reshape(self.batch_size, -1)
+                input_ids = []
+                attention_mask = []
+                for sub in subs:
+                    tokens = self.tokenizer(sub, return_tensors="np", padding="max_length", truncation=True,
+                                            max_length=self.clip_tokens)
+                    input_ids.append(tokens["input_ids"].reshape(self.batch_size, -1))
+                    attention_mask.append(tokens["attention_mask"].reshape(self.batch_size, -1))
+
+                print(f'{np.stack(input_ids).shape} {np.stack(input_ids).shape} {np.stack(attention_mask).shape}') 
                 self.batch_queue.put((np.stack(np_batch), input_ids, attention_mask))
                 np_batch.clear()
                 subs.clear()
