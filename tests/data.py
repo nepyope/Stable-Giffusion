@@ -233,7 +233,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             timed_subs = []
             for i in range(len(frames)):
                 #append the subs whose timestamps are less than the current fram
-                timed_subs.append(f'{title} {subs[timestamps <= i][-1]}')
+                timed_subs.append(f'{title[:30]} | {subs[timestamps <= i][-1]}')
             timed_subs = np.array(timed_subs)
 
             print(frames.shape)
@@ -244,10 +244,12 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
             batch_timed_subs = []
             for i, sub_list in enumerate(timed_subs):
-                concat_subs = " ".join(set(sub_list))
-
+                concat_subs = ''
+                for j, sub in enumerate(sub_list):
+                    if sub_list[j] != sub_list[j]-1:
+                        concat_subs += sub_list[j]
                 batch_timed_subs.append(concat_subs)
-            batch_timed_subs = np.array(batch_timed_subs)
+        #batch_timed_subs = np.array(batch_timed_subs)
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
             print(frames.shape)
@@ -310,6 +312,7 @@ class DataLoader:
                 if _DEBUG:
                     self.batch_queue.put([hashlib.sha3_512(s.encode()).hexdigest() for s in subs])
                     continue
+                for batch_subs in subs:
                 tokens = self.tokenizer(subs, return_tensors="np", padding="max_length", truncation=True,
                                         max_length=self.clip_tokens)
                 input_ids = tokens["input_ids"].reshape(self.batch_size, -1)
