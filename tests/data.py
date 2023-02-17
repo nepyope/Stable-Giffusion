@@ -248,7 +248,9 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
 
-            queue.put((to_share(frames, smm), batch_timed_subs))
+
+
+            queue.put((to_share(frames, smm), to_share(batch_timed_subs, smm)))
         queue.put(_DONE)
 
 
@@ -293,7 +295,6 @@ class DataLoader:
         self.thread = threading.Thread(target=self._worker)
         self.thread.start()
         return
-    
 
     def _batch(self, samples: List[Tuple[List[np.ndarray], str]]):
         idx = 0
@@ -306,7 +307,6 @@ class DataLoader:
                     continue
                 input_ids = []
                 attention_mask = []
-                print(subs)
                 tokens = self.tokenizer(subs, return_tensors="np", padding="max_length", truncation=True,
                                         max_length=self.clip_tokens)
                 input_ids.append(tokens["input_ids"].reshape(self.batch_size, -1))
@@ -320,10 +320,9 @@ class DataLoader:
                 del samples[idx]
             if len(samples) <= idx:
                 continue
-            print('samples',samples[idx][1])
+            print('samples',samples[idx][1])#this is a whole video's subs
             np_batch.append(np.stack([samples[idx][0].pop(0) for _ in range(self.device_steps)]))
             subs.append(np.stack([samples[idx][1].pop(0) for _ in range(self.device_steps)]))
-            print(np.stack([samples[idx][1].pop(0) for _ in range(self.device_steps)]))
             idx = (idx + 1) % self.parallel_videos
 
     def _worker(self):
@@ -360,7 +359,7 @@ class DataLoader:
                 try:
                     share = list(from_share(out[0]))
                     self.rng.shuffle(share)
-                    samples.append((share, out[1]))
+                    samples.append((share, out[1]))#is out 1 the text?
                 except:
                     print("failed to load share")
                 continue
