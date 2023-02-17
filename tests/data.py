@@ -231,6 +231,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
                 continue
 
             timed_subs = []
+            print(subs)
             for i in range(len(frames)):
                 #append the subs whose timestamps are less than the current fram
                 timed_subs.append(subs[timestamps <= i][-1])
