@@ -285,6 +285,7 @@ class DataLoader:
                     self.batch_queue.put([hashlib.sha3_512(s.encode()).hexdigest() for s in subs])
                     continue
                 print(subs)
+                print(np_batch.shape)
                 tokens = self.tokenizer(subs, return_tensors="np", padding="max_length", truncation=True,
                                         max_length=self.clip_tokens)
                 input_ids = tokens["input_ids"].reshape(self.batch_size, -1)
@@ -298,8 +299,6 @@ class DataLoader:
             if len(samples) <= idx:
                 continue
             np_batch.append(np.stack([samples[idx][0].pop(0) for _ in range(self.device_steps)]))
-            print(samples[idx][1])
-            print(samples[idx][0])
             subs.append(samples[idx][1])
             idx = (idx + 1) % self.parallel_videos
 
