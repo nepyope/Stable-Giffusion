@@ -150,7 +150,7 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str]):
                                     proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
                 events = json.loads(subs)['events']
 
-                return ''.join(get_sentences(events, 8)[:, 0])
+                return get_sentences(events, 8)
 
             except urllib3.exceptions.HTTPError:
                 pass
@@ -225,9 +225,10 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             frames = get_video_frames(video_urls, target_image_size, target_fps)
             if frames is None or not frames.size or frames.shape[0] < group:
                 continue
-
+            print(frames.shape)
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
+            print(frames.shape)
             queue.put((to_share(frames, smm), subs))
         queue.put(_DONE)
 
@@ -284,8 +285,6 @@ class DataLoader:
                 if _DEBUG:
                     self.batch_queue.put([hashlib.sha3_512(s.encode()).hexdigest() for s in subs])
                     continue
-                print(subs)
-                print(np_batch.shape)
                 tokens = self.tokenizer(subs, return_tensors="np", padding="max_length", truncation=True,
                                         max_length=self.clip_tokens)
                 input_ids = tokens["input_ids"].reshape(self.batch_size, -1)
