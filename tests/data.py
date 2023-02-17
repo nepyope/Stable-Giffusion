@@ -250,7 +250,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
 
 
-            queue.put((to_share(frames, smm), to_share(batch_timed_subs, smm)))
+            queue.put((to_share(frames, smm), batch_timed_subs))
         queue.put(_DONE)
 
 
