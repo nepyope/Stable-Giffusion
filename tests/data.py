@@ -312,7 +312,7 @@ class DataLoader:
                     input_ids.append(tokens["input_ids"].reshape(self.batch_size, -1))
                     attention_mask.append(tokens["attention_mask"].reshape(self.batch_size, -1))
 
-                print(f'{np.stack(input_ids).shape} |||| {input_ids} |||| {attention_mask}') 
+                print(f'{input_ids} |||| {attention_mask}') 
                 self.batch_queue.put((np.stack(np_batch), input_ids, attention_mask))
                 np_batch.clear()
                 subs.clear()
