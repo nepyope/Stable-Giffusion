@@ -147,7 +147,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: 
             return update * -lr(count), (mom + delta * (1 - b2)).astype(dtype)
 
         leaves, treedef = jax.tree_util.tree_flatten(updates)
-        all_leaves = [leaves] + [treedef.flatten_up_to(r) for r in (params, state.nu, state.mu)]
+        all_leaves = [leaves] + [treedef.flatten_up_to(r) for r in (params, state["momentum"])]
         updates, mom = [treedef.unflatten(leaf) for leaf in zip(*[get_update(*xs) for xs in zip(*all_leaves)])]
         return jnp.sign(updates), {"momentum": mom, "count": count}
 
