@@ -180,10 +180,10 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
          resolution: int = 128, fps: int = 1, context: int = 8, workers: int = 64, prefetch: int = 32,
          batch_prefetch: int = 4, base_model: str = "flax_base_model", data_path: str = "./urls",
-         sample_interval: int = 1, parallel_videos: int = 128, schedule_length: int = 1024, warmup_steps: int = 1024,
+         sample_interval: int = 2048, parallel_videos: int = 128, schedule_length: int = 1024, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, save_interval: int = 2048,
-         overwrite: bool = True, base_path: str = "gs://video-us/checkpoint/", local_iterations: int = 4,
-         unet_batch: int = 1, device_steps: int = 4):
+         overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_subtitles/", local_iterations: int = 4,
+         unet_batch: int = 4, device_steps: int = 4):
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch,
                       parallel_videos, tokenizer, clip_tokens, device_steps, batch_prefetch)
@@ -232,8 +232,6 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     def sample(unet_params, batch: Dict[str, Union[np.ndarray, int]]):
         batch = all_to_all_batch(batch)
-
-        print(f'AFTER {batch["pixel_values"].shape}, {batch["input_ids"].shape}, {batch["attention_mask"].shape}')
         batch = jax.tree_map(lambda x: x[0], batch)
         latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 4)
 
@@ -338,10 +336,9 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             i *= device_steps
             batch = {
                 "pixel_values": vid.reshape(jax.local_device_count(), device_steps, context, resolution, resolution, 3),
-                "input_ids": ids,#.reshape(jax.local_device_count(), 1, -1)
-                "attention_mask": msk,#.reshape(jax.local_device_count(), 1, -1)
+                "input_ids": ids,#local_device_count()is always 4 anyways
+                "attention_mask": msk,
                 "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
-            print(f'BEFORE {batch["pixel_values"].shape}, {batch["input_ids"].shape}, {batch["attention_mask"].shape}')
 
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
@@ -354,7 +351,6 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 extra[f"Samples/Reconstruction (U-Net, Guidance 4) {pid}"] = to_img(g4)
                 extra[f"Samples/Reconstruction (U-Net, Guidance 8) {pid}"] = to_img(g8)
 
-'''
             print("Before train step", datetime.datetime.now())
             unet_state, scalars = p_train_step(unet_state, batch)
             print("After train step", datetime.datetime.now())
@@ -387,6 +383,5 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                             print("failed to write", n, "checkpoint")
                             traceback.print_exc()
 
-'''
 if __name__ == "__main__":
     app()
