@@ -176,7 +176,7 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 
 
 @app.command()
-def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
+def main(lr: float = 2e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
          resolution: int = 128, fps: int = 1, context: int = 32, workers: int = 64, prefetch: int = 32,
          batch_prefetch: int = 4, base_model: str = "flax_base_model", data_path: str = "./urls",
          sample_interval: int = 2048, parallel_videos: int = 1024, schedule_length: int = 1024, warmup_steps: int = 1024,
