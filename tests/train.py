@@ -232,6 +232,8 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     def sample(unet_params, batch: Dict[str, Union[np.ndarray, int]]):
         batch = all_to_all_batch(batch)
+
+        print(f'AFTER {batch["pixel_values"].shape}, {batch["input_ids"].shape}, {batch["attention_mask"].shape}')
         batch = jax.tree_map(lambda x: x[0], batch)
         latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 4)
 
@@ -335,11 +337,11 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 print(f"Step {global_step}", datetime.datetime.now())
             i *= device_steps
             batch = {
-                "pixel_values": vid.reshape(jax.local_device_count(), device_steps, context, resolution, resolution, 3),
-                "input_ids": ids.reshape(jax.local_device_count(), 1, -1),
-                "attention_mask": msk.reshape(jax.local_device_count(), 1, -1),
+                "pixel_values": vid,
+                "input_ids": ids,
+                "attention_mask": msk,
                 "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
-            print(batch["pixel_values"].shape, batch["input_ids"].shape, batch["attention_mask"].shape)
+            print(f'BEFORE {batch["pixel_values"].shape}, {batch["input_ids"].shape}, {batch["attention_mask"].shape}')
 
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'

@@ -310,8 +310,6 @@ class DataLoader:
                                             max_length=self.clip_tokens)
                     input_ids.append(tokens["input_ids"].reshape(self.batch_size, -1))
                     attention_mask.append(tokens["attention_mask"].reshape(self.batch_size, -1))
-                    print(input_ids[0].shape)
-                    print(attention_mask[0].shape)
                 self.batch_queue.put((np.stack(np_batch), np.stack(input_ids), np.stack(attention_mask)))
                 np_batch.clear()
                 subs.clear()
