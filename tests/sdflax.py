@@ -298,17 +298,20 @@ def main():
 
     print(caption)
     
+    for n,im in enumerate(data):
+        data[n] = (data[n], f'{caption}')
+        if n == 0:
+            data[n] = np.zeros(im.shape, dtype=np.uint8)
+            continue
+        data[n] = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+
     for epoch in epochs:
         #usual overfit test
         #fetch = threading.Thread(target=get_data, name="Downloader", args=(ids,batch_per_device,new_data, new_n_batches, new_batch_size, new_caption)) 
         #fetch.start()
 
-        for n,im in enumerate(data):
-            if n == 0:
-                data[n] = np.zeros(im.shape, dtype=np.uint8)
-                continue
-            data[n] = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
-            data[n] = (data[n], f'{caption}')
+
+
 
         for shift in range(4):#shift batch y 1 so that all transitions are learned 
 
