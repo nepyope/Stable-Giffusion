@@ -299,15 +299,18 @@ def main():
     print(caption)
     
     for epoch in epochs:
-
-        fetch = threading.Thread(target=get_data, name="Downloader", args=(ids,batch_per_device,new_data, new_n_batches, new_batch_size, new_caption))
-        fetch.start()
+        #usual overfit test
+        #fetch = threading.Thread(target=get_data, name="Downloader", args=(ids,batch_per_device,new_data, new_n_batches, new_batch_size, new_caption)) 
+        #fetch.start()
 
         for n,im in enumerate(data):
+            if n == 0:
+                data[n] = np.zeros(im.shape, dtype=np.uint8)
+                continue
             data[n] = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
             data[n] = (data[n], f'{caption}')
 
-        for _ in range(4):#shift batch y 1 so that all transitions are learned 
+        for shift in range(4):#shift batch y 1 so that all transitions are learned 
 
             iters = tqdm(range(n_batches), desc="Iter ... ", position=1)
             ######UNET TRAINING
@@ -323,8 +326,8 @@ def main():
                     images.append(dt[0])
                     captions.append(dt[1])
 
-                #images = images[shift%2:] + images[:shift%2]#this is done so that the transition is learned from frame 0 to 1, 1 to 2, 2 to 3.. instead of 0 to 1, 2 to 3, 4 to 5
-                #captions = captions[shift%2:] + captions[:shift%2]
+                images = images[shift%2:] + images[:shift%2]#this is done so that the transition is learned from frame 0 to 1, 1 to 2, 2 to 3.. instead of 0 to 1, 2 to 3, 4 to 5
+                captions = captions[shift%2:] + captions[:shift%2]
 
                 #append captions[0] to text file
                 with open('text.txt', 'a') as file:
@@ -406,8 +409,8 @@ def main():
 
                 print('model saved')
 
-        fetch.join()
-        data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
+        #fetch.join()
+        #data, n_batches, batch_size, caption = new_data[0], new_n_batches[0][0], new_batch_size[0][0], new_caption[0][0]
 
 if __name__ == "__main__":
     main()
