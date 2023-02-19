@@ -218,11 +218,13 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
                 continue
 
 
-            subs, timestamps = get_subs(video_urls, ip_addresses, target_fps)
+            subtitles = get_subs(video_urls, ip_addresses, target_fps)
 
-            if subs is None:
+            if subtitles is None:
                 continue
-
+            
+            subs, timestamps = subtitles
+                
             frames = get_video_frames(video_urls, target_image_size, target_fps)
 
             title = video_urls[0]["title"]
