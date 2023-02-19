@@ -15,4 +15,4 @@ export XLA_FLAGS="--xla_force_host_platform_device_count=1"  # We don't use TPU-
 # export XLA_FLAGS="--xla_step_marker_location=1 $XLA_FLAGS"  # 0 = entry; 1 = outer while
 
 cd tests
-/usr/bin/env python3 test.py "$@"
+/usr/bin/env python3 sdflax.py "$@"
