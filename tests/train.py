@@ -128,6 +128,7 @@ def ema(x, y, beta, step):
     return out / (1 - beta ** step), out
 
 
+
 def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: float = 1e-2) -> GradientTransformation:
     def init_fn(params):
         return ScaleByAdamState(mu=jax.tree_map(jnp.zeros_like, params),  # First Moment
@@ -180,9 +181,9 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
          resolution: int = 128, fps: int = 1, context: int = 32, workers: int = 64, prefetch: int = 32,
          batch_prefetch: int = 4, base_model: str = "flax_base_model", data_path: str = "./urls",
-         sample_interval: int = 2048, parallel_videos: int = 1024, schedule_length: int = 1024, warmup_steps: int = 1024,
+         sample_interval: int = 2048, parallel_videos: int = 128, schedule_length: int = 1024, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, save_interval: int = 2048,
-         overwrite: bool = True, base_path: str = "gs://video-us/checkpoint/", local_iterations: int = 64,
+         overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_subtitles/", local_iterations: int = 4,
          unet_batch: int = 1, device_steps: int = 4):
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch,
@@ -203,6 +204,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     lr_sched = optax.warmup_exponential_decay_schedule(0, lr, warmup_steps, lr_halving_every_n_steps, 0.5)
     optimizer = scale_by_laprop(beta1, beta2, eps, lr_sched)
+    
     unet_state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
     noise_scheduler = FlaxPNDMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear",
@@ -224,8 +226,8 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": batch["pixel_values"], "idx": batch["idx"] + jnp.arange(device_steps),
-                "input_ids": jnp.stack([batch["input_ids"]] * device_steps, 0),
-                "attention_mask": jnp.stack([batch["attention_mask"]] * device_steps, 0)}
+                "input_ids": batch["input_ids"].reshape(jax.local_device_count(), 1, -1),#maybe stupid? i could just do unsqueeze or sth
+                "attention_mask": batch["attention_mask"].reshape(jax.local_device_count(), 1, -1)}
 
     def rng(idx: jax.Array):
         return jax.random.PRNGKey(idx * jax.device_count() + device_id())
@@ -259,7 +261,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         noise = lax.broadcast_in_dim(noise, (4, *noise.shape), (1, 2, 3, 4)).reshape(-1, *noise.shape[1:])
         latents = lax.broadcast_in_dim(latents, (4, *latents.shape), (1, 2, 3, 4)).reshape(*noise.shape)
         state = noise_scheduler.set_timesteps(sched_state, schedule_length, latents.shape)
-        start_step = round(schedule_length * 0.9)
+        start_step = schedule_length#round(schedule_length * 0.9)
         t0 = jnp.full((), start_step, jnp.int32)
         latents = noise_scheduler.add_noise(sched_state, latents, noise, t0)
 
@@ -336,9 +338,10 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             i *= device_steps
             batch = {
                 "pixel_values": vid.reshape(jax.local_device_count(), device_steps, context, resolution, resolution, 3),
-                "input_ids": ids.reshape(jax.local_device_count(), 1, -1),
-                "attention_mask": msk.reshape(jax.local_device_count(), 1, -1),
+                "input_ids": ids,#local_device_count()is always 4 anyways
+                "attention_mask": msk,
                 "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
+
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
             if i % sample_interval == 0:
@@ -381,7 +384,6 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                         except:
                             print("failed to write", n, "checkpoint")
                             traceback.print_exc()
-
 
 if __name__ == "__main__":
     app()
