@@ -241,7 +241,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
             batch_timed_subs = []
             for i, sub_list in enumerate(timed_subs):
-                concat_subs = f'{title[:30]} | {"".join(list(dict.fromkeys(sub_list)))}'
+                concat_subs = f'{title[:50]} | {"".join(list(dict.fromkeys(sub_list)))}'
                 batch_timed_subs.append(concat_subs)
 
             frames = frames[:frames.shape[0] // group * group]
@@ -304,10 +304,8 @@ class DataLoader:
                     continue
                 input_ids = []
                 attention_mask = []
-                subs = subs#this takes 4 chunks from the first video and returns them. 
-                #print(np.stack(np_batch))
-                print(subs.shape)
-                #print(np.stack(np_batch).shape)4,4,8,128,128,3
+                subs = subs
+
                 for sub in subs:
                     tokens = self.tokenizer(sub.tolist(), return_tensors="np", padding="max_length", truncation=True,
                                             max_length=self.clip_tokens)
@@ -315,8 +313,6 @@ class DataLoader:
                     attention_mask.append(tokens["attention_mask"].reshape(self.batch_size, -1))
                     print(input_ids.shape)
                     print(attention_mask.shape)
-                    print(np.stack(input_ids).shape)
-                    print(np.stack(attention_mask).shape)
                 self.batch_queue.put((np.stack(np_batch), np.stack(input_ids), np.stack(attention_mask)))
                 np_batch.clear()
                 subs.clear()
