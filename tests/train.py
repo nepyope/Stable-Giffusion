@@ -150,8 +150,11 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: 
         leaves, treedef = jax.tree_util.tree_flatten(updates)
         all_leaves = [leaves] + [treedef.flatten_up_to(r) for r in (params, state["momentum"])]
         updates, mom = [treedef.unflatten(leaf) for leaf in zip(*[get_update(*xs) for xs in zip(*all_leaves)])]
-        print(updates.keys())
-        return jnp.sign(updates), {"momentum": mom, "count": count}
+
+        for i in updates.keys():
+            updates[i] = jnp.sign(updates[i])
+
+        return updates, {"momentum": mom, "count": count}
 
     return GradientTransformation(init_fn, update_fn)
 
@@ -282,9 +285,8 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         gauss0, drop0 = jax.random.split(rng(batch["idx"] + 1), 2)
         vae_out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode)
         encoded = get_encoded(batch["input_ids"], batch["attention_mask"])
-        print(f'{encoded.shape} BEFORE')
         encoded = encoded.reshape(*encoded.shape[1:])  # remove batch dim for einsum
-        print(f'{encoded.shape} AFTER')
+
         def compute_loss(unet_params, itr):
             sample_rng, noise_rng, step_rng = jax.random.split(rng(itr + batch["idx"]), 3)
 
