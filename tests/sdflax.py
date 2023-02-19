@@ -371,10 +371,10 @@ def main():
 
                 run.log({"UNET loss": unet_loss})
 
-                vae_state, vae_loss = vae_p_train_step(vae_state, batch)
-                vae_loss = sum(vae_loss['loss'])/jax.device_count()
+                #vae_state, vae_loss = vae_p_train_step(vae_state, batch)
+                #vae_loss = sum(vae_loss['loss'])/jax.device_count()
 
-                run.log({"VAE loss": vae_loss})
+                #run.log({"VAE loss": vae_loss})
 
         if epoch % 100 == 0:
 
