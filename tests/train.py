@@ -175,12 +175,12 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 
 @app.command()
 def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
-         resolution: int = 128, fps: int = 1, context: int = 8, workers: int = 64, prefetch: int = 32,
+         resolution: int = 128, fps: int = 1, context: int = 32, workers: int = 64, prefetch: int = 32,
          batch_prefetch: int = 4, base_model: str = "flax_base_model", data_path: str = "./urls",
          sample_interval: int = 2048, parallel_videos: int = 128, schedule_length: int = 1024, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, save_interval: int = 2048,
          overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_subtitles/", local_iterations: int = 4,
-         unet_batch: int = 4, device_steps: int = 4):
+         unet_batch: int = 1, device_steps: int = 4):
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch,
                       parallel_videos, tokenizer, clip_tokens, device_steps, batch_prefetch)
@@ -257,7 +257,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         noise = lax.broadcast_in_dim(noise, (4, *noise.shape), (1, 2, 3, 4)).reshape(-1, *noise.shape[1:])
         latents = lax.broadcast_in_dim(latents, (4, *latents.shape), (1, 2, 3, 4)).reshape(*noise.shape)
         state = noise_scheduler.set_timesteps(sched_state, schedule_length, latents.shape)
-        start_step = round(schedule_length * 0.9)
+        start_step = schedule_length#round(schedule_length * 0.9)
         t0 = jnp.full((), start_step, jnp.int32)
         latents = noise_scheduler.add_noise(sched_state, latents, noise, t0)
 
