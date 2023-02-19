@@ -86,7 +86,7 @@ def main():
     weight_dtype = jnp.float32
 
     # Load models and create wrapper for stable diffusion
-    model_path = 'flax/stable-diffusion-2-1'
+    model_path = 'flax_base_model'
     tokenizer = CLIPTokenizer.from_pretrained(model_path, subfolder="tokenizer")
     text_encoder = FlaxCLIPTextModel.from_pretrained(
         model_path, subfolder="text_encoder", dtype=weight_dtype
@@ -130,23 +130,27 @@ def main():
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
 
         def compute_loss(params):
-            # Convert images to latent space
-            inp = batch["pixel_values"]
+
             #inp = jnp.expand_dims(inp, axis=0)
             
             vae_outputs = vae.apply(
-                {"params": vae_params}, inp, deterministic=True, method=vae.encode
+                {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
             )
             latents = vae_outputs.latent_dist.sample(sample_rng)
             # (NHWC) -> (NCHW)
             latents = jnp.transpose(latents, (0, 3, 1, 2))
             latents = latents * 0.18215
 
+            inp = latents[0]
+            inp = jnp.expand_dims(inp, axis=0)
+            tar = latents[1]
+            tar = jnp.expand_dims(tar, axis=0)
+
             # Sample noise that we'll add to the latents
             noise_rng, timestep_rng = jax.random.split(sample_rng)
-            noise = jax.random.normal(noise_rng, latents.shape)
+            noise = jax.random.normal(noise_rng, inp.shape)
             # Sample a random timestep for each image
-            bsz = latents.shape[0]
+            bsz = inp.shape[0]
             timesteps = jax.random.randint(
                 timestep_rng,
                 (bsz,),
@@ -154,7 +158,7 @@ def main():
                 noise_scheduler.config.num_train_timesteps,
             )
 
-            noisy_latents = noise_scheduler.add_noise(sched,latents, noise, timesteps)
+            noisy_latents = noise_scheduler.add_noise(sched,inp, noise, timesteps)#noisy latents-latents = noise added by scheduler
 
             # Get the text embedding for conditioning
             encoder_hidden_states = text_encoder(
@@ -168,13 +172,9 @@ def main():
                 {"params": params}, noisy_latents, timesteps, encoder_hidden_states
             ).sample
 
-            # Get the target for loss depending on the prediction type
-            if noise_scheduler.config.prediction_type == "epsilon":
-                target = noise
-            elif noise_scheduler.config.prediction_type == "v_prediction":
-                target = noise_scheduler.get_velocity(latents, noise, timesteps)
-            else:
-                raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
+
+            model_pred += inp #prediction of noisy latents
+            target = tar+noise
 
             loss = (target - model_pred) ** 2
             loss = loss.mean()
@@ -195,15 +195,12 @@ def main():
     def vae_train_step(state, batch):
 
         def compute_loss(params):
-            inp = batch["pixel_values"][0]#i might be teaching it that time goes backwards? whatever if it doesnt work, just lower the framerate
-            inp = jnp.expand_dims(inp, axis=0)
-            tar = batch["pixel_values"][1]
-            tar = jnp.expand_dims(tar, axis=0)
+            inp = batch["pixel_values"]
             gaussian, dropout = jax.random.split(jax.random.PRNGKey(0), 2)
             out = vae.apply({"params": params}, inp, rngs={"gaussian": gaussian, "dropout": dropout},
                             sample_posterior=True, deterministic=False).sample
 
-            loss = (tar - out) ** 2
+            loss = (inp - out) ** 2
 
             loss = loss.mean()
 
@@ -310,7 +307,7 @@ def main():
             data[n] = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
             data[n] = (data[n], f'{caption}')
 
-        for shift in range(4):#shift batch y 1 so that all transitions are learned 
+        for _ in range(4):#shift batch y 1 so that all transitions are learned 
 
             iters = tqdm(range(n_batches), desc="Iter ... ", position=1)
             ######UNET TRAINING
@@ -326,8 +323,8 @@ def main():
                     images.append(dt[0])
                     captions.append(dt[1])
 
-                images = images[shift%2:] + images[:shift%2]#this is done so that the transition is learned from frame 0 to 1, 1 to 2, 2 to 3.. instead of 0 to 1, 2 to 3, 4 to 5
-                captions = captions[shift%2:] + captions[:shift%2]
+                #images = images[shift%2:] + images[:shift%2]#this is done so that the transition is learned from frame 0 to 1, 1 to 2, 2 to 3.. instead of 0 to 1, 2 to 3, 4 to 5
+                #captions = captions[shift%2:] + captions[:shift%2]
 
                 #append captions[0] to text file
                 with open('text.txt', 'a') as file:
