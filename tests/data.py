@@ -305,8 +305,12 @@ class DataLoader:
                 input_ids = []
                 attention_mask = []
                 subs = np.stack(subs)#this takes 4 chunks from the first video and returns them. 
+                print(subs)
+                print(np.stack(np_batch))
+                print(subs.shape)
+                print(np.stack(np_batch).shape)
                 for sub in subs:
-                    tokens = self.tokenizer(sub, return_tensors="np", padding="max_length", truncation=True,
+                    tokens = self.tokenizer(sub.tolist(), return_tensors="np", padding="max_length", truncation=True,
                                             max_length=self.clip_tokens)
                     input_ids.append(tokens["input_ids"].reshape(self.batch_size, -1))
                     attention_mask.append(tokens["attention_mask"].reshape(self.batch_size, -1))
