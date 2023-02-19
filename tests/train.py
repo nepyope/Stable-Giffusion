@@ -150,6 +150,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: 
         leaves, treedef = jax.tree_util.tree_flatten(updates)
         all_leaves = [leaves] + [treedef.flatten_up_to(r) for r in (params, state["momentum"])]
         updates, mom = [treedef.unflatten(leaf) for leaf in zip(*[get_update(*xs) for xs in zip(*all_leaves)])]
+        print(updates.keys())
         return jnp.sign(updates), {"momentum": mom, "count": count}
 
     return GradientTransformation(init_fn, update_fn)
@@ -223,7 +224,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": batch["pixel_values"], "idx": batch["idx"] + jnp.arange(device_steps),
-                "input_ids": batch["input_ids"].reshape(jax.local_device_count(), 1, -1),#maybe stupid? i could just do unsqueeze or sth
+                "input_ids": batch["input_ids"].reshape(jax.local_device_count(), 1, -1),
                 "attention_mask": batch["attention_mask"].reshape(jax.local_device_count(), 1, -1)}
 
     def rng(idx: jax.Array):
@@ -258,7 +259,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         noise = lax.broadcast_in_dim(noise, (4, *noise.shape), (1, 2, 3, 4)).reshape(-1, *noise.shape[1:])
         latents = lax.broadcast_in_dim(latents, (4, *latents.shape), (1, 2, 3, 4)).reshape(*noise.shape)
         state = noise_scheduler.set_timesteps(sched_state, schedule_length, latents.shape)
-        start_step = schedule_length#round(schedule_length * 0.9)
+        start_step = schedule_length
         t0 = jnp.full((), start_step, jnp.int32)
         latents = noise_scheduler.add_noise(sched_state, latents, noise, t0)
 
@@ -281,8 +282,9 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         gauss0, drop0 = jax.random.split(rng(batch["idx"] + 1), 2)
         vae_out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode)
         encoded = get_encoded(batch["input_ids"], batch["attention_mask"])
+        print(f'{encoded.shape} BEFORE')
         encoded = encoded.reshape(*encoded.shape[1:])  # remove batch dim for einsum
-
+        print(f'{encoded.shape} AFTER')
         def compute_loss(unet_params, itr):
             sample_rng, noise_rng, step_rng = jax.random.split(rng(itr + batch["idx"]), 3)
 
@@ -302,6 +304,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             return unet_dist_sq, (unet_dist_sq, unet_dist_abs)
 
         (loss, scalars), grads = jax.value_and_grad(lambda x: compute_loss(x, 0), has_aux=True)(unet_state.params)
+
         if local_iterations > 1:
             def _inner(prev, itr):
                 grads = jax.value_and_grad(lambda x: compute_loss(x, itr * 257), has_aux=True)(unet_state.params)
@@ -335,7 +338,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             i *= device_steps
             batch = {
                 "pixel_values": vid.reshape(jax.local_device_count(), device_steps, context, resolution, resolution, 3),
-                "input_ids": ids,#local_device_count()is always 4 anyways
+                "input_ids": ids,
                 "attention_mask": msk,
                 "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
 
