@@ -306,7 +306,7 @@ class DataLoader:
                 attention_mask = []
                 subs = np.stack(subs)#this takes 4 chunks from the first video and returns them. 
                 print(subs)
-                print(np.stack(np_batch))
+                #print(np.stack(np_batch))
                 print(subs.shape)
                 print(np.stack(np_batch).shape)
                 for sub in subs:
