@@ -25,7 +25,7 @@ from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
 from transformers import CLIPTokenizer, FlaxCLIPTextModel
 
-from old_data import DataLoader
+from data import DataLoader
 
 app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")
