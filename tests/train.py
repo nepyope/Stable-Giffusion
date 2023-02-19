@@ -25,7 +25,7 @@ from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
 from transformers import CLIPTokenizer, FlaxCLIPTextModel
 
-from data import DataLoader
+from old_data import DataLoader
 
 app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")
@@ -224,8 +224,8 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": batch["pixel_values"], "idx": batch["idx"] + jnp.arange(device_steps),
-                "input_ids": batch["input_ids"],
-                "attention_mask": batch["attention_mask"]}
+                "input_ids": jnp.stack([batch["input_ids"]] * device_steps, 0),
+                "attention_mask": jnp.stack([batch["attention_mask"]] * device_steps, 0)}
 
     def rng(idx: jax.Array):
         return jax.random.PRNGKey(idx * jax.device_count() + device_id())
