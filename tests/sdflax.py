@@ -300,7 +300,7 @@ def main():
     
     for n,im in enumerate(data):
         if n == 0:
-            data[n] = np.zeros(im.shape, dtype=np.uint8)
+            data[n] = Image.fromarray(np.zeros(im.shape, dtype=np.uint8))
         else:
             data[n] = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
         data[n] = (data[n], f'{caption}')
