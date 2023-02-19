@@ -299,11 +299,11 @@ def main():
     print(caption)
     
     for n,im in enumerate(data):
-        data[n] = (data[n], f'{caption}')
         if n == 0:
             data[n] = np.zeros(im.shape, dtype=np.uint8)
-            continue
-        data[n] = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+        else:
+            data[n] = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+        data[n] = (data[n], f'{caption}')
 
     for epoch in epochs:
         #usual overfit test
