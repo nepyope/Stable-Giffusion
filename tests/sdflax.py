@@ -164,7 +164,7 @@ def main():
             encoder_hidden_states = text_encoder(
                 batch["input_ids"],
                 params=text_encoder_params
-            )[0]
+            )[0][0]
 
             #encoder_hidden_states = jnp.expand_dims(encoder_hidden_states, axis=0)
 
