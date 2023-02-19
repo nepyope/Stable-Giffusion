@@ -152,7 +152,8 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: 
         updates, mom = [treedef.unflatten(leaf) for leaf in zip(*[get_update(*xs) for xs in zip(*all_leaves)])]
 
         for i in updates.keys():
-            updates[i] = jnp.sign(updates[i])
+            print(updates[i].keys())
+            #updates[i] = jnp.sign(updates[i])
 
         return updates, {"momentum": mom, "count": count}
 
