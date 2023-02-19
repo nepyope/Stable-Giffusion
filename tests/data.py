@@ -162,7 +162,7 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str], target_fps: i
             print('error')
             
         proxies.clear()
-        proxies.extend(get_proxies())
+        proxies = get_proxies()
         print("Refreshing proxies", len(proxies))
 
 
@@ -355,7 +355,7 @@ class DataLoader:
 
                 try:
                     share = list(from_share(out[0]))
-                    #self.rng.shuffle(share)
+                    self.rng.shuffle(share)
                     samples.append((share, out[1]))#is out 1 the text?
                 except:
                     print("failed to load share")

@@ -130,29 +130,26 @@ def ema(x, y, beta, step):
 
 def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: float = 1e-2) -> GradientTransformation:
     def init_fn(params):
-        return ScaleByAdamState(mu=jax.tree_map(jnp.zeros_like, params),  # First Moment
-                                nu=jax.tree_map(jnp.zeros_like, params),  # Second Moment
-                                count=jnp.zeros([], jnp.int32))
+        return {"momentum": jax.tree_util.tree_map(jnp.zeros_like, params), "count": jnp.zeros((), dtype=jnp.int64)}
 
     def update_fn(updates, state, params=None):
-        count = safe_int32_increment(state.count)
+        count = state["count"] + 1
 
-        def get_update(grad: jax.Array, param: jax.Array, nu: jax.Array, mu: jax.Array):
-            dtype = nu.dtype
-            grad, param, nu, mu = jax.tree_map(promote, (grad, param, nu, mu))
+        def get_update(grad: jax.Array, param: jax.Array, mom: jax.Array):
+            dtype = mom.dtype
+            grad, param, mom = jax.tree_map(promote, (grad, param, mom))
             g_norm = clip_norm(grad, 1e-16)
             p_norm = clip_norm(param, 1e-3)
             grad *= lax.min(p_norm / g_norm * clip, 1.)
 
-            nuc, nu = ema(lax.square(grad), nu, b2, count)
-            grad /= lax.max(lax.sqrt(nuc), eps)
-            muc, mu = ema(grad, mu, b1, count)
-            return muc * -lr(count), nu.astype(dtype), mu.astype(dtype)
+            delta = grad - mom
+            update = mom + delta * (1 - b1)
+            return update * -lr(count), (mom + delta * (1 - b2)).astype(dtype)
 
         leaves, treedef = jax.tree_util.tree_flatten(updates)
         all_leaves = [leaves] + [treedef.flatten_up_to(r) for r in (params, state.nu, state.mu)]
-        updates, nu, mu = [treedef.unflatten(leaf) for leaf in zip(*[get_update(*xs) for xs in zip(*all_leaves)])]
-        return updates, ScaleByAdamState(count=count, mu=mu, nu=nu)
+        updates, mom = [treedef.unflatten(leaf) for leaf in zip(*[get_update(*xs) for xs in zip(*all_leaves)])]
+        return jnp.sign(updates), {"momentum": mom, "count": count}
 
     return GradientTransformation(init_fn, update_fn)
 
@@ -203,6 +200,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     lr_sched = optax.warmup_exponential_decay_schedule(0, lr, warmup_steps, lr_halving_every_n_steps, 0.5)
     optimizer = scale_by_laprop(beta1, beta2, eps, lr_sched)
+    
     unet_state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
     noise_scheduler = FlaxPNDMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear",
@@ -224,7 +222,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": batch["pixel_values"], "idx": batch["idx"] + jnp.arange(device_steps),
-                "input_ids": batch["input_ids"].reshape(jax.local_device_count(), 1, -1),
+                "input_ids": batch["input_ids"].reshape(jax.local_device_count(), 1, -1),#maybe stupid? i could just do unsqueeze or sth
                 "attention_mask": batch["attention_mask"].reshape(jax.local_device_count(), 1, -1)}
 
     def rng(idx: jax.Array):
