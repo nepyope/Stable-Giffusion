@@ -370,8 +370,10 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 "idx": jnp.full((jax.device_count(),), i, jnp.int64)}
             
             print(f'vid shape AFTER{batch["pixel_values"].shape}')         
-            print(batch['idx'].shape)
-            batch = jax.pmap(lambda x: lax.all_to_all(x, axis_name='i', split_axis=0, concat_axis=0, tiled=True), axis_name='i')(batch)
+
+            batch = jax.pmap(lambda x: x, "batch", devices=jax.devices())(batch)
+            print('after pmap: ' ,batch['idx'].shape)
+            batch = lax.all_to_all(batch, axis_name='batch', split_axis=0, concat_axis=1, tiled=True)
 
             print(f'vid shape all_to_all{batch["pixel_values"].shape}')    
             
