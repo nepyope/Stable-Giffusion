@@ -369,7 +369,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 "attention_mask": jnp.transpose(msk, (1, 0, 2)),
                 "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
             print(f'vid shape AFTER{vid.shape}')            
-            batch = lax.all_to_all(batch, "batch", tiled = True)
+            batch = lax.all_to_all(batch, "batch", split_axis=0, concat_axis=1,tiled = True)
             print(f'vid shape all_to_all{vid.shape}')    
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
