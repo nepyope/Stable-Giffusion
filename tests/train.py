@@ -208,8 +208,8 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
          overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_big_context", local_iterations: int = 4,
          unet_batch: int = 1, device_steps: int = 4):
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
-    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch,
-                      parallel_videos, tokenizer, clip_tokens, device_steps, batch_prefetch)#FOR TESTING PURPOSES batch size is device steps and device steps is 64 on a 128
+    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, device_steps, prefetch,
+                      parallel_videos, tokenizer, clip_tokens, jax.device_count(), batch_prefetch)#FOR TESTING PURPOSES batch size is device steps and device steps is 64 on a 128
     
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
