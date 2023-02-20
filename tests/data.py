@@ -321,6 +321,7 @@ class DataLoader:
                 continue
             np_batch.append(np.stack([samples[idx][0].pop(0) for _ in range(self.device_steps)]))
             subs.append(np.stack([samples[idx][1].pop(0) for _ in range(self.device_steps)]))
+            print(len(subs), subs[0].shape)
             idx = (idx + 1) % self.parallel_videos
 
     def _worker(self):
