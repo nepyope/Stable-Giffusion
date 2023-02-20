@@ -305,7 +305,7 @@ class DataLoader:
                     continue
                 input_ids = []
                 attention_mask = []
-                
+
                 for sub in subs:
                     tokens = self.tokenizer(sub.tolist(), return_tensors="np", padding="max_length", truncation=True,
                                             max_length=self.clip_tokens)
@@ -320,7 +320,7 @@ class DataLoader:
             if len(samples) <= idx:
                 continue
             np_batch.append(np.stack([samples[idx][0].pop(0) for _ in range(self.device_steps)]))
-            subs.append(np.stack([samples[idx][1].pop(0) for _ in range(self.device_steps)]))#ok
+            subs.append(np.stack([samples[idx][1].pop(0) for _ in range(self.device_steps)]))
             idx = (idx + 1) % self.parallel_videos
 
     def _worker(self):
@@ -355,8 +355,8 @@ class DataLoader:
                     continue
 
                 try:
-                    share = list(from_share(out[0]))
-                    self.rng.shuffle(share)
+                    share = list(from_share(out[0]))#this also removes share from_shared_memory
+                    #self.rng.shuffle(share)
                     samples.append((share, out[1]))
                 except:
                     print("failed to load share")
