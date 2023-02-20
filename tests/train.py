@@ -368,15 +368,15 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 "input_ids": ids.transpose(1, 0, 2),
                 "attention_mask": msk.transpose(1, 0, 2),
                 "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
-            print(f'vid shape AFTER{vid.shape()}')            
+            print(f'vid shape AFTER{vid.shape}')            
             batch = lax.all_to_all(batch, "batch", tiled = True)
-            print(f'vid shape all_to_all{vid.shape()}')    
+            print(f'vid shape all_to_all{vid.shape}')    
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
             if i % sample_interval == 0:
                 sample_out = p_sample(unet_state.params, batch)
                 s_mode, g1, g2, g4, g8 = np.split(to_host(sample_out, lambda x: x), 5, 1)
-                print(f'sample shape {g1.shape()}')    
+                print(f'sample shape {g1.shape}')    
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
                 extra[f"Samples/Reconstruction (U-Net, Guidance 1) {pid}"] = to_img(g1)
                 extra[f"Samples/Reconstruction (U-Net, Guidance 2) {pid}"] = to_img(g2)
