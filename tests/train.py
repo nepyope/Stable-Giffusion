@@ -376,7 +376,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             if i % sample_interval == 0:
                 sample_out = p_sample(unet_state.params, batch)
                 s_mode, g1, g2, g4, g8 = np.split(to_host(sample_out, lambda x: x), 5, 1)
-            print(f'sample shape {g1.shape()}')    
+                print(f'sample shape {g1.shape()}')    
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
                 extra[f"Samples/Reconstruction (U-Net, Guidance 1) {pid}"] = to_img(g1)
                 extra[f"Samples/Reconstruction (U-Net, Guidance 2) {pid}"] = to_img(g2)
