@@ -367,11 +367,11 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 "pixel_values": jnp.transpose(vid, (0,1,2,3,4,5)),
                 "input_ids": jnp.transpose(ids, (0,1,2)),
                 "attention_mask": jnp.transpose(msk, (0,1,2)),
-                "idx": jnp.full((jax.device_count(),), i, jnp.int64)}
+                "idx": jnp.full((jax.local_devices(),), i, jnp.int64)}
             
             print(f'vid shape AFTER{batch["pixel_values"].shape}')         
             print(batch['idx'].shape)
-            batch = jax.pmap(lambda x: lax.all_to_all(x, axis_name='i', split_axis=0, concat_axis=1, tiled=True), axis_name='i')(batch)
+            batch = jax.pmap(lambda x: lax.all_to_all(x, axis_name='i', split_axis=0, concat_axis=1, tiled=True), axis_name='i')(batch)#why the fuck is a 64 here
 
             print(f'vid shape all_to_all{batch["pixel_values"].shape}')    
             
