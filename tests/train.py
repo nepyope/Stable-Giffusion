@@ -368,10 +368,10 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 print(f"Step {global_step}", datetime.datetime.now())
             i *= device_steps
             batch = {
-                "pixel_values": jnp.transpose(vid, (0,1,2,3,4,5)),
+                "pixel_values": jnp.transpose(vid, (0,1,2,3,4,5)),#device steps, batch, context, resolution, resolution, 3
                 "input_ids": jnp.transpose(ids, (0,1,2)),
                 "attention_mask": jnp.transpose(msk, (0,1,2)),
-                "idx": jnp.broadcast_to(jnp.full((jax.device_count(),), i, jnp.int64), (jax.local_device_count(),jax.device_count()))}
+                "idx": jnp.full((jax.local_device_count(),jax.device_count()),i)}
             print(f'vid shape AFTER{batch["pixel_values"].shape}, {batch["input_ids"].shape}, {batch["attention_mask"].shape}, {batch["idx"].shape}')
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
