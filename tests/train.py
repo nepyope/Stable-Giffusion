@@ -208,8 +208,8 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
          overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_big_context", local_iterations: int = 4,
          unet_batch: int = 1, device_steps: int = 4):
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
-    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, device_steps, prefetch,
-                      parallel_videos, tokenizer, clip_tokens, jax.device_count(), batch_prefetch)#FOR TESTING PURPOSES batch size is device steps and device steps is 64 on a 128
+    data = DataLoader(workers, data_path, downloaders, resolution, fps, context * jax.device_count(), jax.local_device_count(), prefetch,
+                      parallel_videos, tokenizer, clip_tokens, device_steps, batch_prefetch)
     
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
@@ -308,7 +308,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         return dist_sq, dist_abs
 
     def train_step(unet_state: TrainState, batch: Dict[str, jax.Array]):
-        img = batch["pixel_values"].astype(jnp.float32) / 255 #this should be 4
+        img = batch["pixel_values"].astype(jnp.float32) / 255
         inp = jnp.transpose(img, (0, 3, 1, 2))
         gauss0, drop0 = jax.random.split(rng(batch["idx"] + 1), 2)
         vae_out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode)
@@ -362,16 +362,15 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     global_step = 0
     for epoch in range(10 ** 9):
         for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 0)):
-            print(f'vid shape BEFORE{vid.shape}, {ids.shape}, {msk.shape}')
+            print(f'{vid.shape}, {ids.shape}, {msk.shape}')
             global_step += 1
             if global_step <= 2:
                 print(f"Step {global_step}", datetime.datetime.now())
             i *= device_steps
-            batch = {
-                "pixel_values": jnp.transpose(vid, (0,1,2,3,4,5)),
-                "input_ids": jnp.transpose(ids, (0,1,2)),
-                "attention_mask": jnp.transpose(msk, (0,1,2)),
-                "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
+            batch = {"pixel_values": vid.reshape(jax.local_device_count(), -1, *vid.shape[1:]),
+                     "input_ids": ids.reshape(jax.local_device_count(), 1, -1),
+                     "attention_mask": msk.reshape(jax.local_device_count(), 1, -1),
+                     "idx": jnp.full((jax.local_device_count(),), i, jnp.int32)}
 
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
