@@ -209,7 +209,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
          unet_batch: int = 1, device_steps: int = 4):
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, device_steps, prefetch,
-                      parallel_videos, tokenizer, clip_tokens, jax.device_count(), batch_prefetch)#FOR TESTING PURPOSES batch size is device steps and device steps is 64 on a 128
+                      parallel_videos, tokenizer, clip_tokens, jax.device_count(), batch_prefetch)
     
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
@@ -265,8 +265,9 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         batch = all_to_all_batch(batch)
         batch = jax.tree_map(lambda x: x[0], batch)
         latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 4)
-
-        inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
+        print('ids ', batch["input_ids"].shape)
+        print('idx ', batch["idx"].shape)
+        inp = jnp.transpose(batch["pixel_values"][0].astype(jnp.float32) / 255, (0, 3, 1, 2))
         posterior = vae_apply(inp, method=vae.encode)
 
         hidden_mode = posterior.latent_dist.mode()
@@ -369,7 +370,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 print(f"Step {global_step}", datetime.datetime.now())
             i *= device_steps
             batch = {
-                "pixel_values": jnp.transpose(vid, (0,1,2,3,4,5)),#device steps, batch, context, resolution, resolution, 3
+                "pixel_values": jnp.transpose(vid, (0,1,2,3,4,5)),#device steps, batch (ordered), context, resolution, resolution, 3
                 "input_ids": jnp.transpose(ids, (0,1,2)),
                 "attention_mask": jnp.transpose(msk, (0,1,2)),
                 "idx": jnp.full((jax.local_device_count(),jax.device_count()),i)}
