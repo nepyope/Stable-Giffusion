@@ -364,9 +364,9 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 print(f"Step {global_step}", datetime.datetime.now())
             i *= device_steps
             batch = {
-                "pixel_values": vid.transpose(1, 0, *vid.shape[2:]),
-                "input_ids": ids.transpose(1, 0, 2),
-                "attention_mask": msk.transpose(1, 0, 2),
+                "pixel_values": jnp.transpose(vid, (1, 0, *vid.shape[2:])),
+                "input_ids": jnp.transpose(ids, (1, 0, 2)),
+                "attention_mask": jnp.transpose(msk, (1, 0, 2)),
                 "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
             print(f'vid shape AFTER{vid.shape}')            
             batch = lax.all_to_all(batch, "batch", tiled = True)
