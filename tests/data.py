@@ -312,8 +312,7 @@ class DataLoader:
                                             max_length=self.clip_tokens)
                     input_ids.append(np.stack(tokens["input_ids"]))
                     attention_mask.append(np.stack(tokens["attention_mask"]))
-                    print(input_ids[0].shape, attention_mask[0].shape)
-                print('after tokenization: ',len(input_ids), len(attention_mask))
+
                 self.batch_queue.put((np.stack(np_batch), np.stack(input_ids), np.stack(attention_mask)))
                 np_batch.clear()
                 subs.clear()
