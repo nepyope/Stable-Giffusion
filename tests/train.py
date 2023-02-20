@@ -255,8 +255,8 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": all_to_all(batch["pixel_values"], 1),
                 "idx": batch["idx"] + jnp.arange(jax.device_count()),
-                "input_ids": lax.all_gather(batch["input_ids"], "batch"),
-                "attention_mask": lax.all_gather(batch["attention_mask"], "batch")}
+                "input_ids": all_to_all(batch["input_ids"], "batch"),
+                "attention_mask": all_to_all(batch["attention_mask"], "batch")}
 
     def rng(idx: jax.Array):
         return jax.random.PRNGKey(idx * jax.device_count() + device_id())
