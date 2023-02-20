@@ -266,7 +266,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         batch = jax.tree_map(lambda x: x[0], batch)
         latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 4)
         print('ids ', batch["input_ids"].shape)
-        print('idx ', batch["idx"].shape)
+        print('idx ', batch["idx"].shape, batch["idx"])
         inp = jnp.transpose(batch["pixel_values"][0].astype(jnp.float32) / 255, (0, 3, 1, 2))
         posterior = vae_apply(inp, method=vae.encode)
 
