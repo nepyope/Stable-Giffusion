@@ -30,7 +30,7 @@ from data import DataLoader
 app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")
 _UPLOAD_RETRIES = 8
-
+_SHUFFLE = False
 
 def attention(query: jax.Array, key: jax.Array, value: jax.Array, scale: float):
     ctx_dims = f'{"b" * (key.ndim > 3)}zhf'
@@ -74,11 +74,27 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
 FlaxAttentionBlock.__call__ = _new_attention
 
 
-def _canonicalize_axes(rank: int, axes: List[int]) -> Tuple[int, ...]:
-    """Returns a tuple of deduplicated, sorted, and positive axes."""
-    if not isinstance(axes, Iterable):
-        axes = (axes,)
-    return tuple(set([rank + axis if axis < 0 else axis for axis in axes]))
+
+_original_call = nn.Conv.__call__
+
+@jax.custom_gradient
+def communicate(x: jax.Array):
+
+    def _grad(dy: jax.Array):
+        dy = lax.ppermute(dy, "batch", [((i + 1) % jax.local_device_count(), i) for i in range(jax.local_device_count())])
+        return dy
+
+    x = lax.ppermute(x, "batch", [(i, (i + 1) % jax.local_device_count()) for i in range(jax.local_device_count())])
+    return x, _grad
+
+def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
+    inputs = jnp.asarray(inputs, self.dtype)
+    if _SHUFFLE and "quant" not in self.scope.name:
+        inputs = (inputs + communicate(inputs)) / 2
+    return _original_call(self, inputs)
+
+nn.Conv.__call__ = conv_call
+
 
 
 def device_id():
@@ -129,29 +145,37 @@ def ema(x, y, beta, step):
 
 
 
-def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: float = 1e-2) -> GradientTransformation: #LION Optimizer
+def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: float = 1e-2) -> GradientTransformation: #adam+lion
+    def zero(x):
+        return jnp.zeros_like(x, dtype=jnp.bfloat16)
     def init_fn(params):
-        return {"momentum": jax.tree_util.tree_map(jnp.zeros_like, params), "count": jnp.zeros((), dtype=jnp.int64)}
+        return {"momentum": jax.tree_util.tree_map(zero, params), "mu": jax.tree_util.tree_map(zero, params), "nu": jax.tree_util.tree_map(zero, params), "count": jnp.zeros((), dtype=jnp.int64)}
 
     def update_fn(updates, state, params=None):
         count = state["count"] + 1
 
-        def get_update(grad: jax.Array, param: jax.Array, mom: jax.Array):
+        def get_update(grad: jax.Array, param: jax.Array, mom: jax.Array, mu: jax.Array, nu: jax.Array):
             dtype = mom.dtype
-            grad, param, mom = jax.tree_map(promote, (grad, param, mom))
+            grad, param, mom, nu, mu = jax.tree_map(promote, (grad, param, mom, nu, mu))
             g_norm = clip_norm(grad, 1e-16)
             p_norm = clip_norm(param, 1e-3)
             grad *= lax.min(p_norm / g_norm * clip, 1.)
 
+            nuc, nu = ema(lax.square(grad), nu, b2, count)
+            grad /= lax.max(lax.sqrt(nuc), eps)
+            muc, mu = ema(grad, mu, b1, count)
+
+
             delta = grad - mom
             update = mom + delta * (1 - b1)
-            return jnp.sign(update) * -lr(count), (mom + delta * (1 - b2)).astype(dtype)
+
+            update *= jnp.linalg.norm(muc) / jnp.linalg.norm(update) * -lr(count)
+            return update,  (mom + delta * (1 - b2)).astype(dtype), mu.astype(dtype), nu.astype(dtype)
 
         leaves, treedef = jax.tree_util.tree_flatten(updates)
-        all_leaves = [leaves] + [treedef.flatten_up_to(r) for r in (params, state["momentum"])]
-        updates, mom = [treedef.unflatten(leaf) for leaf in zip(*[get_update(*xs) for xs in zip(*all_leaves)])]
-
-        return updates, {"momentum": mom, "count": count}
+        all_leaves = [leaves] + [treedef.flatten_up_to(r) for r in (params, state["momentum"], state["mu"], state["nu"])]
+        updates, mom, mu, nu = [treedef.unflatten(leaf) for leaf in zip(*[get_update(*xs) for xs in zip(*all_leaves)])]
+        return updates, {"momentum": mom, "count": count, "mu": mu, "nu": nu}
 
     return GradientTransformation(init_fn, update_fn)
 
@@ -176,17 +200,17 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 
 
 @app.command()
-def main(lr: float = 2e-8, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
-         resolution: int = 128, fps: int = 1, context: int = 32, workers: int = 64, prefetch: int = 32,
+def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
+         resolution: int = 128, fps: int = 8, context: int = 32, workers: int = 64, prefetch: int = 32,
          batch_prefetch: int = 4, base_model: str = "flax_base_model", data_path: str = "./urls",
-         sample_interval: int = 2048, parallel_videos: int = 1024, schedule_length: int = 1024, warmup_steps: int = 1024,
+         sample_interval: int = 2048, parallel_videos: int = 128, schedule_length: int = 1024, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, save_interval: int = 2048,
-         overwrite: bool = True, base_path: str = "gs://video-us/checkpoint", local_iterations: int = 4,
+         overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_big_context", local_iterations: int = 4,
          unet_batch: int = 1, device_steps: int = 4):
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
-    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch,
-                      parallel_videos, tokenizer, clip_tokens, device_steps, batch_prefetch)
-
+    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, device_steps, prefetch,
+                      parallel_videos, tokenizer, clip_tokens, jax.device_count(), batch_prefetch)#FOR TESTING PURPOSES batch size is device steps and device steps is 64 on a 128
+    
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
@@ -214,7 +238,10 @@ def main(lr: float = 2e-8, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         return text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
 
     def unet_fn(noise, encoded, timesteps, params):
-        return unet.apply({"params": params}, lax.stop_gradient(noise), timesteps, lax.stop_gradient(encoded)).sample
+        _SHUFFLE = True
+        out = unet.apply({"params": params}, lax.stop_gradient(noise), timesteps, lax.stop_gradient(encoded)).sample
+        _SHUFFLE = False
+        return out
 
     def vae_apply(*args, method=vae.__call__, **kwargs):
         return vae.apply({"params": vae_params}, *args, method=method, **kwargs)
@@ -277,7 +304,7 @@ def main(lr: float = 2e-8, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         return dist_sq, dist_abs
 
     def train_step(unet_state: TrainState, batch: Dict[str, jax.Array]):
-        img = batch["pixel_values"].astype(jnp.float32) / 255
+        img = batch["pixel_values"].astype(jnp.float32) / 255 #this should be 4
         inp = jnp.transpose(img, (0, 3, 1, 2))
         gauss0, drop0 = jax.random.split(rng(batch["idx"] + 1), 2)
         vae_out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode)
@@ -326,26 +353,30 @@ def main(lr: float = 2e-8, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     start_time = time.time()
 
     def to_img(x: jax.Array) -> wandb.Image:
-        return wandb.Image(x.reshape(jax.local_device_count(), context * resolution, resolution, 3).transpose(1, 0, 2, 3).reshape(context * resolution, jax.local_device_count() * resolution, 3))
+        return wandb.Image(x.reshape(jax.device_count(), context * resolution, resolution, 3).transpose(1, 0, 2, 3).reshape(context * resolution, jax.device_count() * resolution, 3))
 
     global_step = 0
     for epoch in range(10 ** 9):
-        for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 1)):
+        for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 0)):
+            print(f'vid shape BEFORE{vid.shape()}')
             global_step += 1
             if global_step <= 2:
                 print(f"Step {global_step}", datetime.datetime.now())
             i *= device_steps
             batch = {
-                "pixel_values": vid.reshape(jax.local_device_count(), device_steps, context, resolution, resolution, 3),
-                "input_ids": ids,
-                "attention_mask": msk,
+                "pixel_values": vid.transpose(1, 0, *vid.shape[2:]),
+                "input_ids": ids.transpose(1, 0, 2),
+                "attention_mask": msk.transpose(1, 0, 2),
                 "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
-
+            print(f'vid shape AFTER{vid.shape()}')            
+            batch = lax.all_to_all(batch, "batch", tiled = True)
+            print(f'vid shape all_to_all{vid.shape()}')    
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
             if i % sample_interval == 0:
                 sample_out = p_sample(unet_state.params, batch)
                 s_mode, g1, g2, g4, g8 = np.split(to_host(sample_out, lambda x: x), 5, 1)
+            print(f'sample shape {g1.shape()}')    
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
                 extra[f"Samples/Reconstruction (U-Net, Guidance 1) {pid}"] = to_img(g1)
                 extra[f"Samples/Reconstruction (U-Net, Guidance 2) {pid}"] = to_img(g2)
