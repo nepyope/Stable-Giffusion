@@ -249,10 +249,14 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     def sample_vae(inp: jax.Array):
         return jnp.transpose(vae_apply(inp, method=vae.decode).sample, (0, 2, 3, 1))
 
+    def all_to_all(x, split=2):
+        return lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
+
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
-        return {"pixel_values": batch["pixel_values"], "idx": batch["idx"] + jnp.arange(device_steps),
-                "input_ids": batch["input_ids"].reshape(jax.local_device_count(), 1, -1),
-                "attention_mask": batch["attention_mask"].reshape(jax.local_device_count(), 1, -1)}
+        return {"pixel_values": all_to_all(batch["pixel_values"], 1),
+                "idx": batch["idx"] + jnp.arange(jax.device_count()),
+                "input_ids": lax.all_gather(batch["input_ids"], "batch"),
+                "attention_mask": lax.all_gather(batch["attention_mask"], "batch")}
 
     def rng(idx: jax.Array):
         return jax.random.PRNGKey(idx * jax.device_count() + device_id())
@@ -364,19 +368,10 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 print(f"Step {global_step}", datetime.datetime.now())
             i *= device_steps
             batch = {
-                "pixel_values": jnp.transpose(vid, (1,0,2,3,4,5)).reshape(jax.local_device_count(),int(jax.device_count()/jax.local_device_count()), device_steps, context, resolution, resolution, 3),
-                "input_ids": jnp.transpose(ids, (1,0,2)).reshape(jax.local_device_count(),int(jax.device_count()/jax.local_device_count()), device_steps,clip_tokens),
-                "attention_mask": jnp.transpose(msk, (1,0,2)).reshape(jax.local_device_count(),int(jax.device_count()/jax.local_device_count()), device_steps,clip_tokens),
-                "idx": jnp.full((jax.device_count(),), i, jnp.int64).reshape(jax.local_device_count(),int(jax.device_count()/jax.local_device_count()))}
-            
-            print(f'vid shape AFTER{batch["pixel_values"].shape}')         
-
-            batch = jax.pmap(lambda x: x, "batch", devices=jax.devices())(batch)
-            print('after pmap: ' ,batch['idx'].shape)
-            batch = lax.all_to_all(batch, axis_name='batch', split_axis=0, concat_axis=1, tiled=True)
-
-            print(f'vid shape all_to_all{batch["pixel_values"].shape}')    
-            
+                "pixel_values": jnp.transpose(vid, (1,0,2,3,4,5)),#this is wrongZZ
+                "input_ids": jnp.transpose(ids, (1,0,2)),
+                "attention_mask": jnp.transpose(msk, (1,0,2)),
+                "idx": jnp.full((jax.device_count(),), i, jnp.int64)}
 
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
