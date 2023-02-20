@@ -308,8 +308,9 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         return dist_sq, dist_abs
 
     def train_step(unet_state: TrainState, batch: Dict[str, jax.Array]):
-        img = batch["pixel_values"].astype(jnp.float32) / 255 #this should be 4
-        inp = jnp.transpose(img, (0, 3, 1, 2))
+        img = batch["pixel_values"].astype(jnp.float32) / 255 
+        inp = jnp.transpose(img[0], (0, 3, 1, 2))
+        print(batch["input_ids"].shape)
         gauss0, drop0 = jax.random.split(rng(batch["idx"] + 1), 2)
         vae_out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode)
         encoded = get_encoded(batch["input_ids"], batch["attention_mask"])
