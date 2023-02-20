@@ -368,9 +368,9 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 print(f"Step {global_step}", datetime.datetime.now())
             i *= device_steps
             batch = {
-                "pixel_values": jnp.transpose(vid, (1,0,2,3,4,5)).reshape(jax.local_device_count(), jax.device_count()//jax.local_device_count(), context, resolution, resolution, 3),
-                "input_ids": jnp.transpose(ids, (1,0,2)).reshape(jax.local_device_count(), jax.device_count()//jax.local_device_count(), clip_tokens),
-                "attention_mask": jnp.transpose(msk, (1,0,2)).reshape(jax.local_device_count(), jax.device_count()//jax.local_device_count(), clip_tokens),
+                "pixel_values": jnp.transpose(vid, (1,0,2,3,4,5)).reshape(jax.local_device_count(), jax.device_count()//jax.local_device_count(), device_steps, context, resolution, resolution, 3),
+                "input_ids": jnp.transpose(ids, (1,0,2)).reshape(jax.local_device_count(), jax.device_count()//jax.local_device_count(), device_steps, clip_tokens),
+                "attention_mask": jnp.transpose(msk, (1,0,2)).reshape(jax.local_device_count(), jax.device_count()//jax.local_device_count(), device_steps, clip_tokens),
                 "idx": jnp.full((jax.device_count(),), i, jnp.int64).reshape(jax.local_device_count(), jax.device_count()//jax.local_device_count()),}
             print(f'vid shape AFTER{batch["pixel_values"].shape}, {batch["input_ids"].shape}, {batch["attention_mask"].shape}, {batch["idx"].shape}')
             extra = {}
