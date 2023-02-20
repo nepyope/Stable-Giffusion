@@ -371,13 +371,9 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             
             print(f'vid shape AFTER{batch["pixel_values"].shape}')         
             print(batch['idx'].shape)
-            batch = jax.pmap(lambda a: a, in_axes=(0,))(batch)
+            batch = jax.pmap(lambda a: a, "batch")(batch)
             print(f'vid shape pmap batch{batch["pixel_values"].shape}')    
-            all_to_all= jax.pmap(lambda x, y, z: lax.all_to_all(x, axis_name='i',split_axis=y,
-                                                    concat_axis=z), in_axes=(0,),
-                 axis_name='i', static_broadcasted_argnums=(1, 2))
-            
-            batch = all_to_all(batch, 0, 1)
+            batch = lax.all_to_all(batch, "batch", split_axis=0, concat_axis=1)
 
             print(f'vid shape all_to_all{batch["pixel_values"].shape}')    
             
