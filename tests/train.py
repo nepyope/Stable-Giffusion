@@ -78,7 +78,7 @@ FlaxAttentionBlock.__call__ = _new_attention
 
 _original_call = nn.Conv.__call__
 
-def rot(x: jax.Array)
+def rot(x: jax.Array):
     return (lax.ppermute(x, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())]),
             lax.ppermute(x, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())]))
     
