@@ -78,21 +78,27 @@ FlaxAttentionBlock.__call__ = _new_attention
 
 _original_call = nn.Conv.__call__
 
+def rot(x: jax.Array)
+    return (lax.ppermute(x, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())]),
+            lax.ppermute(x, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())]))
+    
+
 @jax.custom_gradient
 def communicate(x: jax.Array):
-
     def _grad(dy: jax.Array):
-        dy = lax.ppermute(dy, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
-        return dy
+        dy /= 3
+        left, right = rot(dy)
+        return dy + left + right
 
-    x = lax.ppermute(x, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
-    return x, _grad
+    x /= 3
+    left, right = rot(x)
+    return x + left + right, _grad
 
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     global _SHUFFLE 
     inputs = jnp.asarray(inputs, self.dtype)
     if _SHUFFLE and "quant" not in self.scope.name:
-        inputs = (inputs + communicate(inputs)) / 2
+        inputs = communicate(inputs)
     return _original_call(self, inputs)
 
 nn.Conv.__call__ = conv_call
@@ -169,7 +175,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: 
 
 
             delta = grad - mom
-            update = mom + delta * (1 - b1)
+            update = lax.sign(mom + delta * (1 - b1))
 
             update *= jnp.linalg.norm(muc) / jnp.linalg.norm(update) * -lr(count)
             return update,  (mom + delta * (1 - b2)).astype(dtype), mu.astype(dtype), nu.astype(dtype)
