@@ -30,7 +30,7 @@ from data import DataLoader
 app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")
 _UPLOAD_RETRIES = 8
-
+global _SHUFFLE 
 
 
 def attention(query: jax.Array, key: jax.Array, value: jax.Array, scale: float):
