@@ -364,7 +364,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     global_step = 0
     for epoch in range(10 ** 9):
-        for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 0)):
+        for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 1)):
 
             global_step += 1
             if global_step <= 2:
