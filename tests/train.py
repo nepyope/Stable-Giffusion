@@ -31,7 +31,7 @@ app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")
 _UPLOAD_RETRIES = 8
 
-global _SHUFFLE 
+
 
 def attention(query: jax.Array, key: jax.Array, value: jax.Array, scale: float):
     ctx_dims = f'{"b" * (key.ndim > 3)}zhf'
@@ -89,6 +89,7 @@ def communicate(x: jax.Array):
     return x, _grad
 
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
+    global _SHUFFLE 
     inputs = jnp.asarray(inputs, self.dtype)
     if _SHUFFLE and "quant" not in self.scope.name:
         inputs = (inputs + communicate(inputs)) / 2
@@ -208,6 +209,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, save_interval: int = 2048,
          overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_big_context", local_iterations: int = 4,
          unet_batch: int = 1, device_steps: int = 4):
+    global _SHUFFLE 
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, device_steps, prefetch,
                       parallel_videos, tokenizer, clip_tokens, jax.device_count(), batch_prefetch)
