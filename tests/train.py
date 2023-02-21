@@ -365,7 +365,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     global_step = 0
     for epoch in range(10 ** 9):
         for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 0)):
-            print(f'vid shape BEFORE{vid.shape}, {ids.shape}, {msk.shape}')
+
             global_step += 1
             if global_step <= 2:
                 print(f"Step {global_step}", datetime.datetime.now())
@@ -375,7 +375,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 "input_ids": ids,#device_steps, batch (ordered), input_ids
                 "attention_mask": msk,
                 "idx": jnp.full((jax.local_device_count(),jax.device_count()),i)}#device_steps, batch (ordered), input_ids
-            print(f'vid shape AFTER{batch["pixel_values"].shape}, {batch["input_ids"].shape}, {batch["attention_mask"].shape}, {batch["idx"].shape}')
+
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
             if i % sample_interval == 0:
