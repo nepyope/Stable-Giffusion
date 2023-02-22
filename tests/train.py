@@ -86,13 +86,13 @@ def rot(x: jax.Array):
 @jax.custom_gradient
 def communicate(x: jax.Array):
     def _grad(dy: jax.Array):
-        dy /= 3
+        dy /= 4
         left, right = rot(dy)
-        return dy + left + right
+        return dy * 2 + left + right
 
-    x /= 3
+    x /= 4
     left, right = rot(x)
-    return x + left + right, _grad
+    return x * 2 + left + right, _grad
 
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     global _SHUFFLE 
@@ -270,7 +270,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 "attention_mask": all_to_all(batch["attention_mask"], 1)}
 
     def rng(idx: jax.Array):
-        return jax.random.PRNGKey(idx * jax.device_count() + device_id())
+        return jax.random.PRNGKey(idx)
 
     def sample(unet_params, batch: Dict[str, Union[np.ndarray, int]]):
         batch = all_to_all_batch(batch)
