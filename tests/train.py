@@ -270,12 +270,16 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 "attention_mask": all_to_all(batch["attention_mask"], 1)}
 
     def rng(idx: jax.Array):
+        return jax.random.PRNGKey(idx * jax.device_count() + device_id())
+    
+    def rng_syncd(idx: jax.Array):
         return jax.random.PRNGKey(idx)
 
     def sample(unet_params, batch: Dict[str, Union[np.ndarray, int]]):
         batch = all_to_all_batch(batch)
         batch = jax.tree_map(lambda x: x[0], batch)
-        latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 4)
+        latent_rng, sample_rng, noise_rng = jax.random.split(rng(batch["idx"]), 3)
+        step_rng = rng_syncd(batch["idx"])
         inp = jnp.transpose(batch["pixel_values"][0].astype(jnp.float32) / 255, (0, 3, 1, 2))
         posterior = vae_apply(inp, method=vae.encode)
 
@@ -326,7 +330,8 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         encoded = encoded.reshape(*encoded.shape[1:])  # remove batch dim for einsum
 
         def compute_loss(unet_params, itr):
-            sample_rng, noise_rng, step_rng = jax.random.split(rng(itr + batch["idx"]), 3)
+            sample_rng, noise_rng = jax.random.split(rng(itr + batch["idx"]), 3)
+            step_rng = rng_syncd(itr + batch["idx"])
 
             latents = jnp.stack([vae_out.latent_dist.sample(r) for r in jax.random.split(sample_rng, unet_batch)])
             latents = latents.reshape(unet_batch, context * latents.shape[2], latents.shape[3], latents.shape[4])
