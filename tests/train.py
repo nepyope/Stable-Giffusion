@@ -330,7 +330,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         encoded = encoded.reshape(*encoded.shape[1:])  # remove batch dim for einsum
 
         def compute_loss(unet_params, itr):
-            sample_rng, noise_rng = jax.random.split(rng(itr + batch["idx"]), 3)
+            sample_rng, noise_rng = jax.random.split(rng(itr + batch["idx"]), 2)
             step_rng = rng_syncd(itr + batch["idx"])
 
             latents = jnp.stack([vae_out.latent_dist.sample(r) for r in jax.random.split(sample_rng, unet_batch)])
