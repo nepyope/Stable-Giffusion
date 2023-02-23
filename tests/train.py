@@ -74,29 +74,28 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
 
 FlaxAttentionBlock.__call__ = _new_attention
 
-
 _original_call = nn.Conv.__call__
 
 @jax.custom_gradient
 def communicate(x: jax.Array):
     def _grad(dy: jax.Array):
-        left, mid, right = jnp.split(dy, 3, 1)
+        left, mid, right = jnp.split(dy, 3, -1)
         right = lax.ppermute(right, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
         left = lax.ppermute(left, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
         return mid + left + right
 
     left = lax.ppermute(x, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
     right = lax.ppermute(x, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
-    return jnp.concatenate([left, x, right], 1), _grad
+    return jnp.concatenate([left, x, right], -1), _grad
 
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
+    global _SHUFFLE 
     inputs = jnp.asarray(inputs, self.dtype)
-    if _SHUFFLE and "quant" not in self.scope.name:
+    if _SHUFFLE and "mid_block" in self.scope.path and "conv1" in self.scope.path:
         inputs = communicate(inputs)
     out = _original_call(self, inputs)
-    if _SHUFFLE and "quant" not in self.scope.name:
-        _, out, _ = jnp.split(out, 3, 1)
     return out
+
 
 nn.Conv.__call__ = conv_call
 
