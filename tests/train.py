@@ -91,7 +91,7 @@ def communicate(x: jax.Array):
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     global _SHUFFLE 
     inputs = jnp.asarray(inputs, self.dtype)
-    if _SHUFFLE and "mid_block" in self.scope.path and "conv1" in self.scope.path:
+    if _SHUFFLE and "conv1" in self.scope.path:
         inputs = communicate(inputs)
     out = _original_call(self, inputs)
     return out
@@ -216,9 +216,10 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
-    for k, v in unet_params["mid_block"].items():
-        if k.startswith("resnets_"):
-            v["conv1"]["kernel"] = jnp.concatenate([v["conv1"]["kernel"] * 0.01, v["conv1"]["kernel"], v["conv1"]["kernel"] * 0.01], -2)
+    for _, outer_v in unet_params.items():
+        for k, v in outer_v.items():
+            if k.startswith("resnets_"):
+                v["conv1"]["kernel"] = jnp.concatenate([v["conv1"]["kernel"] * 0.01, v["conv1"]["kernel"], v["conv1"]["kernel"] * 0.01], -2)
     
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
