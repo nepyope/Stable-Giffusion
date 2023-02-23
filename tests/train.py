@@ -24,7 +24,7 @@ from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
 from transformers import CLIPTokenizer, FlaxCLIPTextModel
-
+from diffusers.models.resnet_flax import FlaxResnetBlock2D
 from data import DataLoader
 
 app = typer.Typer(pretty_exceptions_enable=False)
@@ -96,9 +96,7 @@ def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     out = _original_call(self, inputs)
     return out
 
-
 nn.Conv.__call__ = conv_call
-
 
 def device_id():
     return lax.axis_index("batch")
@@ -218,7 +216,10 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
-
+    for k, v in unet_params["mid_block"].items():
+        if k.startswith("resnets_"):
+            v["conv1"]["kernel"] = jnp.concatenate([v["conv1"]["kernel"] * 0.01, v["conv1"]["kernel"], v["conv1"]["kernel"] * 0.01], -2)
+    
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
     vae: FlaxAutoencoderKL = vae
