@@ -82,9 +82,12 @@ def communicate(x: jax.Array):
     def _grad(dy: jax.Array):
         mid, lr = jnp.split(dy, 2, -1)
         left, right = jnp.split(lr, 2, -1)
+
         right = lax.ppermute(right, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
         left = lax.ppermute(left, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
+        jnp.concatenate([left, right], -1)
         return mid + left + right
+    
     left, right = jnp.split(x, 2, -1)
     left = lax.ppermute(left, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
     right = lax.ppermute(right, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
