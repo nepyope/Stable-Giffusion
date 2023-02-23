@@ -83,7 +83,7 @@ def communicate(x: jax.Array):
         left, mid, right = jnp.split(dy, 3, 1)
         right = lax.ppermute(right, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
         left = lax.ppermute(left, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
-        return dy + left + right
+        return mid + left + right
 
     left = lax.ppermute(x, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
     right = lax.ppermute(x, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
