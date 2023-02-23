@@ -74,19 +74,21 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
 
 FlaxAttentionBlock.__call__ = _new_attention
 
+
 _original_call = nn.Conv.__call__
 
 @jax.custom_gradient
 def communicate(x: jax.Array):
     def _grad(dy: jax.Array):
-        left, mid, right = jnp.split(dy, 3, -1)
+        mid, lr = jnp.split(dy, 2, -1)
+        left, right = jnp.split(lr, 2, -1)
         right = lax.ppermute(right, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
         left = lax.ppermute(left, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
         return mid + left + right
-
-    left = lax.ppermute(x, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
-    right = lax.ppermute(x, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
-    return jnp.concatenate([left, x, right], -1), _grad
+    left, right = jnp.split(x, 2, -1)
+    left = lax.ppermute(left, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
+    right = lax.ppermute(right, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
+    return jnp.concatenate([x, left, right], -1), _grad
 
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     global _SHUFFLE 
@@ -215,11 +217,12 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                       parallel_videos, tokenizer, clip_tokens, device_steps, batch_prefetch)
 
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
+
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
     for _, outer_v in unet_params.items():
         for k, v in outer_v.items():
             if k.startswith("resnets_"):
-                v["conv1"]["kernel"] = jnp.concatenate([v["conv1"]["kernel"] * 0.01, v["conv1"]["kernel"], v["conv1"]["kernel"] * 0.01], -2)
+                v["conv1"]["kernel"] = jnp.concatenate([v["conv1"]["kernel"], v["conv1"]["kernel"] * 0.01], -2)
     
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
