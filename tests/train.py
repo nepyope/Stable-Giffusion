@@ -356,7 +356,7 @@ def main(lr: float = 6e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             return jax.tree_util.tree_map(lambda x, y: x / local_iterations / jax.device_count() + y, new, prev), scalars
         
         grads, scalars = lax.scan(_inner, grads, jnp.arange(local_iterations))
-        return grads, jax.tree_utils.tree_map(jnp.mean, scalars)
+        return grads, jax.tree_util.tree_map(jnp.mean, scalars)
 
     def train_loop(states, batch: Dict[str, Union[np.ndarray, int]]):
         grads, scalars = lax.scan(lambda x, y: train_step(states.params, y, x), jax.tree_util.tree_map(jnp.zeros_like, states.params), all_to_all_batch(batch))
