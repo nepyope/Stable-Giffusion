@@ -298,7 +298,7 @@ def main(lr: float = 6e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             new = lax.broadcast_in_dim(latents, (2, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
             unet_pred = unet_fn(new, encoded, i, unet_params)
             u1, u2, u4, u8, c1, c2, c4, c8 = jnp.split(unet_pred, 8, 0)
-            pred = jnp.concatenate([c1, u2 + (c2 - u2) * 2, u4 + (c4 - u4) * 4, u8 + (c8 - u8) * 8])
+            pred = jnp.concatenate([u1 + (c1 - u1) * 12, u2 + (c2 - u2) * 2, u4 + (c4 - u4) * 4, u8 + (c8 - u8) * 8])
             return noise_scheduler.step(state, pred, i, latents).to_tuple(), None
 
         lshape = latents.shape
