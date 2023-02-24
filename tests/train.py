@@ -206,7 +206,7 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 
 
 @app.command()
-def main(lr: float = 6e-4, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
+def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
          resolution: int = 256, fps: int = 8, context: int = 8, workers: int = 4, prefetch: int = 1,
          batch_prefetch: int = 4, base_model: str = "flax_base_model", data_path: str = "./urls",
          sample_interval: int = 2048, parallel_videos: int = 60, schedule_length: int = 1024, warmup_steps: int = 1024,
@@ -324,7 +324,7 @@ def main(lr: float = 6e-4, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         dist_abs = lax.abs(dist).mean()
         return dist_sq, dist_abs
 
-    def train_step(params, batch: Dict[str, jax.Array], grads):
+    def train_step(unet_state, batch: Dict[str, jax.Array], grads):
         img = batch["pixel_values"].astype(jnp.float32) / 255 
         inp = jnp.transpose(img[0], (0, 3, 1, 2))
         gauss0, drop0 = jax.random.split(rng(batch["idx"] + 1), 2)
@@ -352,11 +352,11 @@ def main(lr: float = 6e-4, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             return unet_dist_sq, (unet_dist_sq, unet_dist_abs)
 
         def _inner(prev, itr):
-            (_, scalars), new = jax.value_and_grad(lambda x: compute_loss(x, itr * 257), has_aux=True)(params)
+            (_, scalars), new = jax.value_and_grad(lambda x: compute_loss(x, itr * 257), has_aux=True)(unet_state.params)
             return jax.tree_util.tree_map(lambda x, y: x / local_iterations / jax.device_count() + y, new, prev), scalars
         
         grads, scalars = lax.scan(_inner, grads, jnp.arange(local_iterations))
-        return grads, scalars.mean(0)
+        return grads, (scalars[0].mean(0), scalars[1].mean(0))
 
     def train_loop(states, batch: Dict[str, Union[np.ndarray, int]]):
         grads, scalars = lax.scan(lambda x, y: train_step(states.params, y, x), jax.tree_util.tree_map(jnp.zeros_like, states.params), all_to_all_batch(batch))
