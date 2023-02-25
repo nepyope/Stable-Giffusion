@@ -24,13 +24,14 @@ from optax import GradientTransformation
 from optax._src.numerics import safe_int32_increment
 from optax._src.transform import ScaleByAdamState
 from transformers import CLIPTokenizer, FlaxCLIPTextModel
-
+from diffusers.models.resnet_flax import FlaxResnetBlock2D
 from data import DataLoader
 
 app = typer.Typer(pretty_exceptions_enable=False)
 check_min_version("0.10.0.dev0")
 _UPLOAD_RETRIES = 8
-
+global _SHUFFLE 
+_SHUFFLE = False
 
 def attention(query: jax.Array, key: jax.Array, value: jax.Array, scale: float):
     ctx_dims = f'{"b" * (key.ndim > 3)}zhf'
@@ -74,12 +75,33 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
 FlaxAttentionBlock.__call__ = _new_attention
 
 
-def _canonicalize_axes(rank: int, axes: List[int]) -> Tuple[int, ...]:
-    """Returns a tuple of deduplicated, sorted, and positive axes."""
-    if not isinstance(axes, Iterable):
-        axes = (axes,)
-    return tuple(set([rank + axis if axis < 0 else axis for axis in axes]))
+_original_call = nn.Conv.__call__
 
+@jax.custom_gradient
+def communicate(x: jax.Array):
+    def _grad(dy: jax.Array):
+        mid, lr = jnp.split(dy, 2, -1)
+        left, right = jnp.split(lr, 2, -1)
+
+        right = lax.ppermute(right, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
+        left = lax.ppermute(left, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
+        lr = jnp.concatenate([left, right], -1)
+        return mid + lr
+    
+    left, right = jnp.split(x, 2, -1)
+    left = lax.ppermute(left, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())])
+    right = lax.ppermute(right, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())])
+    return jnp.concatenate([x, left, right], -1), _grad
+
+def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
+    global _SHUFFLE 
+    inputs = jnp.asarray(inputs, self.dtype)
+    if _SHUFFLE and "conv1" in self.scope.path:
+        inputs = communicate(inputs)
+    out = _original_call(self, inputs)
+    return out
+
+nn.Conv.__call__ = conv_call
 
 def device_id():
     return lax.axis_index("batch")
@@ -129,18 +151,18 @@ def ema(x, y, beta, step):
 
 
 
-def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: float = 1e-2) -> GradientTransformation:
+def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: float = 1e-2) -> GradientTransformation: #adam+lion
+    def zero(x):
+        return jnp.zeros_like(x, dtype=jnp.bfloat16)
     def init_fn(params):
-        return ScaleByAdamState(mu=jax.tree_map(jnp.zeros_like, params),  # First Moment
-                                nu=jax.tree_map(jnp.zeros_like, params),  # Second Moment
-                                count=jnp.zeros([], jnp.int32))
+        return {"momentum": jax.tree_util.tree_map(zero, params), "mu": jax.tree_util.tree_map(zero, params), "nu": jax.tree_util.tree_map(zero, params), "count": jnp.zeros((), dtype=jnp.int64)}
 
     def update_fn(updates, state, params=None):
-        count = safe_int32_increment(state.count)
+        count = state["count"] + 1
 
-        def get_update(grad: jax.Array, param: jax.Array, nu: jax.Array, mu: jax.Array):
-            dtype = nu.dtype
-            grad, param, nu, mu = jax.tree_map(promote, (grad, param, nu, mu))
+        def get_update(grad: jax.Array, param: jax.Array, mom: jax.Array, mu: jax.Array, nu: jax.Array):
+            dtype = mom.dtype
+            grad, param, mom, nu, mu = jax.tree_map(promote, (grad, param, mom, nu, mu))
             g_norm = clip_norm(grad, 1e-16)
             p_norm = clip_norm(param, 1e-3)
             grad *= lax.min(p_norm / g_norm * clip, 1.)
@@ -148,12 +170,18 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule, clip: 
             nuc, nu = ema(lax.square(grad), nu, b2, count)
             grad /= lax.max(lax.sqrt(nuc), eps)
             muc, mu = ema(grad, mu, b1, count)
-            return muc * -lr(count), nu.astype(dtype), mu.astype(dtype)
+
+
+            delta = grad - mom
+            update = lax.sign(mom + delta * (1 - b1))
+
+            update *= jnp.linalg.norm(muc) / jnp.linalg.norm(update) * -lr(count)
+            return update,  (mom + delta * (1 - b2)).astype(dtype), mu.astype(dtype), nu.astype(dtype)
 
         leaves, treedef = jax.tree_util.tree_flatten(updates)
-        all_leaves = [leaves] + [treedef.flatten_up_to(r) for r in (params, state.nu, state.mu)]
-        updates, nu, mu = [treedef.unflatten(leaf) for leaf in zip(*[get_update(*xs) for xs in zip(*all_leaves)])]
-        return updates, ScaleByAdamState(count=count, mu=mu, nu=nu)
+        all_leaves = [leaves] + [treedef.flatten_up_to(r) for r in (params, state["momentum"], state["mu"], state["nu"])]
+        updates, mom, mu, nu = [treedef.unflatten(leaf) for leaf in zip(*[get_update(*xs) for xs in zip(*all_leaves)])]
+        return updates, {"momentum": mom, "count": count, "mu": mu, "nu": nu}
 
     return GradientTransformation(init_fn, update_fn)
 
@@ -179,19 +207,26 @@ def load(path: str, prototype: Dict[str, jax.Array]):
 
 @app.command()
 def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
-         resolution: int = 128, fps: int = 1, context: int = 32, workers: int = 64, prefetch: int = 32,
+         resolution: int = 256, fps: int = 8, context: int = 8, workers: int = 4, prefetch: int = 1,
          batch_prefetch: int = 4, base_model: str = "flax_base_model", data_path: str = "./urls",
-         sample_interval: int = 2048, parallel_videos: int = 128, schedule_length: int = 1024, warmup_steps: int = 1024,
+         sample_interval: int = 2048, parallel_videos: int = 60, schedule_length: int = 1024, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, save_interval: int = 2048,
-         overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_subtitles/", local_iterations: int = 4,
+         overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_big_context", local_iterations: int = 4,
          unet_batch: int = 1, device_steps: int = 4):
+    global _SHUFFLE
+    device_steps = jax.device_count()
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch,
                       parallel_videos, tokenizer, clip_tokens, device_steps, batch_prefetch)
 
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
-    unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
+    unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
+    for _, outer_v in unet_params.items():
+        for k, v in outer_v.items():
+            if k.startswith("resnets_"):
+                v["conv1"]["kernel"] = jnp.concatenate([v["conv1"]["kernel"], v["conv1"]["kernel"] * 0.01], -2)
+    
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
     vae: FlaxAutoencoderKL = vae
@@ -216,7 +251,11 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         return text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
 
     def unet_fn(noise, encoded, timesteps, params):
-        return unet.apply({"params": params}, lax.stop_gradient(noise), timesteps, lax.stop_gradient(encoded)).sample
+        global _SHUFFLE
+        _SHUFFLE = True
+        out = unet.apply({"params": params}, lax.stop_gradient(noise), timesteps, lax.stop_gradient(encoded)).sample
+        _SHUFFLE = False
+        return out
 
     def vae_apply(*args, method=vae.__call__, **kwargs):
         return vae.apply({"params": vae_params}, *args, method=method, **kwargs)
@@ -224,20 +263,27 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     def sample_vae(inp: jax.Array):
         return jnp.transpose(vae_apply(inp, method=vae.decode).sample, (0, 2, 3, 1))
 
+    def all_to_all(x, split=1):
+        return lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
+
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
-        return {"pixel_values": batch["pixel_values"], "idx": batch["idx"] + jnp.arange(device_steps),
-                "input_ids": batch["input_ids"].reshape(jax.local_device_count(), 1, -1),#maybe stupid? i could just do unsqueeze or sth
-                "attention_mask": batch["attention_mask"].reshape(jax.local_device_count(), 1, -1)}
+        return {"pixel_values": all_to_all(batch["pixel_values"], 1),
+                "idx": batch["idx"] + jnp.arange(jax.device_count()),
+                "input_ids": all_to_all(batch["input_ids"], 1),
+                "attention_mask": all_to_all(batch["attention_mask"], 1)}
 
     def rng(idx: jax.Array):
         return jax.random.PRNGKey(idx * jax.device_count() + device_id())
+    
+    def rng_syncd(idx: jax.Array):
+        return jax.random.PRNGKey(idx)
 
     def sample(unet_params, batch: Dict[str, Union[np.ndarray, int]]):
         batch = all_to_all_batch(batch)
         batch = jax.tree_map(lambda x: x[0], batch)
-        latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 4)
-
-        inp = jnp.transpose(batch["pixel_values"].astype(jnp.float32) / 255, (0, 3, 1, 2))
+        latent_rng, sample_rng, noise_rng = jax.random.split(rng(batch["idx"]), 3)
+        step_rng = rng_syncd(batch["idx"])
+        inp = jnp.transpose(batch["pixel_values"][0].astype(jnp.float32) / 255, (0, 3, 1, 2))
         posterior = vae_apply(inp, method=vae.encode)
 
         hidden_mode = posterior.latent_dist.mode()
@@ -261,7 +307,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         noise = lax.broadcast_in_dim(noise, (4, *noise.shape), (1, 2, 3, 4)).reshape(-1, *noise.shape[1:])
         latents = lax.broadcast_in_dim(latents, (4, *latents.shape), (1, 2, 3, 4)).reshape(*noise.shape)
         state = noise_scheduler.set_timesteps(sched_state, schedule_length, latents.shape)
-        start_step = schedule_length#round(schedule_length * 0.9)
+        start_step = schedule_length
         t0 = jnp.full((), start_step, jnp.int32)
         latents = noise_scheduler.add_noise(sched_state, latents, noise, t0)
 
@@ -279,15 +325,16 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         return dist_sq, dist_abs
 
     def train_step(unet_state: TrainState, batch: Dict[str, jax.Array]):
-        img = batch["pixel_values"].astype(jnp.float32) / 255
-        inp = jnp.transpose(img, (0, 3, 1, 2))
+        img = batch["pixel_values"].astype(jnp.float32) / 255 
+        inp = jnp.transpose(img[0], (0, 3, 1, 2))
         gauss0, drop0 = jax.random.split(rng(batch["idx"] + 1), 2)
         vae_out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode)
         encoded = get_encoded(batch["input_ids"], batch["attention_mask"])
         encoded = encoded.reshape(*encoded.shape[1:])  # remove batch dim for einsum
 
         def compute_loss(unet_params, itr):
-            sample_rng, noise_rng, step_rng = jax.random.split(rng(itr + batch["idx"]), 3)
+            sample_rng, noise_rng = jax.random.split(rng(itr + batch["idx"]), 2)
+            step_rng = rng_syncd(itr + batch["idx"])
 
             latents = jnp.stack([vae_out.latent_dist.sample(r) for r in jax.random.split(sample_rng, unet_batch)])
             latents = latents.reshape(unet_batch, context * latents.shape[2], latents.shape[3], latents.shape[4])
@@ -305,6 +352,7 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             return unet_dist_sq, (unet_dist_sq, unet_dist_abs)
 
         (loss, scalars), grads = jax.value_and_grad(lambda x: compute_loss(x, 0), has_aux=True)(unet_state.params)
+
         if local_iterations > 1:
             def _inner(prev, itr):
                 grads = jax.value_and_grad(lambda x: compute_loss(x, itr * 257), has_aux=True)(unet_state.params)
@@ -327,26 +375,28 @@ def main(lr: float = 2e-5, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     start_time = time.time()
 
     def to_img(x: jax.Array) -> wandb.Image:
-        return wandb.Image(x.reshape(jax.local_device_count(), context * resolution, resolution, 3).transpose(1, 0, 2, 3).reshape(context * resolution, jax.local_device_count() * resolution, 3))
+        return wandb.Image(x.reshape(-1, resolution, 3))
 
     global_step = 0
     for epoch in range(10 ** 9):
         for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 1)):
+
             global_step += 1
             if global_step <= 2:
                 print(f"Step {global_step}", datetime.datetime.now())
             i *= device_steps
             batch = {
-                "pixel_values": vid.reshape(jax.local_device_count(), device_steps, context, resolution, resolution, 3),
-                "input_ids": ids,#local_device_count()is always 4 anyways
+                "pixel_values": vid,#device steps, batch (ordered), context, resolution, resolution, 3
+                "input_ids": ids,#device_steps, batch (ordered), input_ids
                 "attention_mask": msk,
-                "idx": jnp.full((jax.local_device_count(),), i, jnp.int64)}
+                "idx": jnp.full((jax.local_device_count(),jax.device_count()),i)}#device_steps, batch (ordered), input_ids
 
             extra = {}
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
             if i % sample_interval == 0:
                 sample_out = p_sample(unet_state.params, batch)
                 s_mode, g1, g2, g4, g8 = np.split(to_host(sample_out, lambda x: x), 5, 1)
+                print(f'sample shape {g1.shape}')    
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
                 extra[f"Samples/Reconstruction (U-Net, Guidance 1) {pid}"] = to_img(g1)
                 extra[f"Samples/Reconstruction (U-Net, Guidance 2) {pid}"] = to_img(g2)
