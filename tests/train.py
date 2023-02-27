@@ -58,10 +58,10 @@ def rotate(left: jax.Array, right: jax.Array):
     return (lax.ppermute(left, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())]),
             lax.ppermute(right, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())]))
 
-
+@jax.custom_gradient
 def communicate(x: jax.Array):
     if not _SHUFFLE:
-        return x
+        return x, lambda y: y
 
     def _grad(dy: jax.Array):
         mid, left, right = jnp.split(dy, 3, -1)
