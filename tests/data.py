@@ -1,23 +1,22 @@
-import collections 
+import collections
 import dataclasses
 import datetime
 import hashlib
 import json
 import multiprocessing
 import os
+import queue
 import random
 import shutil
 import threading
 import traceback
 import uuid
-import time
 from multiprocessing import managers
 from multiprocessing import shared_memory
 from queue import Empty
 from typing import List, Callable, Optional, Tuple, Dict
-import queue
+
 import ffmpeg
-import ftfy
 import jax
 import numpy as np
 import requests
@@ -27,7 +26,7 @@ import yt_dlp as youtube_dl
 
 _DEBUG = False
 _DONE = "DONE"
-os.environ["TOKENIZERS_PARALLELISM"] = "true"
+
 
 @dataclasses.dataclass
 class Share:
@@ -66,8 +65,8 @@ def try_except(fn: Callable, default=None):
 
 
 @try_except
-def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.Semaphore, target_image_size: int
-                   ) -> List[dict]:
+def get_video_urls(youtube_getter, youtube_base: str, url: str, lock: threading.Semaphore,
+                   target_image_size: int) -> List[dict]:
     # We have to lock this part because it can lead to errors if multiple thread try to scrape video Information at
     # the same time.
 
@@ -105,19 +104,23 @@ def get_proxies():
         try:
             r = requests.get("https://proxy.webshare.io/api/proxy/list/?mode=backbone&page_size=1000",
                              headers={"Authorization": os.environ["WEBSHARE_KEY"]})
-            return [f"{r['username']}:{r['password']}" + '@' + f"{r['proxy_address']}:{r['ports']['socks5']}"
-                    for r in r.json()['results']]
+            return [f"{r['username']}:{r['password']}" + '@' + f"{r['proxy_address']}:{r['ports']['socks5']}" for r in
+                    r.json()['results']]
         except:
             pass
 
+
 def get_sentences(subtitles, fps):
     sentences = []
+    timestamps = []
     timestamp = 0
+
     for subtitle in subtitles:
         if 'aAppend' in subtitle:
             timestamp = subtitle['tStartMs']
             sentences.append([' ', timestamp])
             continue
+
         if 'segs' in subtitle:
             segs = subtitle['segs']
             start = subtitle['tStartMs']
@@ -125,17 +128,21 @@ def get_sentences(subtitles, fps):
                 word = seg['utf8']
                 if 'tOffsetMs' in seg:
                     start += seg['tOffsetMs']
-                sentences.append([word, timestamp])
-    s = []
-    for i in range(len(sentences)):
-        if i == 0:
-            s.append(sentences[i])
-            continue
-        if sentences[i][1] == sentences[i-1][1]:
-            s[-1][0] += sentences[i][0]
+                sentences.append(word)
+                timestamps.append(timestamp)
+
+    if not sentences:
+        return np.array([])
+
+    out_s = [sentences[0]]
+    out_t = [timestamps[0]]
+    for s, t0, t1 in zip(sentences[1:], timestamps[:-1], timestamps[1:]):
+        if t0 == t1:
+            out_s[-1] = f"{out_s[-1]} {s}"
         else:
-            s.append([sentences[i][0], round(fps*sentences[i][1]/1000)])
-    return np.array(s)
+            out_s.append(s)
+            out_t.append(round(fps * t1 / 1000))
+    return np.array(out_s), np.array(out_t)
 
 
 @try_except
@@ -149,8 +156,7 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str], target_fps: i
                 subs = requests.get(video_urls[0]["sub_url"],
                                     proxies={"http": f"socks5://{p}", "https": f"socks5://{p}"}).text
                 events = json.loads(subs)['events']
-                s = get_sentences(events, target_fps)
-                return (s[:, 0], s[:, 1].astype(int))
+                return get_sentences(events, target_fps)
 
             except urllib3.exceptions.HTTPError:
                 pass
@@ -160,7 +166,7 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str], target_fps: i
                 pass
 
             print('error')
-            
+
         proxies.clear()
         proxies.extend(get_proxies())
         print("Refreshing proxies", len(proxies))
@@ -184,11 +190,13 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
         w = round(target_image_size * aspect_ratio) if aspect_ratio > 1 else target_image_size
         h = target_image_size if aspect_ratio > 1 else round(target_image_size / aspect_ratio)
         try:
-            out, _ = ffmpeg.input(path).filter("scale", w=w, h=h).filter("crop", w=target_image_size,
-                                                                         h=target_image_size).filter("fps",
-                                                                                                     target_fps).output(
-                "pipe:", format="rawvideo", pix_fmt="rgb24", loglevel="error", preset="ultrafast",
-                threads=target_image_size // 40).run(capture_stdout=True)
+            vid = ffmpeg.input(path)
+            vid = vid.filter("scale", w=w, h=h)
+            vid = vid.filter("crop", w=target_image_size, h=target_image_size)
+            vid = vid.filter("fps", target_fps)
+            vid = vid.output("pipe:", format="rawvideo", pix_fmt="rgb24", loglevel="error", preset="ultrafast",
+                             threads=target_image_size // 40)
+            out, _ = vid.run(capture_stdout=True)
         except ffmpeg.Error:  # Broken Video, next might work
             continue
 
@@ -203,8 +211,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
     youtube_base = 'https://www.youtube.com/watch?v='
     youtube_getter = youtube_dl.YoutubeDL(
         {'writeautomaticsub': True, 'socket_timeout': 600, "quiet": True, "verbose": False, "no_warnings": True,
-         "ignoreerrors": True
-         })
+         "ignoreerrors": True})
     youtube_getter.add_default_info_extractors()
     rng = random.Random(worker_id)
     rng.shuffle(work)
@@ -217,33 +224,26 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             if not video_urls:
                 continue
 
-
             subtitles = get_subs(video_urls, ip_addresses, target_fps)
 
             if subtitles is None:
                 continue
-            
-            subs, timestamps = subtitles
-                
-            frames = get_video_frames(video_urls, target_image_size, target_fps)
 
-            title = video_urls[0]["title"]
+            frames = get_video_frames(video_urls, target_image_size, target_fps)
 
             if frames is None or not frames.size or frames.shape[0] < group:
                 continue
 
+            subs, timestamps = subtitles
             timed_subs = []
-            for i in range(len(frames)):
-                timed_subs.append(subs[timestamps <= i][-1])
+            for frame_idx in range(len(frames)):
+                timed_subs.append(subs[timestamps <= frame_idx][-1])
             timed_subs = np.array(timed_subs)
- 
-            timed_subs = timed_subs[:timed_subs.shape[0] // group * group]
-            timed_subs = timed_subs.reshape(-1, context_size, *timed_subs.shape[1:])     
 
-            batch_timed_subs = []
-            for i, sub_list in enumerate(timed_subs):
-                concat_subs = f'{title[:50]} | {"".join(list(dict.fromkeys(sub_list)))}'
-                batch_timed_subs.append(concat_subs)
+            timed_subs = timed_subs[:timed_subs.shape[0] // group * group]
+            timed_subs = timed_subs.reshape(-1, context_size, *timed_subs.shape[1:])
+
+            batch_timed_subs = ["".join(list(dict.fromkeys(sub_list))) for sub_list in timed_subs]
 
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
@@ -255,7 +255,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 class DataLoader:
     def __init__(self, workers: int, url_dir: str, video_downloaders: int, resolution: int, fps: int, context: int,
                  batch_size: int, prefetch: int, parallel_videos: int, tokenizer: transformers.BertTokenizer,
-                 clip_tokens: int, device_steps: int, batch_prefetch: int,  seed: int = 0):
+                 clip_tokens: int, device_steps: int, batch_prefetch: int, seed: int = 0):
         self.workers = workers
         self.video_downloaders = video_downloaders
         self.resolution = resolution
@@ -273,7 +273,7 @@ class DataLoader:
             with open(f'{url_dir}/{path}', 'rb') as f:
                 vals = json.load(f)
                 ids.extend([x for i, d in zip(vals["id"], vals["duration"]) for x, z in zip(i, d) if
-                            z > context * self.device_steps / fps])        
+                            z > context * self.device_steps / fps])
         self.rng = random.Random(self.seed)
         self.rng.shuffle(self.ids)
         self.ids = ids[int(len(ids) * jax.process_index() / jax.process_count()):
@@ -358,8 +358,8 @@ class DataLoader:
                     continue
 
                 try:
-                    share = list(from_share(out[0]))#this also removes share from_shared_memory
-                    #self.rng.shuffle(share)
+                    share = list(from_share(out[0]))  # this also removes share from_shared_memory
+                    # self.rng.shuffle(share)
                     samples.append((share, out[1]))
                 except:
                     print("failed to load share")
@@ -369,8 +369,6 @@ class DataLoader:
                 w.join()
         self.running = False
 
-
-    
     def __iter__(self):
         self._start()
         while self.running:
@@ -379,6 +377,7 @@ class DataLoader:
             except queue.Empty:
                 continue
         raise StopIteration
+
 
 if __name__ == '__main__':
     sub_hashes = collections.defaultdict(int)
