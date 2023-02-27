@@ -24,7 +24,7 @@ from data import DataLoader
 
 app = typer.Typer(pretty_exceptions_enable=False)
 _UPLOAD_RETRIES = 8
-
+_SHUFFLE = False
 
 def attention(query: jax.Array, key: jax.Array, value: jax.Array, scale: float):
     ctx_dims = f'{"b" * (key.ndim > 3)}zhf'
