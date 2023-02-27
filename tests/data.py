@@ -149,7 +149,7 @@ def get_sentences(subtitles, fps):
     return out_s, out_t
 
 
-def get_iframes(video_path):
+def count_iframes(video_path):
     cmd = ['ffmpeg', '-i', video_path, '-vf', 'select=eq(pict_type\,I)', '-vsync', 'vfr', '-f', 'image2pipe', '-']
     output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     output = output.decode('utf-8').split('\n')
