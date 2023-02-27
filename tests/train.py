@@ -339,17 +339,17 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             img = b["pixel_values"].astype(jnp.float32) / 255
             inp = jnp.transpose(img, (0, 3, 1, 2))
             gauss0, drop0 = jax.random.split(rng(b["idx"] + 1), 2)
-            out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode)
-            return out, get_encoded(b["input_ids"], b["attention_mask"])
+            out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode).latent_dist
+            return (out.mean, out.std), get_encoded(b["input_ids"], b["attention_mask"])
 
         all_vae_out, all_encoded = jax.vmap(_vae_apply)(batch)
         all_encoded = all_encoded.reshape(all_encoded.shape[0], *all_encoded.shape[2:])  # remove batch dim
 
         def _loss(params, inp):
-            itr, vae_out, encoded = inp
+            itr, (v_mean, v_std), encoded = inp
             sample_rng, noise_rng = jax.random.split(rng(itr), 2)
 
-            latents = jnp.stack([vae_out.latent_dist.sample(r) for r in jax.random.split(sample_rng, unet_batch)])
+            latents = jnp.stack([v_mean + v_std * jax.random.normal(r, v_mean.shape) for r in jax.random.split(sample_rng, unet_batch)])
             latents = latents.reshape(unet_batch, context * latents.shape[2], latents.shape[3], latents.shape[4])
             latents = latents.transpose(0, 3, 1, 2)
             latents = latents * 0.18215
@@ -371,8 +371,8 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             return _fn
 
         def _outer(state: TrainState, idx: jax.Array):
-            out = _grad(state.params, (idx, all_vae_out[0], all_encoded[0]))
-            inp = jnp.arange(1, jax.device_count()) * 257 + idx, all_vae_out[1:], all_encoded[1:]
+            out = _grad(state.params, (idx, (all_vae_out[0][0], all_vae_out[1][0]), all_encoded[0]))
+            inp = jnp.arange(1, jax.device_count()) * 257 + idx, (all_vae_out[0][1:], all_vae_out[1][1:]), all_encoded[1:]
             out, _ = lax.scan(_inner(state.params), out, inp)
             scalars, grads = lax.psum(out, "batch")  # we can sum because we divide by device_count^2 above
             return state.apply_gradients(grads=grads), scalars
