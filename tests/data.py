@@ -16,7 +16,7 @@ from multiprocessing import shared_memory
 from queue import Empty
 from typing import List, Callable, Optional, Tuple, Dict
 import redis 
-
+import subprocess
 import ffmpeg
 import jax
 import numpy as np
