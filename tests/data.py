@@ -243,13 +243,15 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             if subtitles is None:
                 continue
 
-            frames, iframe_count = get_video_frames(video_urls, target_image_size, target_fps)
+            frames = get_video_frames(video_urls, target_image_size, target_fps)
 
-            if frames is None or not frames.size or frames.shape[0] < group or iframe_count is None:
+            if frames is None or not frames[0].size or frames[0].shape[0] < group:
                 continue
-
-            with smart_open.open(f"gs://video-us/iframe_data/{video_urls[0]['url'][-11:]}", "w") as f:
-                f.write(f'{frames.shape[0]/iframe_count}')
+            
+            frames, iframe_count = frames
+            
+            with open("iframe_count", "a") as f:
+                f.write(f'{frames.shape[0]/iframe_count} | {video_urls[0]['url'][-11:]} \n')
 
                 
             subs, timestamps = subtitles
