@@ -27,6 +27,7 @@ import yt_dlp as youtube_dl
 _DEBUG = False
 _DONE = "DONE"
 
+r = redis.Redis(host='localhost', port=6379, db=0)
 
 @dataclasses.dataclass
 class Share:
@@ -250,8 +251,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             
             frames, iframe_count = frames
             
-            with open("iframe_count", "a") as f:
-                f.write(f'{frames.shape[0]/iframe_count} | {video_urls[0]['url'][-11:]} \n')
+            r.append(f'{video_urls[0]['url'][-11:]}', f'{frames.shape[0]/iframe_count}')
 
                 
             subs, timestamps = subtitles
