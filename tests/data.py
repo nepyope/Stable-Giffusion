@@ -148,16 +148,18 @@ def get_sentences(subtitles, fps):
     out_t = np.array(out_t)
     return out_s, out_t
 
-def count_iframes(video_path):
-    cmd = ['ffmpeg', '-i', video_path, '-vframes', '1', '-vf', 'select=eq(pict_type\,I)', '-print_format', 'json', '-show_entries', 'frame=pict_type']
+
+def get_iframes(video_path):
+    cmd = ['ffmpeg', '-i', video_path, '-vf', 'select=eq(pict_type\,I)', '-vsync', 'vfr', '-f', 'image2pipe', '-']
     output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-    output = output.decode('utf-8')
-    output = output.split('\n')
-    iframe_count = 0
+    output = output.decode('utf-8').split('\n')
+    iframes = []
+    
     for line in output:
-        if 'I' in line:
-            iframe_count += 1
-    return iframe_count
+        if line.startswith('data:image'):
+            image_data = line.split(',')[1]
+            iframes.append(image_data)
+    return len(iframes)
 
 @try_except
 def get_subs(video_urls: List[Dict[str, str]], proxies: List[str], target_fps: int):
