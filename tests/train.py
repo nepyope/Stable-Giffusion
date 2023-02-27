@@ -343,6 +343,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             return (out.mean, out.std), get_encoded(b["input_ids"], b["attention_mask"])
 
         all_vae_out, all_encoded = jax.vmap(_vae_apply)(batch)
+        print(all_vae_out.shape, batch["pixel_values"].shape)
         all_encoded = all_encoded.reshape(all_encoded.shape[0], *all_encoded.shape[2:])  # remove batch dim
 
         def _loss(params, inp):
