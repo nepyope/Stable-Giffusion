@@ -251,7 +251,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             
             frames, iframe_count = frames
             
-            r.append(f'{video_urls[0]['url'][-11:]}', f'{frames.shape[0]/iframe_count}')
+            r.append(f"{video_urls[0]['url'][-11:]}", f"{frames.shape[0]/iframe_count}")
 
                 
             subs, timestamps = subtitles
