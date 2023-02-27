@@ -337,7 +337,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
         def _vae_apply(b):
             img = b["pixel_values"].astype(jnp.float32) / 255
-            inp = jnp.transpose(img[0], (0, 3, 1, 2))
+            inp = jnp.transpose(img, (0, 3, 1, 2))
             gauss0, drop0 = jax.random.split(rng(b["idx"] + 1), 2)
             out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode)
             return out, get_encoded(b["input_ids"], b["attention_mask"])
