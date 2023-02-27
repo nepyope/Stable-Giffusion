@@ -118,8 +118,8 @@ def get_sentences(subtitles, fps):
     for subtitle in subtitles:
         if 'aAppend' in subtitle:
             timestamp = subtitle['tStartMs']
-            sentences.append([' ', timestamp])
-            continue
+            sentences.append(' ')
+            timestamps.append(timestamp)
 
         if 'segs' in subtitle:
             segs = subtitle['segs']
@@ -142,7 +142,9 @@ def get_sentences(subtitles, fps):
         else:
             out_s.append(s)
             out_t.append(round(fps * t1 / 1000))
-    return np.array(out_s), np.array(out_t)
+    out_s = np.array(out_s)
+    out_t = np.array(out_t)
+    return out_s, out_t
 
 
 @try_except
