@@ -60,6 +60,9 @@ def rotate(left: jax.Array, right: jax.Array):
 
 
 def communicate(x: jax.Array):
+    if not _SHUFFLE:
+        return x
+
     def _grad(dy: jax.Array):
         mid, left, right = jnp.split(dy, 3, -1)
         right, left = rotate(right, left)
@@ -242,10 +245,17 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np")
 
     def get_encoded(input_ids: jax.Array, attention_mask: jax.Array):
-        return communicate(text_encoder(input_ids, attention_mask, params=text_encoder.params)[0])
+        global _SHUFFLE
+        _SHUFFLE = True
+        out = communicate(text_encoder(input_ids, attention_mask, params=text_encoder.params)[0])
+        _SHUFFLE = False
+        return out
 
     def unet_fn(noise, encoded, timesteps, params):
+        global _SHUFFLE
+        _SHUFFLE = True
         out = unet.apply({"params": params}, lax.stop_gradient(noise), timesteps, lax.stop_gradient(encoded)).sample
+        _SHUFFLE = False
         return out
 
     def vae_apply(*args, method=vae.__call__, **kwargs):

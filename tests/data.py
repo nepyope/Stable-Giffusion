@@ -132,7 +132,7 @@ def get_sentences(subtitles, fps):
                 timestamps.append(timestamp)
 
     if not sentences:
-        return np.array([])
+        return np.array([]), np.array([])
 
     out_s = [sentences[0]]
     out_t = [timestamps[0]]
