@@ -337,13 +337,13 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
         def _vae_apply(b):
             img = b["pixel_values"].astype(jnp.float32) / 255
-            inp = jnp.transpose(img, (0, 3, 1, 2))
+            inp = jnp.transpose(img[0], (0, 3, 1, 2))
             gauss0, drop0 = jax.random.split(rng(b["idx"] + 1), 2)
             out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode).latent_dist
             return (out.mean, out.std), get_encoded(b["input_ids"], b["attention_mask"])
 
         all_vae_out, all_encoded = jax.vmap(_vae_apply)(batch)
-        print(all_vae_out.shape, batch["pixel_values"].shape)
+        print(all_vae_out[0].shape, batch["pixel_values"].shape)
         all_encoded = all_encoded.reshape(all_encoded.shape[0], *all_encoded.shape[2:])  # remove batch dim
 
         def _loss(params, inp):
@@ -385,7 +385,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     p_sample = jax.pmap(sample, "batch")
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
 
-    batch = {"pixel_values": jnp.zeros((jax.local_device_count(), jax.device_count(), resolution, resolution, 3)),
+    batch = {"pixel_values": jnp.zeros((jax.local_device_count(), jax.device_count(), context, resolution, resolution, 3)),
              "input_ids": jnp.zeros((jax.local_device_count(), jax.device_count(), clip_tokens)),
              "attention_mask": jnp.zeros((jax.local_device_count(), jax.device_count(), clip_tokens)),
              "idx": jnp.zeros((jax.local_device_count(),), dtype=jnp.int_)
