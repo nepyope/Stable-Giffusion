@@ -335,14 +335,14 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     def train_step(outer_state: TrainState, batch: Dict[str, jax.Array]):
         batch = all_to_all_batch(batch)
 
-        def _vae_apply(b):
+        def _vae_apply(_, b):
             img = b["pixel_values"].astype(jnp.float32) / 255
             inp = jnp.transpose(img[0], (0, 3, 1, 2))
             gauss0, drop0 = jax.random.split(rng(b["idx"] + 1), 2)
             out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode).latent_dist
-            return (out.mean, out.std), get_encoded(b["input_ids"], b["attention_mask"])
+            return None, (out.mean, out.std), get_encoded(b["input_ids"], b["attention_mask"])
 
-        all_vae_out, all_encoded = jax.vmap(_vae_apply)(batch)
+        _, (all_vae_out, all_encoded) = lax.scan(_vae_apply, None, batch)
         print(all_vae_out[0].shape, batch["pixel_values"].shape)
         all_encoded = all_encoded.reshape(all_encoded.shape[0], *all_encoded.shape[2:])  # remove batch dim
 
