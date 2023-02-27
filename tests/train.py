@@ -1,3 +1,4 @@
+import copy
 import datetime
 import operator
 import time
@@ -390,7 +391,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
              "attention_mask": jnp.zeros((jax.local_device_count(), jax.device_count(), clip_tokens)),
              "idx": jnp.zeros((jax.local_device_count(),), dtype=jnp.int_)
              }
-    compile_fn(lambda: p_train_step(jax_utils.replicate(unet_state), batch), "train step")
+    compile_fn(lambda: p_train_step(jax_utils.replicate(copy.deepcopy(unet_state)), batch), "train step")
     _, sample_encoded = compile_fn(lambda: p_encode_for_sampling(batch), "sample encoder")
     unet_state = jax_utils.replicate(unet_state)
     compile_fn(lambda: p_sample(unet_state.params, sample_encoded), "sampling")
