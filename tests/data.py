@@ -148,17 +148,6 @@ def get_sentences(subtitles, fps):
     out_t = np.array(out_t)
     return out_s, out_t
 
-def count_iframes(video_path):
-    cmd = ['ffmpeg', '-i', video_path, '-vframes', '1', '-vf', 'select=eq(pict_type\,I)', '-print_format', 'json', '-show_entries', 'frame=pict_type']
-    output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-    output = output.decode('utf-8')
-    output = output.split('\n')
-    iframe_count = 0
-    for line in output:
-        if 'I' in line:
-            iframe_count += 1
-    return iframe_count
-
 @try_except
 def get_subs(video_urls: List[Dict[str, str]], proxies: List[str], target_fps: int):
     while True:
@@ -195,7 +184,6 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
 
         url = video_url["url"]
         path = f"{filename}.{video_url['ext']}"
-        iframe_count = count_iframes(path)
         
         try:
             with requests.get(url, stream=True) as r, open(path, 'wb') as f:
@@ -218,7 +206,7 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
 
         if os.path.exists(path):
             os.remove(path)
-        return np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3)), iframe_count
+        return np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3))
 
 
 def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_image_size: int, target_fps: int,
@@ -247,13 +235,8 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
 
             frames = get_video_frames(video_urls, target_image_size, target_fps)
 
-            if frames is None or not frames[0].size or frames[0].shape[0] < group:
+            if frames is None or not frames.size or frames.shape[0] < group:
                 continue
-            
-            frames, iframe_count = frames
-            
-            r.append(f"{video_urls[0]['url'][-11:]}", f"{frames.shape[0]/iframe_count}")
-
                 
             subs, timestamps = subtitles
             timed_subs = []
@@ -265,7 +248,10 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             timed_subs = timed_subs.reshape(-1, context_size, *timed_subs.shape[1:])
 
             batch_timed_subs = ["".join(list(dict.fromkeys(sub_list))) for sub_list in timed_subs]
-
+            
+            diff = np.mean(np.abs(frames[:-1] - frames[1:]))
+            r.append(f"{video_urls[0]['url'][-11:]}", f"{diff/frames.shape[0]}")
+            
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
 
