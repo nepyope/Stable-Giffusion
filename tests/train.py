@@ -377,7 +377,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
         def _outer(state: TrainState, idx: jax.Array):
             out = _grad(state.params, (idx[0], (all_vae_out[0][0], all_vae_out[1][0]), all_encoded[0]))
-            inp = jnp.arange(1, jax.device_count()) * 257 + idx[1:], (all_vae_out[0][1:], all_vae_out[1][1:]), all_encoded[1:]
+            inp = idx[1:], (all_vae_out[0][1:], all_vae_out[1][1:]), all_encoded[1:]
             out, _ = lax.scan(_inner(state.params), out, inp)
             scalars, grads = lax.psum(out, "batch")  # we can sum because we divide by device_count^2 above
             return state.apply_gradients(grads=grads), scalars
