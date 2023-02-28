@@ -442,6 +442,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 if offset == local_iterations - 1:
                     vals.update({"Runtime": timediff, "Speed/Videos per Day": vid_per_day,
                                  "Speed/Frames per Day": vid_per_day * context})
+                    vals.update(extra)
                     extra = {}
                 run.log(vals, step=(global_step - 1) * local_iterations + offset)
             if i % save_interval == 0 and jax.process_index() == 0:
