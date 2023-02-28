@@ -416,7 +416,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             batch = {"pixel_values": vid,
                      "input_ids": ids,
                      "attention_mask": msk,
-                     "idx": jnp.full((jax.local_device_count(),), i * jax.device_count(), dtype=jnp.int_)
+                     "idx": jnp.full((jax.local_device_count(),), i, dtype=jnp.int_)
                      }
 
             if i % sample_interval == 0:
