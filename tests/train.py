@@ -307,7 +307,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     def sample(unet_params, encoded: jax.Array):
         encoded = lax.broadcast_in_dim(encoded, (encoded.shape[0], 4, *encoded.shape[1:]),
                                        (0, *range(2, encoded.ndim + 1)))
-        encoded = jnp.reshape(encoded, (-1, *encoded.shape[2:])
+        encoded = jnp.reshape(encoded, (-1, *encoded.shape[2:]))
 
         def _step(state, i):
             latents, state = state
