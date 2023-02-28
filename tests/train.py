@@ -19,10 +19,12 @@ from flax import jax_utils
 from flax.training.train_state import TrainState
 from jax import lax
 from optax import GradientTransformation
+from jax.experimental.compilation_cache import compilation_cache as cc
 from transformers import CLIPTokenizer, FlaxCLIPTextModel
 
 from data import DataLoader
 
+cc.initialize_cache("/home/ubuntu/cache")
 app = typer.Typer(pretty_exceptions_enable=False)
 _UPLOAD_RETRIES = 8
 _SHUFFLE = False
