@@ -409,7 +409,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
             if global_step == 1:
                 s_mode, sample_encoded = p_encode_for_sampling(batch)
-                extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(s_mode)
+                extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(to_host(s_mode))
             if global_step <= 2:
                 log(f"Step {global_step}")
             i *= local_iterations
