@@ -398,6 +398,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     _, sample_encoded = compile_fn(lambda: p_encode_for_sampling(batch), "sample encoder")
     unet_state = jax_utils.replicate(unet_state)
     compile_fn(lambda: p_sample(unet_state.params, sample_encoded), "sampling")
+    del batch
 
     def to_img(x: jax.Array) -> wandb.Image:
         return wandb.Image(x.reshape(-1, resolution, 3))
@@ -409,17 +410,17 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 1)):
             global_step += 1
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
-            if global_step == 1:
-                s_mode, sample_encoded = p_encode_for_sampling(batch)
-                extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(to_host(s_mode))
-            if global_step <= 2:
-                log(f"Step {global_step}")
-            i *= local_iterations
             batch = {"pixel_values": vid.astype(jnp.uint8),
                      "input_ids": ids.astype(jnp.int32),
                      "attention_mask": msk.astype(jnp.int32),
                      "idx": jnp.full((jax.local_device_count(),), i, dtype=jnp.int_)
                      }
+            if global_step == 1:
+                s_mode, sample_encoded = p_encode_for_sampling(batch)
+                extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(to_host(s_mode, lambda x: x))
+            if global_step <= 2:
+                log(f"Step {global_step}")
+            i *= local_iterations
 
             if i % sample_interval == 0:
                 sample_out = p_sample(unet_state.params, sample_encoded)
