@@ -398,7 +398,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     _, sample_encoded = compile_fn(lambda: p_encode_for_sampling(batch), "sample encoder")
     unet_state = jax_utils.replicate(unet_state)
     compile_fn(lambda: p_sample(unet_state.params, sample_encoded), "sampling")
-    del batch
+    del batch, sample_encoded
 
     def to_img(x: jax.Array) -> wandb.Image:
         return wandb.Image(x.reshape(-1, resolution, 3))
