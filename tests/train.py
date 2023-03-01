@@ -317,7 +317,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             new = lax.broadcast_in_dim(latents, (2, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
             unet_pred = unet_fn(new, encoded, i, unet_params)
             u, c = jnp.split(unet_pred, 2, 0)
-            pred = u + (c - u) * jnp.arange(1, 5).reshape(-1, 1, 1, 1) * 2
+            pred = u + (c - u) * 2 ** jnp.arange(1, 5).reshape(-1, 1, 1, 1)
             return noise_scheduler.step(state, pred, i, latents).to_tuple(), None
 
         shape = (lshape[1], lshape[0] * lshape[2], lshape[3])
@@ -424,15 +424,9 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             i *= local_iterations
 
             if i % sample_interval == 0:
-                s_mode, sample_encoded = p_encode_for_sampling(batch)
-                extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(to_host(s_mode, lambda x: x))
-                
                 sample_out = p_sample(unet_state.params, sample_encoded)
-                g2, g4, g6, g8 = np.split(to_host(sample_out, lambda x: x), 4, 1)
-                extra[f"Samples/Reconstruction (U-Net, Guidance 2) {pid}"] = to_img(g2)
-                extra[f"Samples/Reconstruction (U-Net, Guidance 4) {pid}"] = to_img(g4)
-                extra[f"Samples/Reconstruction (U-Net, Guidance 6) {pid}"] = to_img(g6)
-                extra[f"Samples/Reconstruction (U-Net, Guidance 8) {pid}"] = to_img(g8)
+                for rid, g in enumerate(np.split(to_host(sample_out, lambda x: x), 4, 1)):
+                    extra[f"Samples/Reconstruction (U-Net, Guidance {2**rid}) {pid}"] = to_img(g)
 
             log(f"Before step {i}")
             unet_state, scalars = p_train_step(unet_state, batch)
