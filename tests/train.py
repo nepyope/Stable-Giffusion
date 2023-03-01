@@ -249,8 +249,9 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     def get_encoded(input_ids: jax.Array, attention_mask: jax.Array):
         global _SHUFFLE
+        out = text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
         _SHUFFLE = True
-        out = communicate(text_encoder(input_ids, attention_mask, params=text_encoder.params)[0])
+        out = communicate(out)
         _SHUFFLE = False
         return out
 
