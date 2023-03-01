@@ -424,6 +424,9 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             i *= local_iterations
 
             if i % sample_interval == 0:
+                s_mode, sample_encoded = p_encode_for_sampling(batch)
+                extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(to_host(s_mode, lambda x: x))
+                
                 sample_out = p_sample(unet_state.params, sample_encoded)
                 g2, g4, g6, g8 = np.split(to_host(sample_out, lambda x: x), 4, 1)
                 extra[f"Samples/Reconstruction (U-Net, Guidance 2) {pid}"] = to_img(g2)
