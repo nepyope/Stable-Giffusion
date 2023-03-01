@@ -1,3 +1,4 @@
+
 import copy
 import datetime
 import operator
@@ -321,7 +322,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             return noise_scheduler.step(state, pred, i, latents).to_tuple(), None
 
         shape = (lshape[1], lshape[0] * lshape[2], lshape[3])
-        noise = jax.random.normal(jax.random.PRNGKey(0), shape, hidden_dtype)
+        noise = jax.random.normal(rng(0), shape, hidden_dtype)
         noise = lax.broadcast_in_dim(noise, (4, *shape), (1, 2, 3))
         state = noise_scheduler.set_timesteps(sched_state, schedule_length, noise.shape)
 
