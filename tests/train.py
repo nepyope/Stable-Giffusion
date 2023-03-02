@@ -394,7 +394,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             ste, sclr = lax.scan(_outer, ste, (ix, av, ae))
             return (ste, av, ae), sclr
 
-        (outer_state, _, _), scalars = lax.scan(_wrapped, (outer_state, all_vae_out, all_encode), jnp.arange(local_iterations))
+        (outer_state, _, _), scalars = lax.scan(_wrapped, (outer_state, all_vae_out, all_encoded), jnp.arange(local_iterations))
         return outer_state, (scalars[0].reshape(-1), scalars[1].reshape(-1))
 
     p_encode_for_sampling = jax.pmap(encode_for_sampling, "batch")
