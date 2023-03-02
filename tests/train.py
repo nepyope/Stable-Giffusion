@@ -417,6 +417,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     global_step = 0
     start_time = time.time()
     extra = {}
+    lsteps = local_iterations * jax.device_count() // subsample * video_group
     for epoch in range(10 ** 9):
         for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 1)):
             global_step += 1
@@ -431,7 +432,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(to_host(s_mode, lambda x: x))
             if global_step <= 2:
                 log(f"Step {global_step}")
-            i *= local_iterations * jax.device_count() // subsample * video_group
+            i *= lsteps
 
             if i % sample_interval == 0:
                 sample_out = p_sample(unet_state.params, sample_encoded)
@@ -449,13 +450,13 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             for offset, (unet_sq, unet_abs) in enumerate(zip(*sclr)):
                 vid_per_day = i / timediff * 24 * 3600 * jax.device_count()
                 vals = {"U-Net MSE/Total": float(unet_sq), "U-Net MAE/Total": float(unet_abs),
-                        "Step": i + offset - local_iterations, "Epoch": epoch}
-                if offset == local_iterations - 1:
+                        "Step": i + offset - lsteps, "Epoch": epoch}
+                if offset == lsteps - 1:
                     vals.update({"Runtime": timediff, "Speed/Videos per Day": vid_per_day,
                                  "Speed/Frames per Day": vid_per_day * context})
                     vals.update(extra)
                     extra = {}
-                run.log(vals, step=(global_step - 1) * local_iterations + offset)
+                run.log(vals, step=(global_step - 1) * lsteps + offset)
             if i % save_interval == 0 and jax.process_index() == 0:
                 for n, s in (("unet", unet_state),):
                     p = to_host(s.params)
