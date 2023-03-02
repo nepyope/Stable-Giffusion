@@ -358,7 +358,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             global _SHUFFLE
             itr, (v_mean, v_std), encoded = inp
             _SHUFFLE = True
-            out = communicate(encoded.astype(jnp.float32))
+            encoded = communicate(encoded.astype(jnp.float32))
             _SHUFFLE = False
 
             sample_rng, noise_rng = jax.random.split(rng(itr), 2)
