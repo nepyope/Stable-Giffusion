@@ -1,4 +1,4 @@
-
+import hashlib
 import copy
 import datetime
 import operator
@@ -206,10 +206,10 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
          sample_interval: int = 2048, parallel_videos: int = 60, schedule_length: int = 1024, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, save_interval: int = 2048,
          overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_2", local_iterations: int = 8,
-         unet_batch: int = 1):
+         unet_batch: int = 1, video_group: int = 8, subsample: int = 32):
     lr *= jax.device_count() ** 0.5
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
-    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count(), prefetch,
+    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count() * video_group, prefetch,
                       parallel_videos, tokenizer, clip_tokens, jax.device_count(), batch_prefetch)
 
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
@@ -270,11 +270,12 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         return jnp.transpose(vae_apply(inp, method=vae.decode).sample, (0, 2, 3, 1))
 
     def all_to_all(x, split=1):
-        return lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
+        out = lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
+        return out.reshape(jax.device_count() * video_groups, -1, *out.shape[2:])
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": all_to_all(batch["pixel_values"], 1),
-                "idx": batch["idx"] + jnp.arange(jax.device_count()),
+                "idx": batch["idx"] + jnp.arange(jax.device_count() * video_groups),
                 "input_ids": all_to_all(batch["input_ids"], 1),
                 "attention_mask": all_to_all(batch["attention_mask"], 1)}
 
@@ -377,15 +378,23 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
             return _fn
 
-        def _outer(state: TrainState, idx: jax.Array):
-            out = _grad(state.params, (idx[0], (all_vae_out[0][0], all_vae_out[1][0]), all_encoded[0]))
-            inp = idx[1:], (all_vae_out[0][1:], all_vae_out[1][1:]), all_encoded[1:]
+        def _outer(state: TrainState, k):
+            ix, av, ae = k
+            out = _grad(state.params, (idx[0], (av[0][0], av[1][0]), ae[0]))
+            inp = idx[1:], (av[0][1:], av[1][1:]), ae[1:]
             out, _ = lax.scan(_inner(state.params), out, inp)
             scalars, grads = lax.psum(out, "batch")  # we can sum because we divide by device_count^2 above
             return state.apply_gradients(grads=grads), scalars
 
-        itrs = jnp.arange(local_iterations).reshape(-1, 1) * jax.device_count() + batch["idx"].reshape(1, -1)
-        return lax.scan(_outer, outer_state, itrs)
+        def _wrapped(ste, k):
+            idx, s = k
+            ix = batch["idx"].reshape(-1, subsample) + idx * video_groups * jax.device_count()
+            states = int(math.log2(video_groups*jax.device_count()))
+            av, ae = lax.switch(s % states), [lambda: jax.tree_util.tree_map(lambda x: x.reshape(-1, 2**iidx, *x.shape[1:]).transpose(1, 0, *range(2, x.ndim)).reshape(-1, subsample, *x.shape[1:]), (all_vae_out, all_encoded)) for iidx in range(states)])
+            return lax.scan(_outer, ste, (ix, av, ae))
+
+        outer_state, scalars = lax.scan(_wrapped, outer_state, jnp.arange(local_iterations))
+        return outer_state, (scalars[0].reshape(-1), scalars[1].reshape(-1))
 
     p_encode_for_sampling = jax.pmap(encode_for_sampling, "batch")
     p_sample = jax.pmap(sample, "batch")
@@ -415,14 +424,14 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             batch = {"pixel_values": vid.astype(jnp.uint8),
                      "input_ids": ids.astype(jnp.int32),
                      "attention_mask": msk.astype(jnp.int32),
-                     "idx": jnp.full((jax.local_device_count(),), i, dtype=jnp.int_)
+                     "idx": jnp.full((jax.local_device_count(),), int(hashlib.blake2b(str(i).encode()).hexdigest()[:4], 16), dtype=jnp.int_)
                      }
             if global_step == 1:
                 s_mode, sample_encoded = p_encode_for_sampling(batch)
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(to_host(s_mode, lambda x: x))
             if global_step <= 2:
                 log(f"Step {global_step}")
-            i *= local_iterations
+            i *= local_iterations * jax.device_count() // subsample * video_groups
 
             if i % sample_interval == 0:
                 sample_out = p_sample(unet_state.params, sample_encoded)
