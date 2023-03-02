@@ -347,17 +347,24 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             inp = jnp.transpose(img[0], (0, 3, 1, 2))
             gauss0, drop0 = jax.random.split(rng(b["idx"] + 1), 2)
             out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode).latent_dist
-            return None, ((out.mean, out.std), get_encoded(b["input_ids"], b["attention_mask"]))
+            enc = text_encoder(b['input_ids'], b['attention_mask'], params=text_encoder.params)[0]
+            return None, ((out.mean.astype(jnp.bfloat16), out.std.astype(jnp.bfloat16)), enc.astype(jnp.bfloat16)
 
         _, (all_vae_out, all_encoded) = lax.scan(_vae_apply, None, batch)
         print(all_vae_out[0].shape, batch["pixel_values"].shape)
         all_encoded = all_encoded.reshape(all_encoded.shape[0], *all_encoded.shape[2:])  # remove batch dim
 
         def _loss(params, inp):
+            global _SHUFFLE
             itr, (v_mean, v_std), encoded = inp
+            _SHUFFLE = True
+            out = communicate(encoded)
+            _SHUFFLE = False
+
+
             sample_rng, noise_rng = jax.random.split(rng(itr), 2)
 
-            latents = jnp.stack([v_mean + v_std * jax.random.normal(r, v_mean.shape) for r in jax.random.split(sample_rng, unet_batch)])
+            latents = jnp.stack([v_mean.astype(jnp.float32) + v_std.astype(jnp.float32) * jax.random.normal(r, v_mean.shape) for r in jax.random.split(sample_rng, unet_batch)])
             latents = latents.reshape(unet_batch, context * latents.shape[2], latents.shape[3], latents.shape[4])
             latents = latents.transpose(0, 3, 1, 2)
             latents = latents * 0.18215
