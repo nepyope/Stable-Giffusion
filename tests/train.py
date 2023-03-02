@@ -430,16 +430,20 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                      "idx": jnp.full((jax.local_device_count(),), int(hashlib.blake2b(str(i).encode()).hexdigest()[:4], 16), dtype=jnp.int_)
                      }
             if global_step == 1:
+                log("Encoding eval samples")
                 s_mode, sample_encoded = p_encode_for_sampling(batch)
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(to_host(s_mode, lambda x: x))
+                log("Finished encoding samples")
             if global_step <= 2:
                 log(f"Step {global_step}")
             i *= lsteps
 
             if i % sample_interval == 0:
+                log("Sampling")
                 sample_out = p_sample(unet_state.params, sample_encoded)
                 for rid, g in enumerate(np.split(to_host(sample_out, lambda x: x), 4, 1)):
                     extra[f"Samples/Reconstruction (U-Net, Guidance {2**rid}) {pid}"] = to_img(g)
+                log("Finished sampling")
 
             log(f"Before step {i}")
             unet_state, scalars = p_train_step(unet_state, batch)
