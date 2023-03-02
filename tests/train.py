@@ -348,7 +348,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             gauss0, drop0 = jax.random.split(rng(b["idx"] + 1), 2)
             out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode).latent_dist
             enc = text_encoder(b['input_ids'], b['attention_mask'], params=text_encoder.params)[0]
-            return None, ((out.mean.astype(jnp.bfloat16), out.std.astype(jnp.bfloat16)), enc.astype(jnp.bfloat16)
+            return None, ((out.mean.astype(jnp.bfloat16), out.std.astype(jnp.bfloat16)), enc.astype(jnp.bfloat16))
 
         _, (all_vae_out, all_encoded) = lax.scan(_vae_apply, None, batch)
         print(all_vae_out[0].shape, batch["pixel_values"].shape)
