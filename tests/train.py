@@ -381,8 +381,8 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
         def _outer(state: TrainState, k):
             ix, av, ae = k
-            out = _grad(state.params, (idx[0], (av[0][0], av[1][0]), ae[0]))
-            inp = idx[1:], (av[0][1:], av[1][1:]), ae[1:]
+            out = _grad(state.params, (ix[0], (av[0][0], av[1][0]), ae[0]))
+            inp = ix[1:], (av[0][1:], av[1][1:]), ae[1:]
             out, _ = lax.scan(_inner(state.params), out, inp)
             scalars, grads = lax.psum(out, "batch")  # we can sum because we divide by device_count^2 above
             return state.apply_gradients(grads=grads), scalars
