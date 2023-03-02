@@ -151,9 +151,9 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule,
     def update_fn(updates, state, params=None):
         count = state["count"] + 1
 
-        def get_update(grad: jax.Array, param: jax.Array, mom: jax.Array, mu: jax.Array, nu: jax.Array):
-            dtype = mom.dtype
-            grad, param, mom, nu, mu = jax.tree_map(promote, (grad, param, mom, nu, mu))
+        def get_update(grad: jax.Array, param: jax.Array,  mu: jax.Array, nu: jax.Array):
+            dtype = mu.dtype
+            grad, param,  nu, mu = jax.tree_map(promote, (grad, param, nu, mu))
             g_norm = clip_norm(grad, 1e-16)
             p_norm = clip_norm(param, 1e-3)
             grad *= lax.min(p_norm / g_norm * clip, 1.)
@@ -168,7 +168,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule,
             return update, mu.astype(dtype), nu.astype(dtype)
 
         leaves, treedef = jax.tree_util.tree_flatten(updates)
-        all_leaves = [leaves] + [treedef.flatten_up_to(r) for r in (params, state["mom"], state["mu"], state["nu"])]
+        all_leaves = [leaves] + [treedef.flatten_up_to(r) for r in (params, state["mu"], state["nu"])]
         updates, mu, nu = [treedef.unflatten(leaf) for leaf in zip(*[get_update(*xs) for xs in zip(*all_leaves)])]
         return updates, {"count": count, "mu": mu, "nu": nu}
 
