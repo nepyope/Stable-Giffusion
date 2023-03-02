@@ -206,7 +206,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
          batch_prefetch: int = 4, base_model: str = "flax_base_model", data_path: str = "./urls",
          sample_interval: int = 2048, parallel_videos: int = 60, schedule_length: int = 1024, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, save_interval: int = 2048,
-         overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_2", local_iterations: int = 8,
+         overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_2", local_iterations: int = 6,
          unet_batch: int = 1, video_group: int = 8, subsample: int = 32):
     lr *= jax.device_count() ** 0.5
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
@@ -389,8 +389,8 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
         def _wrapped(ste, idx):
             ix = batch["idx"].reshape(-1, subsample) + idx * video_group * jax.device_count()
-            states = int(math.log2(video_group * jax.device_count()))
-            av, ae = lax.switch(idx % states, [lambda: jax.tree_util.tree_map(lambda x: x.reshape(-1, 2**iidx, *x.shape[1:]).transpose(1, 0, *range(2, x.ndim + 1)).reshape(-1, subsample, *x.shape[1:]), (all_vae_out, all_encoded)) for iidx in range(states)])
+            key = synced_rng(idx + batch["idx"][0])
+            av, ae = jax.tree_util.tree_map(lambda x: jax.random.shuffle(key, x), (all_vae_out, all_encoded))
             return lax.scan(_outer, ste, (ix, av, ae))
 
         outer_state, scalars = lax.scan(_wrapped, outer_state, jnp.arange(local_iterations))
