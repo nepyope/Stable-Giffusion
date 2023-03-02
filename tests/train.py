@@ -145,7 +145,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule,
         return jnp.zeros_like(x, dtype=jnp.bfloat16)
 
     def init_fn(params):
-        return {"mom": jax.tree_util.tree_map(zero, params), "mu": jax.tree_util.tree_map(zero, params),
+        return {"mu": jax.tree_util.tree_map(zero, params),
                 "nu": jax.tree_util.tree_map(zero, params), "count": jnp.zeros((), dtype=jnp.int64)}
 
     def update_fn(updates, state, params=None):
@@ -162,16 +162,15 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule,
             grad /= lax.max(lax.sqrt(nuc), eps)
             muc, mu = ema(grad, mu, b1, count)
 
-            delta = grad - mom
-            update = lax.sign(mom + delta * (1 - b1))
+            update = lax.sign(muc)
 
             update *= jnp.linalg.norm(muc) / jnp.linalg.norm(update) * -lr(count)
-            return update, (mom + delta * (1 - b2)).astype(dtype), mu.astype(dtype), nu.astype(dtype)
+            return update, mu.astype(dtype), nu.astype(dtype)
 
         leaves, treedef = jax.tree_util.tree_flatten(updates)
         all_leaves = [leaves] + [treedef.flatten_up_to(r) for r in (params, state["mom"], state["mu"], state["nu"])]
-        updates, mom, mu, nu = [treedef.unflatten(leaf) for leaf in zip(*[get_update(*xs) for xs in zip(*all_leaves)])]
-        return updates, {"mom": mom, "count": count, "mu": mu, "nu": nu}
+        updates, mu, nu = [treedef.unflatten(leaf) for leaf in zip(*[get_update(*xs) for xs in zip(*all_leaves)])]
+        return updates, {"count": count, "mu": mu, "nu": nu}
 
     return GradientTransformation(init_fn, update_fn)
 
@@ -387,13 +386,15 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             scalars, grads = lax.psum(out, "batch")  # we can sum because we divide by device_count^2 above
             return state.apply_gradients(grads=grads), scalars
 
-        def _wrapped(ste, idx):
+        def _wrapped(carry, idx):
+            ste, av, ae = carry
             ix = batch["idx"].reshape(-1, subsample) + idx * video_group * jax.device_count()
             key = rng_synced(idx + batch["idx"][0])
-            av, ae = jax.tree_util.tree_map(lambda x: jax.random.shuffle(key, x).reshape(-1, subsample, *x.shape[1:]), (all_vae_out, all_encoded))
-            return lax.scan(_outer, ste, (ix, av, ae))
+            av, ae = jax.tree_util.tree_map(lambda x: jax.random.shuffle(key, x).reshape(-1, subsample, *x.shape[1:]), (av, ae))
+            ste, sclr = lax.scan(_outer, ste, (ix, av, ae))
+            return (ste, av, ae), sclr
 
-        outer_state, scalars = lax.scan(_wrapped, outer_state, jnp.arange(local_iterations))
+        (outer_state, _, _), scalars = lax.scan(_wrapped, (outer_state, all_vae_out, all_encode), jnp.arange(local_iterations))
         return outer_state, (scalars[0].reshape(-1), scalars[1].reshape(-1))
 
     p_encode_for_sampling = jax.pmap(encode_for_sampling, "batch")
