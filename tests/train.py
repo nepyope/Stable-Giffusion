@@ -392,6 +392,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             key = rng_synced(idx + batch["idx"][0])
             av, ae = jax.tree_util.tree_map(lambda x: jax.random.shuffle(key, x).reshape(-1, subsample, *x.shape[1:]), (av, ae))
             ste, sclr = lax.scan(_outer, ste, (ix, av, ae))
+            av, ae = jax.tree_util.tree_map(lambda x: x.reshape(-1, *x.shape[2:]), (av, ae))
             return (ste, av, ae), sclr
 
         (outer_state, _, _), scalars = lax.scan(_wrapped, (outer_state, all_vae_out, all_encoded), jnp.arange(local_iterations))
