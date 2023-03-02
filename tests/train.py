@@ -271,11 +271,11 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     def all_to_all(x, split=1):
         out = lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
-        return out.reshape(jax.device_count() * video_groups, -1, *out.shape[2:])
+        return out.reshape(jax.device_count() * video_group, -1, *out.shape[2:])
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": all_to_all(batch["pixel_values"], 1),
-                "idx": batch["idx"] + jnp.arange(jax.device_count() * video_groups),
+                "idx": batch["idx"] + jnp.arange(jax.device_count() * video_group),
                 "input_ids": all_to_all(batch["input_ids"], 1),
                 "attention_mask": all_to_all(batch["attention_mask"], 1)}
 
@@ -388,8 +388,8 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
         def _wrapped(ste, k):
             idx, s = k
-            ix = batch["idx"].reshape(-1, subsample) + idx * video_groups * jax.device_count()
-            states = int(math.log2(video_groups*jax.device_count()))
+            ix = batch["idx"].reshape(-1, subsample) + idx * video_group * jax.device_count()
+            states = int(math.log2(video_group * jax.device_count()))
             av, ae = lax.switch(s % states, [lambda: jax.tree_util.tree_map(lambda x: x.reshape(-1, 2**iidx, *x.shape[1:]).transpose(1, 0, *range(2, x.ndim)).reshape(-1, subsample, *x.shape[1:]), (all_vae_out, all_encoded)) for iidx in range(states)])
             return lax.scan(_outer, ste, (ix, av, ae))
 
@@ -431,7 +431,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(to_host(s_mode, lambda x: x))
             if global_step <= 2:
                 log(f"Step {global_step}")
-            i *= local_iterations * jax.device_count() // subsample * video_groups
+            i *= local_iterations * jax.device_count() // subsample * video_group
 
             if i % sample_interval == 0:
                 sample_out = p_sample(unet_state.params, sample_encoded)
