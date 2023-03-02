@@ -358,7 +358,7 @@ class DataLoader:
                 try:
                     out = queue.get(timeout=120)
                 except Empty:
-                    print(datetime.datetime.now(), "Queue empty. Waiting another 120 seconds.")
+                    print(datetime.datetime.now(), f"Queue empty. Waiting another 120 seconds. Already have {len(samples)} videos.")
                     continue
                 if out == _DONE:
                     done += 1
