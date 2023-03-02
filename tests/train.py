@@ -390,7 +390,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         def _wrapped(ste, idx):
             ix = batch["idx"].reshape(-1, subsample) + idx * video_group * jax.device_count()
             key = rng_synced(idx + batch["idx"][0])
-            av, ae = jax.tree_util.tree_map(lambda x: jax.random.shuffle(key, x), (all_vae_out, all_encoded))
+            av, ae = jax.tree_util.tree_map(lambda x: jax.random.shuffle(key, x).reshape(-1, subsample, *x.shape[1:]), (all_vae_out, all_encoded))
             return lax.scan(_outer, ste, (ix, av, ae))
 
         outer_state, scalars = lax.scan(_wrapped, outer_state, jnp.arange(local_iterations))
