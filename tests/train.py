@@ -283,7 +283,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np")
 
     def get_encoded(input_ids: jax.Array, attention_mask: jax.Array):
-        return text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
+        return text_encoder(input_ids[None], attention_mask[None], params=text_encoder.params)[0]
 
     def unet_fn(noise, encoded, timesteps, params):
         global _SHUFFLE
@@ -300,7 +300,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     def all_to_all(x, split=1):
         out = lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
-        return out.reshape(jax.device_count() * video_group, -1, *out.shape[2:])
+        return out.reshape(jax.device_count() * video_group, *out.shape[2:])
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": all_to_all(batch["pixel_values"], 1),
@@ -324,7 +324,9 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         batch = all_to_all_batch(batch)
 
         batch = jax.tree_map(lambda x: x[0], batch)
-        inp = jnp.transpose(batch["pixel_values"][0].astype(jnp.float32) / 255, (0, 3, 1, 2))
+        inp = batch["pixel_values"].astype(jnp.float32) / 255
+        inp = inp.reshape(context, resolution, resolution, 3)
+        inp = inp.transpose(0, 3, 1, 2)
         posterior = vae_apply(inp, method=vae.encode)
 
         hidden_mode = posterior.latent_dist.mode()
@@ -372,7 +374,8 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
         def _vae_apply(_, b):
             img = b["pixel_values"].astype(jnp.float32) / 255
-            inp = jnp.transpose(img[0], (0, 3, 1, 2))
+            img = img.reshape(-1, resolution, resolution, 3)
+            inp = jnp.transpose(img, (0, 3, 1, 2))
             gauss0, drop0 = jax.random.split(rng(b["idx"] + 1), 2)
             out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False,
                             method=vae.encode).latent_dist
@@ -440,7 +443,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
 
     batch = {"pixel_values": jnp.zeros(
-        (jax.local_device_count(), video_group * jax.device_count(), context, resolution, resolution, 3),
+        (jax.local_device_count(), jax.device_count(), video_group * context * resolution * resolution * 3),
         dtype=jnp.uint8),
         "input_ids": jnp.zeros((jax.local_device_count(), video_group * jax.device_count(), clip_tokens),
                                dtype=jnp.int32),
@@ -465,9 +468,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 1)):
             global_step += 1
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
-            batch = {"pixel_values": vid.astype(jnp.uint8).reshape(jax.local_device_count(),
-                                                                   video_group * jax.device_count(), context,
-                                                                   resolution, resolution, 3),
+            batch = {"pixel_values": vid.astype(jnp.uint8).reshape(jax.local_device_count(), jax.device_count(), -1),
                      "input_ids": ids.astype(jnp.int32).reshape(jax.local_device_count(),
                                                                 video_group * jax.device_count(), clip_tokens),
                      "attention_mask": msk.astype(jnp.int32).reshape(jax.local_device_count(),
