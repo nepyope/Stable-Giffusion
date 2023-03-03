@@ -97,7 +97,8 @@ def communicate(x: jax.Array):
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     global _SHUFFLE
     inputs = jnp.asarray(inputs, self.dtype)
-    if _SHUFFLE and any(s.startswith("resnets_") for s in self.scope.path) and any(k in self.scope.path for k in _PATCHED_BLOCK_NAMES):
+    if _SHUFFLE and any(s.startswith("resnets_") for s in self.scope.path) and any(
+            k in self.scope.path for k in _PATCHED_BLOCK_NAMES):
         inputs = communicate(inputs)
     out = _original_call(self, inputs)
     return out
@@ -250,6 +251,8 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     # parameter-efficient, with the down_blocks_0 using 3.6M params. We only patch the outermost blocks for
     # param-efficiency, although the inner blocks would be more flop-efficient while taking up less intermediate space.
     unet_params = filter_dict(unet_params, [_PATCHED_BLOCK_NAMES, "resnets_", "conv", "kernel"])
+    unet_params["conv_in"]["kernel"] = jnp.concatenate([unet_params["conv_in"]["kernel"] / context] * context, 2)
+    unet_params["conv_out"]["kernel"] = jnp.concatenate([unet_params["conv_out"]["kernel"]] * context, 2)
 
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
@@ -340,14 +343,14 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             pred = u + (c - u) * 2 ** jnp.arange(1, 5).reshape(-1, 1, 1, 1)
             return noise_scheduler.step(state, pred, i, latents).to_tuple(), None
 
-        shape = (lshape[1], lshape[0] * lshape[2], lshape[3])
+        shape = (lshape[0] * lshape[1], lshape[2], lshape[3])
         noise = jax.random.normal(rng(0), shape, hidden_dtype)
         noise = lax.broadcast_in_dim(noise, (4, *shape), (1, 2, 3))
         state = noise_scheduler.set_timesteps(sched_state, schedule_length, noise.shape)
 
         (out, _), _ = lax.scan(_step, (noise, state), jnp.arange(schedule_length)[::-1])
-        out = out.reshape(4, lshape[1], lshape[0], lshape[2], lshape[3])
-        out = out.transpose(0, 2, 3, 4, 1) / 0.18215  # NCHW -> NHWC + remove latent folding
+        out = out.reshape(4 * lshape[0], lshape[1], lshape[2], lshape[3])
+        out = out.transpose(0, 2, 3, 1) / 0.18215  # NCHW -> NHWC
         out = out.reshape(-1, *out.shape[2:])
         return sample_vae(out)
 
@@ -383,8 +386,8 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             latents = jnp.stack(
                 [v_mean.astype(jnp.float32) + v_std.astype(jnp.float32) * jax.random.normal(r, v_mean.shape) for r in
                  jax.random.split(sample_rng, unet_batch)])
+            latents = latents.transpose(0, 1, 4, 2, 3)
             latents = latents.reshape(unet_batch, context * latents.shape[2], latents.shape[3], latents.shape[4])
-            latents = latents.transpose(0, 3, 1, 2)
             latents = latents * 0.18215
 
             noise = jax.random.normal(noise_rng, latents.shape)
