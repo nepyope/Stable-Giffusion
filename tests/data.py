@@ -250,7 +250,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             batch_timed_subs = ["".join(list(dict.fromkeys(sub_list))) for sub_list in timed_subs]
             
             diff = np.mean(np.abs(frames[:-1] - frames[1:]))
-            r.append(f"{video_urls[0]['url'][-11:]}", f"{diff/frames.shape[0]}")
+            r.append(f"{wor}", f"{diff/frames.shape[0]}")
             
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])
