@@ -351,7 +351,6 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         (out, _), _ = lax.scan(_step, (noise, state), jnp.arange(schedule_length)[::-1])
         out = out.reshape(4 * lshape[0], lshape[1], lshape[2], lshape[3])
         out = out.transpose(0, 2, 3, 1) / 0.18215  # NCHW -> NHWC
-        out = out.reshape(-1, *out.shape[2:])
         return sample_vae(out)
 
     def distance(x, y):
