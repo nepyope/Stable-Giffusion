@@ -252,7 +252,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     # param-efficiency, although the inner blocks would be more flop-efficient while taking up less intermediate space.
     unet_params = filter_dict(unet_params, [_PATCHED_BLOCK_NAMES, "resnets_", "conv", "kernel"])
     unet_params["conv_in"]["kernel"] = jnp.concatenate([unet_params["conv_in"]["kernel"] / context] * context, 2)
-    unet_params["conv_out"]["kernel"] = jnp.concatenate([unet_params["conv_out"]["kernel"]] * context, 2)
+    unet_params["conv_out"]["kernel"] = jnp.concatenate([unet_params["conv_out"]["kernel"]] * context, 3)
 
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
