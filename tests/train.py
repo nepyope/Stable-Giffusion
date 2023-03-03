@@ -300,7 +300,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     def all_to_all(x, split=1):
         out = lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
-        return out.reshape(jax.device_count() * video_group, *out.shape[2:])
+        return out.reshape(jax.device_count() * video_group, -1, *out.shape[3:])
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": all_to_all(batch["pixel_values"], 1),
