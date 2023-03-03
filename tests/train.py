@@ -97,7 +97,7 @@ def communicate(x: jax.Array):
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     global _SHUFFLE
     inputs = jnp.asarray(inputs, self.dtype)
-    if _SHUFFLE and any(k in self.scope.path for k in _PATCHED_BLOCK_NAMES):
+    if _SHUFFLE and "resnets_" in self.scope.path and any(k in self.scope.path for k in _PATCHED_BLOCK_NAMES):
         inputs = communicate(inputs)
     out = _original_call(self, inputs)
     return out
