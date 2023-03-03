@@ -206,7 +206,7 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
 
         if os.path.exists(path):
             os.remove(path)
-        return np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3))
+        return np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3))[:2]
 
 
 def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_image_size: int, target_fps: int,
