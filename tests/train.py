@@ -1,11 +1,10 @@
-import math
-import hashlib
 import copy
 import datetime
+import hashlib
 import operator
 import time
 import traceback
-from typing import Union, Dict, Callable, Optional
+from typing import Union, Dict, Callable, Optional, Any, List
 
 import jax
 import jax.numpy as jnp
@@ -18,10 +17,11 @@ import wandb
 from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel, FlaxPNDMScheduler
 from diffusers.models.attention_flax import FlaxAttentionBlock
 from flax import jax_utils
+from flax import linen as nn
 from flax.training.train_state import TrainState
 from jax import lax
-from optax import GradientTransformation
 from jax.experimental.compilation_cache import compilation_cache as cc
+from optax import GradientTransformation
 from transformers import CLIPTokenizer, FlaxCLIPTextModel
 
 from data import DataLoader
@@ -29,7 +29,10 @@ from data import DataLoader
 cc.initialize_cache("/home/ubuntu/cache")
 app = typer.Typer(pretty_exceptions_enable=False)
 _UPLOAD_RETRIES = 8
+_PATCHED_BLOCKS = 2
+_PATCHED_BLOCK_NAMES = []
 _SHUFFLE = False
+
 
 def attention(query: jax.Array, key: jax.Array, value: jax.Array, scale: float):
     ctx_dims = f'{"b" * (key.ndim > 3)}zhf'
@@ -59,15 +62,29 @@ def attention(query: jax.Array, key: jax.Array, value: jax.Array, scale: float):
     return _fn(query, key, value)
 
 
+def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: Optional[jax.Array] = None,
+                   deterministic=True):
+    context = hidden_states if context is None else context
+
+    query_proj = self.query(hidden_states).reshape(*hidden_states.shape[:-1], self.heads, -1)
+    key_proj = self.key(context).reshape(*context.shape[:-1], self.heads, -1)
+    value_proj = self.value(context).reshape(*context.shape[:-1], self.heads, -1)
+    hidden_states = attention(query_proj, key_proj, value_proj, self.scale)
+    return self.proj_attn(hidden_states)
+
+
+FlaxAttentionBlock.__call__ = _new_attention
+
+_original_call = nn.Conv.__call__
+
+
 def rotate(left: jax.Array, right: jax.Array):
     return (lax.ppermute(left, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())]),
             lax.ppermute(right, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())]))
 
+
 @jax.custom_gradient
 def communicate(x: jax.Array):
-    if not _SHUFFLE:
-        return x, lambda y: y
-
     def _grad(dy: jax.Array):
         mid, left, right = jnp.split(dy, 3, -1)
         right, left = rotate(right, left)
@@ -77,18 +94,16 @@ def communicate(x: jax.Array):
     return jnp.concatenate([x, left, right], -1), _grad
 
 
-def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: Optional[jax.Array] = None,
-                   deterministic=True):
-    context = hidden_states if context is None else context
-
-    query_proj = self.query(communicate(hidden_states)).reshape(*hidden_states.shape[:-1], self.heads, -1)
-    key_proj = self.key(context).reshape(*context.shape[:-1], self.heads, -1)
-    value_proj = self.value(context).reshape(*context.shape[:-1], self.heads, -1)
-    hidden_states = attention(query_proj, key_proj, value_proj, self.scale)
-    return self.proj_attn(communicate(hidden_states))
+def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
+    global _SHUFFLE
+    inputs = jnp.asarray(inputs, self.dtype)
+    if _SHUFFLE and any(k in self.scope.path for k in _PATCHED_BLOCK_NAMES):
+        inputs = communicate(inputs)
+    out = _original_call(self, inputs)
+    return out
 
 
-FlaxAttentionBlock.__call__ = _new_attention
+nn.Conv.__call__ = conv_call
 
 
 def device_id():
@@ -150,9 +165,9 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule,
     def update_fn(updates, state, params=None):
         count = state["count"] + 1
 
-        def get_update(grad: jax.Array, param: jax.Array,  mu: jax.Array, nu: jax.Array):
+        def get_update(grad: jax.Array, param: jax.Array, mu: jax.Array, nu: jax.Array):
             dtype = mu.dtype
-            grad, param,  nu, mu = jax.tree_map(promote, (grad, param, nu, mu))
+            grad, param, nu, mu = jax.tree_map(promote, (grad, param, nu, mu))
             g_norm = clip_norm(grad, 1e-16)
             p_norm = clip_norm(param, 1e-3)
             grad *= lax.min(p_norm / g_norm * clip, 1.)
@@ -198,6 +213,19 @@ def compile_fn(fn, name: str):
     return out
 
 
+def filter_dict(dct: Union[Dict[str, Any], jax.Array], keys: List[Union[str, List[str]]]
+                ) -> Union[Dict[str, Any], jax.Array]:
+    if not keys:
+        return jnp.concatenate([dct] + [dct * 0.01] * 2, 2)
+    key = keys[0]
+    if isinstance(key, str):
+        key = [key]
+    for k, v in dct.items():
+        if any(map(k.startswith, key)):
+            dct[k] = filter_dict(v, keys[1:])
+    return dct
+
+
 @app.command()
 def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
          resolution: int = 256, fps: int = 8, context: int = 8, workers: int = 4, prefetch: int = 1,
@@ -208,25 +236,20 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
          unet_batch: int = 1, video_group: int = 8, subsample: int = 32):
     lr *= subsample ** 0.5
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
-    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count() * video_group, prefetch,
+    data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count() * video_group,
+                      prefetch,
                       parallel_videos, tokenizer, clip_tokens, jax.device_count(), batch_prefetch)
 
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
 
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
-    for _, v0 in unet_params.items():
-        for k1, v1 in v0.items():
-            if not k1.startswith("attentions_"):
-                continue
-            for k2, v2 in v1.items():
-                if not k2.startswith("transformer_blocks_"):
-                    continue
-                for k3, v3 in v2.items():
-                    if not k3.startswith("attn"):
-                        continue
-                    for k4, v4 in v3.items():
-                        if k4 in ("to_q", "to_out_0"):
-                            v4["kernel"] = jnp.concatenate([v4["kernel"]] + [v4["kernel"] * 0.01] * 2, 0)
+    max_up_block = max(int(k.split('_')[-1]) for k in unet_params.keys() if k.startswith("up_blocks_"))
+    _PATCHED_BLOCK_NAMES.extend([f"down_blocks_{i}" for i in range(_PATCHED_BLOCKS)])
+    _PATCHED_BLOCK_NAMES.extend([f"up_blocks_{max_up_block - i}" for i in range(_PATCHED_BLOCKS)])
+    # Bulk of the parameters is in middle blocks (mid_block taking up 117M for conv) while the outer blocks are more
+    # parameter-efficient, with the down_blocks_0 using 3.6M params. We only patch the outermost blocks for
+    # param-efficiency, although the inner blocks would be more flop-efficient while taking up less intermediate space.
+    filter_dict(unet_params, [_PATCHED_BLOCK_NAMES, "resnets_", "conv", "kernel"])
 
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
@@ -341,7 +364,8 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             img = b["pixel_values"].astype(jnp.float32) / 255
             inp = jnp.transpose(img[0], (0, 3, 1, 2))
             gauss0, drop0 = jax.random.split(rng(b["idx"] + 1), 2)
-            out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode).latent_dist
+            out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False,
+                            method=vae.encode).latent_dist
             enc = get_encoded(b['input_ids'], b['attention_mask'])
             return None, ((out.mean.astype(jnp.bfloat16), out.std.astype(jnp.bfloat16)), enc.astype(jnp.bfloat16))
 
@@ -356,7 +380,9 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
             sample_rng, noise_rng = jax.random.split(rng(itr), 2)
 
-            latents = jnp.stack([v_mean.astype(jnp.float32) + v_std.astype(jnp.float32) * jax.random.normal(r, v_mean.shape) for r in jax.random.split(sample_rng, unet_batch)])
+            latents = jnp.stack(
+                [v_mean.astype(jnp.float32) + v_std.astype(jnp.float32) * jax.random.normal(r, v_mean.shape) for r in
+                 jax.random.split(sample_rng, unet_batch)])
             latents = latents.reshape(unet_batch, context * latents.shape[2], latents.shape[3], latents.shape[4])
             latents = latents.transpose(0, 3, 1, 2)
             latents = latents * 0.18215
@@ -389,23 +415,29 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             ste, av, ae = carry
             ix = batch["idx"].reshape(-1, subsample) + idx * video_group * jax.device_count()
             key = rng_synced(idx + batch["idx"][0])
-            av, ae = jax.tree_util.tree_map(lambda x: jax.random.shuffle(key, x).reshape(-1, subsample, *x.shape[1:]), (av, ae))
+            av, ae = jax.tree_util.tree_map(lambda x: jax.random.shuffle(key, x).reshape(-1, subsample, *x.shape[1:]),
+                                            (av, ae))
             ste, sclr = lax.scan(_outer, ste, (ix, av, ae))
             av, ae = jax.tree_util.tree_map(lambda x: x.reshape(-1, *x.shape[2:]), (av, ae))
             return (ste, av, ae), sclr
 
-        (outer_state, _, _), scalars = lax.scan(_wrapped, (outer_state, all_vae_out, all_encoded), jnp.arange(local_iterations))
+        (outer_state, _, _), scalars = lax.scan(_wrapped, (outer_state, all_vae_out, all_encoded),
+                                                jnp.arange(local_iterations))
         return outer_state, (scalars[0].reshape(-1), scalars[1].reshape(-1))
 
     p_encode_for_sampling = jax.pmap(encode_for_sampling, "batch")
     p_sample = jax.pmap(sample, "batch")
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
 
-    batch = {"pixel_values": jnp.zeros((jax.local_device_count(), video_group * jax.device_count(), context, resolution, resolution, 3), dtype=jnp.uint8),
-             "input_ids": jnp.zeros((jax.local_device_count(), video_group * jax.device_count(), clip_tokens), dtype=jnp.int32),
-             "attention_mask": jnp.zeros((jax.local_device_count(), video_group * jax.device_count(), clip_tokens), dtype=jnp.int32),
-             "idx": jnp.zeros((jax.local_device_count(),), dtype=jnp.int_)
-             }
+    batch = {"pixel_values": jnp.zeros(
+        (jax.local_device_count(), video_group * jax.device_count(), context, resolution, resolution, 3),
+        dtype=jnp.uint8),
+        "input_ids": jnp.zeros((jax.local_device_count(), video_group * jax.device_count(), clip_tokens),
+                               dtype=jnp.int32),
+        "attention_mask": jnp.zeros((jax.local_device_count(), video_group * jax.device_count(), clip_tokens),
+                                    dtype=jnp.int32),
+        "idx": jnp.zeros((jax.local_device_count(),), dtype=jnp.int_)
+    }
     compile_fn(lambda: p_train_step(jax_utils.replicate(copy.deepcopy(unet_state)), batch), "train step")
     _, sample_encoded = compile_fn(lambda: p_encode_for_sampling(batch), "sample encoder")
     unet_state = jax_utils.replicate(unet_state)
@@ -423,10 +455,15 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 1)):
             global_step += 1
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
-            batch = {"pixel_values": vid.astype(jnp.uint8).reshape(jax.local_device_count(), video_group * jax.device_count(), context, resolution, resolution, 3),
-                     "input_ids": ids.astype(jnp.int32).reshape(jax.local_device_count(), video_group * jax.device_count(), clip_tokens),
-                     "attention_mask": msk.astype(jnp.int32).reshape(jax.local_device_count(), video_group * jax.device_count(), clip_tokens),
-                     "idx": jnp.full((jax.local_device_count(),), int(hashlib.blake2b(str(i).encode()).hexdigest()[:4], 16), dtype=jnp.int_)
+            batch = {"pixel_values": vid.astype(jnp.uint8).reshape(jax.local_device_count(),
+                                                                   video_group * jax.device_count(), context,
+                                                                   resolution, resolution, 3),
+                     "input_ids": ids.astype(jnp.int32).reshape(jax.local_device_count(),
+                                                                video_group * jax.device_count(), clip_tokens),
+                     "attention_mask": msk.astype(jnp.int32).reshape(jax.local_device_count(),
+                                                                     video_group * jax.device_count(), clip_tokens),
+                     "idx": jnp.full((jax.local_device_count(),),
+                                     int(hashlib.blake2b(str(i).encode()).hexdigest()[:4], 16), dtype=jnp.int_)
                      }
             if global_step == 1:
                 log("Encoding eval samples")
@@ -441,7 +478,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 log("Sampling")
                 sample_out = p_sample(unet_state.params, sample_encoded)
                 for rid, g in enumerate(np.split(to_host(sample_out, lambda x: x), 4, 1)):
-                    extra[f"Samples/Reconstruction (U-Net, Guidance {2**rid}) {pid}"] = to_img(g)
+                    extra[f"Samples/Reconstruction (U-Net, Guidance {2 ** rid}) {pid}"] = to_img(g)
                 log("Finished sampling")
 
             log(f"Before step {i}")
