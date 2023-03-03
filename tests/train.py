@@ -100,6 +100,9 @@ def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     if _SHUFFLE and any(s.startswith("resnets_") for s in self.scope.path) and any(
             k in self.scope.path for k in _PATCHED_BLOCK_NAMES):
         inputs = communicate(inputs)
+    elif _SHUFFLE and "conv_out" in self.scope.path and "is_patched" not in self.__dict__:
+        self.__dict__["features"] *= 3
+        self.__dict__["is_patched"] = None
     out = _original_call(self, inputs)
     return out
 
