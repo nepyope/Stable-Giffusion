@@ -260,6 +260,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     unet_params = filter_dict(unet_params, [_PATCHED_BLOCK_NAMES, "resnets_", "conv", "kernel"])
     unet_params["conv_in"]["kernel"] = jnp.concatenate([unet_params["conv_in"]["kernel"] / context] * context, 2)
     unet_params["conv_out"]["kernel"] = jnp.concatenate([unet_params["conv_out"]["kernel"]] * context, 3)
+    unet_params["conv_out"]["bias"] = jnp.concatenate([unet_params["conv_out"]["bias"]] * context)
 
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
