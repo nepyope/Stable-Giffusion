@@ -79,10 +79,9 @@ def communicate(x: jax.Array):
 
 def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: Optional[jax.Array] = None,
                    deterministic=True):
-    hidden_states = communicate(hidden_states)
-    context = hidden_states if context is None else context  # context is pre-communicated
+    context = hidden_states if context is None else context
 
-    query_proj = self.query(hidden_states).reshape(*hidden_states.shape[:-1], self.heads, -1)
+    query_proj = self.query(communicate(hidden_states)).reshape(*hidden_states.shape[:-1], self.heads, -1)
     key_proj = self.key(context).reshape(*context.shape[:-1], self.heads, -1)
     value_proj = self.value(context).reshape(*context.shape[:-1], self.heads, -1)
     hidden_states = attention(query_proj, key_proj, value_proj, self.scale)
@@ -226,7 +225,8 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                     if not k3.startswith("attn"):
                         continue
                     for k4, v4 in v3.items():
-                        v4["kernel"] = jnp.concatenate([v4["kernel"]] + [v4["kernel"] * 0.01] * 2, 0)
+                        if k4 in ("to_q", "to_out_0"):
+                            v4["kernel"] = jnp.concatenate([v4["kernel"]] + [v4["kernel"] * 0.01] * 2, 0)
 
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
@@ -249,12 +249,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np")
 
     def get_encoded(input_ids: jax.Array, attention_mask: jax.Array):
-        global _SHUFFLE
-        out = text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
-        _SHUFFLE = True
-        out = communicate(out)
-        _SHUFFLE = False
-        return out
+        return text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
 
     def unet_fn(noise, encoded, timesteps, params):
         global _SHUFFLE
@@ -347,7 +342,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             inp = jnp.transpose(img[0], (0, 3, 1, 2))
             gauss0, drop0 = jax.random.split(rng(b["idx"] + 1), 2)
             out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False, method=vae.encode).latent_dist
-            enc = text_encoder(b['input_ids'], b['attention_mask'], params=text_encoder.params)[0]
+            enc = get_encoded(b['input_ids'], b['attention_mask'])
             return None, ((out.mean.astype(jnp.bfloat16), out.std.astype(jnp.bfloat16)), enc.astype(jnp.bfloat16))
 
         _, (all_vae_out, all_encoded) = lax.scan(_vae_apply, None, batch)
@@ -357,9 +352,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         def _loss(params, inp):
             global _SHUFFLE
             itr, (v_mean, v_std), encoded = inp
-            _SHUFFLE = True
-            encoded = communicate(encoded.astype(jnp.float32))
-            _SHUFFLE = False
+            encoded = encoded.astype(jnp.float32)
 
             sample_rng, noise_rng = jax.random.split(rng(itr), 2)
 
