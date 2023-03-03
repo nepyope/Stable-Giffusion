@@ -237,8 +237,8 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
          batch_prefetch: int = 4, base_model: str = "flax_base_model", data_path: str = "./urls",
          sample_interval: int = 2048, parallel_videos: int = 60, schedule_length: int = 1024, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, save_interval: int = 2048,
-         overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_2", local_iterations: int = 16,
-         unet_batch: int = 1, video_group: int = 8, subsample: int = 32):
+         overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_2", local_iterations: int = 1,
+         unet_batch: int = 1, video_group: int = 1, subsample: int = 32):
     global _CONTEXT
     _CONTEXT = context
 
@@ -283,7 +283,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np")
 
     def get_encoded(input_ids: jax.Array, attention_mask: jax.Array):
-        return text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
+        return text_encoder(input_ids[None], attention_mask[None], params=text_encoder.params)[0]
 
     def unet_fn(noise, encoded, timesteps, params):
         global _SHUFFLE
@@ -427,9 +427,10 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         def _wrapped(carry, idx):
             ste, av, ae = carry
             ix = batch["idx"].reshape(-1, subsample) + idx * video_group * jax.device_count()
-            key = rng_synced(idx + batch["idx"][0])
-            av, ae = jax.tree_util.tree_map(lambda x: jax.random.shuffle(key, x).reshape(-1, subsample, *x.shape[1:]),
-                                            (av, ae))
+            if local_iterations > 1:
+                key = rng_synced(idx + batch["idx"][0])
+                av, ae = jax.tree_util.tree_map(lambda x: jax.random.shuffle(key, x), (av, ae))
+            av, ae = jax.tree_util.tree_map(lambda x: x.reshape(-1, subsample, *x.shape[1:]), (av, ae))
             ste, sclr = lax.scan(_outer, ste, (ix, av, ae))
             av, ae = jax.tree_util.tree_map(lambda x: x.reshape(-1, *x.shape[2:]), (av, ae))
             return (ste, av, ae), sclr
