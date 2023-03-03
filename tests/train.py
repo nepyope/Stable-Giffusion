@@ -283,7 +283,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np")
 
     def get_encoded(input_ids: jax.Array, attention_mask: jax.Array):
-        return text_encoder(input_ids[None], attention_mask[None], params=text_encoder.params)[0]
+        return text_encoder(input_ids, attention_mask, params=text_encoder.params)[0]
 
     def unet_fn(noise, encoded, timesteps, params):
         global _SHUFFLE
@@ -332,7 +332,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         hidden_mode = posterior.latent_dist.mode()
 
         encoded = get_encoded(batch["input_ids"], batch["attention_mask"])
-        unc = get_encoded(unconditioned_tokens["input_ids"], unconditioned_tokens["attention_mask"])
+        unc = get_encoded(unconditioned_tokens["input_ids"][0], unconditioned_tokens["attention_mask"][0])
         encoded = jnp.concatenate([unc, encoded], 0)
 
         lshape = hidden_mode.shape[0], hidden_mode.shape[3], hidden_mode.shape[1], hidden_mode.shape[2]
