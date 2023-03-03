@@ -32,6 +32,7 @@ _UPLOAD_RETRIES = 8
 _PATCHED_BLOCKS = 2
 _PATCHED_BLOCK_NAMES = []
 _SHUFFLE = False
+_CONTEXT = None
 
 
 def attention(query: jax.Array, key: jax.Array, value: jax.Array, scale: float):
@@ -101,7 +102,7 @@ def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
             k in self.scope.path for k in _PATCHED_BLOCK_NAMES):
         inputs = communicate(inputs)
     elif _SHUFFLE and "conv_out" in self.scope.path and "is_patched" not in self.__dict__:
-        self.__dict__["features"] *= 3
+        self.__dict__["features"] *= _CONTEXT
         self.__dict__["is_patched"] = None
     out = _original_call(self, inputs)
     return out
@@ -238,6 +239,9 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
          lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, save_interval: int = 2048,
          overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_2", local_iterations: int = 16,
          unet_batch: int = 1, video_group: int = 8, subsample: int = 32):
+    global _CONTEXT
+    _CONTEXT = context
+
     lr *= subsample ** 0.5
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count() * video_group,
