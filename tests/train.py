@@ -97,7 +97,7 @@ def communicate(x: jax.Array):
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     global _SHUFFLE
     inputs = jnp.asarray(inputs, self.dtype)
-    if _SHUFFLE and "resnets_" in self.scope.path and any(k in self.scope.path for k in _PATCHED_BLOCK_NAMES):
+    if _SHUFFLE and any(s.startswith("resnets_") for s in self.scope.path) and any(k in self.scope.path for k in _PATCHED_BLOCK_NAMES):
         inputs = communicate(inputs)
     out = _original_call(self, inputs)
     return out
@@ -249,7 +249,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     # Bulk of the parameters is in middle blocks (mid_block taking up 117M for conv) while the outer blocks are more
     # parameter-efficient, with the down_blocks_0 using 3.6M params. We only patch the outermost blocks for
     # param-efficiency, although the inner blocks would be more flop-efficient while taking up less intermediate space.
-    filter_dict(unet_params, [_PATCHED_BLOCK_NAMES, "resnets_", "conv", "kernel"])
+    unet_params = filter_dict(unet_params, [_PATCHED_BLOCK_NAMES, "resnets_", "conv", "kernel"])
 
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
