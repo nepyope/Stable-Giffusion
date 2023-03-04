@@ -444,7 +444,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
 
     batch = {"pixel_values": jnp.zeros(
-        (jax.local_device_count(), jax.device_count(), video_group * context * resolution * resolution * 3),
+        (jax.local_device_count(), jax.device_count() * video_group, context * resolution * resolution * 3),
         dtype=jnp.uint8),
         "input_ids": jnp.zeros((jax.local_device_count(), video_group * jax.device_count(), clip_tokens),
                                dtype=jnp.int32),
@@ -469,7 +469,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 1)):
             global_step += 1
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
-            batch = {"pixel_values": vid.astype(jnp.uint8).reshape(jax.local_device_count(), jax.device_count(), -1),
+            batch = {"pixel_values": vid.astype(jnp.uint8).reshape(jax.local_device_count(), video_group * jax.device_count(), -1),
                      "input_ids": ids.astype(jnp.int32).reshape(jax.local_device_count(),
                                                                 video_group * jax.device_count(), clip_tokens),
                      "attention_mask": msk.astype(jnp.int32).reshape(jax.local_device_count(),
