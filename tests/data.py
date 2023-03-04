@@ -217,7 +217,8 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
         {'writeautomaticsub': True, 'socket_timeout': 600, "quiet": True, "verbose": False, "no_warnings": True,
          "ignoreerrors": True})
     youtube_getter.add_default_info_extractors()
-    rng = random.Random(worker_id)    rng.shuffle(work)
+    rng = random.Random(worker_id)
+    rng.shuffle(work)
 
     group = context_size * device_steps
     while True:
