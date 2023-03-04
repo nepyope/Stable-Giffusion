@@ -239,7 +239,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count() * video_group,
                       prefetch,
-                      parallel_videos, tokenizer, clip_tokens, jax.device_count(), batch_prefetch, 1.5e+10/(jax.device_count() * context * resolution**2 * 3 * 4))
+                      parallel_videos, tokenizer, clip_tokens, jax.device_count(), batch_prefetch, round(1.5e+10/(jax.device_count() * context * resolution**2 * 3 * 4)))
 
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
 
