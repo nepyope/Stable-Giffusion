@@ -206,7 +206,7 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
 
         if os.path.exists(path):
             os.remove(path)
-        return np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3))[:2]
+        return np.frombuffer(out, np.uint8).reshape((-1, target_image_size, target_image_size, 3))
 
 
 def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_image_size: int, target_fps: int,
@@ -217,8 +217,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
         {'writeautomaticsub': True, 'socket_timeout': 600, "quiet": True, "verbose": False, "no_warnings": True,
          "ignoreerrors": True})
     youtube_getter.add_default_info_extractors()
-    rng = random.Random(worker_id)
-    rng.shuffle(work)
+    rng = random.Random(worker_id)    rng.shuffle(work)
 
     group = context_size * device_steps
     while True:
@@ -253,7 +252,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             r.append(f"{wor}", f"{diff/frames.shape[0]}")
             
             frames = frames[:frames.shape[0] // group * group]
-            frames = frames.reshape(-1, context_size, *frames.shape[1:])
+            frames = frames.reshape(-1, context_size, *frames.shape[1:])[:2 * device_steps]
 
             queue.put((to_share(frames, smm), batch_timed_subs))
         queue.put(_DONE)
