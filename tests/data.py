@@ -211,7 +211,7 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
 
 def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_image_size: int, target_fps: int,
                  context_size: int, queue: multiprocessing.Queue, smm: managers.SharedMemoryManager,
-                 ip_addresses: List[str], device_steps: int, queue_size: int):
+                 ip_addresses: List[str], device_steps: int):
     youtube_base = 'https://www.youtube.com/watch?v='
     youtube_getter = youtube_dl.YoutubeDL(
         {'writeautomaticsub': True, 'socket_timeout': 600, "quiet": True, "verbose": False, "no_warnings": True,
@@ -255,17 +255,14 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])[:2 * device_steps]
 
-            for batch in range(frames.shape[0] // device_steps):
-                if queue.qsize() <= queue_size:
-                    queue.put((to_share(frames[batch * device_steps: (batch + 1) * device_steps], smm), batch_timed_subs[batch * device_steps: (batch + 1) * device_steps]))
-
+            queue.put((to_share(frames, smm), batch_timed_subs))
         queue.put(_DONE)
 
 
 class DataLoader:
     def __init__(self, workers: int, url_dir: str, video_downloaders: int, resolution: int, fps: int, context: int,
                  batch_size: int, prefetch: int, parallel_videos: int, tokenizer: transformers.BertTokenizer,
-                 clip_tokens: int, device_steps: int, batch_prefetch: int, seed: int = 0, queue_size: int = 100):
+                 clip_tokens: int, device_steps: int, batch_prefetch: int, seed: int = 0):
         self.workers = workers
         self.video_downloaders = video_downloaders
         self.resolution = resolution
@@ -278,7 +275,6 @@ class DataLoader:
         self.tokenizer = tokenizer
         self.clip_tokens = clip_tokens
         self.ids = ids = []
-        self.queue_size = queue_size
         self.device_steps = device_steps
         for path in os.listdir(url_dir):
             with open(f'{url_dir}/{path}', 'rb') as f:
@@ -324,9 +320,7 @@ class DataLoader:
                     input_ids.append(np.stack(tokens["input_ids"]))
                     attention_mask.append(np.stack(tokens["attention_mask"]))
 
-                if self.batch_queue.qsize() <= 2:
-                    self.batch_queue.put((np.stack(np_batch), np.stack(input_ids), np.stack(attention_mask)))
-
+                self.batch_queue.put((np.stack(np_batch), np.stack(input_ids), np.stack(attention_mask)))
                 np_batch.clear()
                 subs.clear()
 
@@ -352,7 +346,7 @@ class DataLoader:
             proxies = get_proxies()
             for i in range(self.workers):
                 work = self.ids[int(len(self.ids) * i / self.workers):int(len(self.ids) * (i + 1) / self.workers)]
-                args = work, i, lock, self.resolution, self.fps, self.context, queue, smm, proxies, self.device_steps, self.queue_size
+                args = work, i, lock, self.resolution, self.fps, self.context, queue, smm, proxies, self.device_steps
                 workers.append(multiprocessing.Process(args=args, daemon=True, target=frame_worker))
             for w in workers:
                 w.start()
