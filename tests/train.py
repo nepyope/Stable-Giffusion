@@ -179,7 +179,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule,
 
             update = lax.sign(muc)
 
-            update *= jnp.linalg.norm(muc) / jnp.linalg.norm(update) * -lr(count)
+            update *= jnp.linalg.norm(muc) / clip_norm(update, 1e-8) * -lr(count)
             return update, mu.astype(dtype), nu.astype(dtype)
 
         leaves, treedef = jax.tree_util.tree_flatten(updates)
