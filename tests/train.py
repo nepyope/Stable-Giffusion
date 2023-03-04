@@ -258,9 +258,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     # parameter-efficient, with the down_blocks_0 using 3.6M params. We only patch the outermost blocks for
     # param-efficiency, although the inner blocks would be more flop-efficient while taking up less intermediate space.
     unet_params = filter_dict(unet_params, [_PATCHED_BLOCK_NAMES, "resnets_", "conv", "kernel"])
-    unet_params["conv_in"]["kernel"] = jnp.concatenate([unet_params["conv_in"]["kernel"]] + [unet_params["conv_in"]["kernel"] * 0.01] * (context - 1), 2)
-    unet_params["conv_out"]["kernel"] = jnp.concatenate([unet_params["conv_out"]["kernel"]] * context, 3)
-    unet_params["conv_out"]["bias"] = jnp.concatenate([unet_params["conv_out"]["bias"]] * context)
+    unet_params["giffusion_posembd"] = jnp.zeros((1, 4, context * resolution // 8, resolution // 8))
 
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
@@ -348,19 +346,21 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         def _step(state, i):
             latents, state = state
             new = lax.broadcast_in_dim(latents, (2, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
+            new = new + unet_params["giffusion_posembd"]
             unet_pred = unet_fn(new, encoded, i, unet_params)
             u, c = jnp.split(unet_pred, 2, 0)
             pred = u + (c - u) * 2 ** jnp.arange(1, 5).reshape(-1, 1, 1, 1)
             return noise_scheduler.step(state, pred, i, latents).to_tuple(), None
 
-        shape = (lshape[0] * lshape[1], lshape[2], lshape[3])
+        shape = (lshape[1], lshape[0] * lshape[2], lshape[3])
         noise = jax.random.normal(rng(0), shape, hidden_dtype)
         noise = lax.broadcast_in_dim(noise, (4, *shape), (1, 2, 3))
         state = noise_scheduler.set_timesteps(sched_state, schedule_length, noise.shape)
 
         (out, _), _ = lax.scan(_step, (noise, state), jnp.arange(schedule_length)[::-1])
-        out = out.reshape(4 * lshape[0], lshape[1], lshape[2], lshape[3])
-        out = out.transpose(0, 2, 3, 1) / 0.18215  # NCHW -> NHWC
+        out = out.reshape(4, lshape[1], lshape[0], lshape[2], lshape[3])
+        out = out.transpose(0, 2, 3, 4, 1) / 0.18215
+        out = out.reshape(4 * lshape[0], lshape[2], lshape[3], lshape[1])
         return sample_vae(out)
 
     def distance(x, y):
@@ -396,13 +396,14 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             latents = jnp.stack(
                 [v_mean.astype(jnp.float32) + v_std.astype(jnp.float32) * jax.random.normal(r, v_mean.shape) for r in
                  jax.random.split(sample_rng, unet_batch)])
-            latents = latents.transpose(0, 1, 4, 2, 3)
             latents = latents.reshape(unet_batch, context * latents.shape[2], latents.shape[3], latents.shape[4])
+            latents = latents.transpose(0, 3, 1, 2)
             latents = latents * 0.18215
 
             noise = jax.random.normal(noise_rng, latents.shape)
             t0 = jax.random.randint(rng_synced(itr), (unet_batch,), 0, noise_scheduler.config.num_train_timesteps)
             noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, t0)
+            noisy_latents += unet_params["giffusion_posembd"]
 
             unet_pred = unet_fn(noisy_latents, encoded, t0, params)
             return distance(unet_pred, noise)
