@@ -299,7 +299,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         return jnp.transpose(vae_apply(inp, method=vae.decode).sample, (0, 2, 3, 1))
 
     def all_to_all(x, split=1):
-        out = lax.all_to_all(x.reshape(1, *x.shape), "batch", split, 0, tiled=True)
+        out = lax.all_to_all(x.reshape(video_group, -1, *x.shape[1:]), "batch", split, 0, tiled=True)
         return out.reshape(jax.device_count() * video_group, -1, *out.shape[3:])
 
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
