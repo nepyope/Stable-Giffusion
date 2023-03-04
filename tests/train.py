@@ -396,7 +396,7 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             noise = jax.random.normal(noise_rng, latents.shape)
             t0 = jax.random.randint(rng_synced(itr), (unet_batch,), 0, noise_scheduler.config.num_train_timesteps)
             noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, t0)
-            noisy_latents += unet_params["giffusion_posembd"]
+            noisy_latents += lax.stop_gradient(params["giffusion_posembd"] * 0.95) + params["giffusion_posembd"] * 0.05
 
             unet_pred = unet_fn(noisy_latents, encoded, t0, params)
             return distance(unet_pred, noise)
