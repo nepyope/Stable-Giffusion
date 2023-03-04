@@ -228,11 +228,11 @@ def filter_dict(dct: Union[Dict[str, Any], jax.Array], keys: List[Union[str, Lis
 
 
 @app.command()
-def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
-         resolution: int = 256, fps: int = 8, context: int = 8, workers: int = 4, prefetch: int = 1,
+def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
+         resolution: int = 256, fps: int = 8, context: int = 8, workers: int = 2, prefetch: int = 1,
          batch_prefetch: int = 4, base_model: str = "flax_base_model", data_path: str = "./urls",
          sample_interval: int = 2048, parallel_videos: int = 60, schedule_length: int = 1024, warmup_steps: int = 1024,
-         lr_halving_every_n_steps: int = 2 ** 17, clip_tokens: int = 77, save_interval: int = 2048,
+         lr_halving_every_n_steps: int = 2 ** 16, clip_tokens: int = 77, save_interval: int = 2048,
          overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_2", local_iterations: int = 16,
          unet_batch: int = 1, video_group: int = 8, subsample: int = 32):
     lr *= subsample ** 0.5
@@ -251,7 +251,6 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     # parameter-efficient, with the down_blocks_0 using 3.6M params. We only patch the outermost blocks for
     # param-efficiency, although the inner blocks would be more flop-efficient while taking up less intermediate space.
     unet_params = filter_dict(unet_params, [_PATCHED_BLOCK_NAMES, "resnets_", "conv", "kernel"])
-    unet_params["giffusion_posembd"] = jnp.zeros((1, 4, context * resolution // 8, resolution // 8))
 
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
@@ -339,7 +338,6 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         def _step(state, i):
             latents, state = state
             new = lax.broadcast_in_dim(latents, (2, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
-            new = new + unet_params["giffusion_posembd"]
             unet_pred = unet_fn(new, encoded, i, unet_params)
             u, c = jnp.split(unet_pred, 2, 0)
             pred = u + (c - u) * 2 ** jnp.arange(1, 5).reshape(-1, 1, 1, 1)
@@ -396,7 +394,6 @@ def main(lr: float = 1e-6, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             noise = jax.random.normal(noise_rng, latents.shape)
             t0 = jax.random.randint(rng_synced(itr), (unet_batch,), 0, noise_scheduler.config.num_train_timesteps)
             noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, t0)
-            noisy_latents += lax.stop_gradient(params["giffusion_posembd"] * 0.95) + params["giffusion_posembd"] * 0.05
 
             unet_pred = unet_fn(noisy_latents, encoded, t0, params)
             return distance(unet_pred, noise)
