@@ -173,7 +173,7 @@ def get_subs(video_urls: List[Dict[str, str]], proxies: List[str], target_fps: i
         print("Refreshing proxies", len(proxies))
 
 
-def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps: int, ) -> np.ndarray:
+def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps: int, device_steps: int, context: int) -> np.ndarray:
     filename = uuid.uuid4()
     path = str(filename)
     for video_url in video_urls:
@@ -196,6 +196,7 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
             vid = vid.filter("scale", w=w, h=h)
             vid = vid.filter("crop", w=target_image_size, h=target_image_size)
             vid = vid.filter("fps", target_fps)
+            vid = vid.filter("select", f"between(n,{0},{8*device_steps*context})")
             vid = vid.output("pipe:", format="rawvideo", pix_fmt="rgb24", loglevel="error", preset="ultrafast",
                              threads=target_image_size // 40)
             out, _ = vid.run(capture_stdout=True)
@@ -231,7 +232,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             if subtitles is None:
                 continue
 
-            frames = get_video_frames(video_urls, target_image_size, target_fps)
+            frames = get_video_frames(video_urls, target_image_size, target_fps, device_steps, context_size)
 
             if frames is None or not frames.size or frames.shape[0] < group:
                 continue
