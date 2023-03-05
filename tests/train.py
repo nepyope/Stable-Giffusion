@@ -261,7 +261,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     if not overwrite:
         log("Loading..")
-        unet_params = load(base_path + "unet", unet_params)
+        unet_params = load("/home/ubuntu/unet", unet_params)
         log("Finished")
 
     lr_sched = optax.warmup_exponential_decay_schedule(0, lr, warmup_steps, lr_halving_every_n_steps, 0.5)
