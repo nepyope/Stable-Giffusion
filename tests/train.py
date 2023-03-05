@@ -304,55 +304,46 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     def rng_synced(idx: jax.Array):
         return jax.random.PRNGKey(idx)
 
-    lshape = []
-    hidden_dtype = None
 
-    def encode_for_sampling(batch: Dict[str, Union[np.ndarray, int]]):
-        nonlocal lshape
-        nonlocal hidden_dtype
-
+    def sample(unet_params, batch: Dict[str, Union[np.ndarray, int]]):
         batch = all_to_all_batch(batch)
-
         batch = jax.tree_map(lambda x: x[0], batch)
+        latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 4)
         inp = batch["pixel_values"].astype(jnp.float32) / 255
         inp = inp.reshape(context, resolution, resolution, 3)
         inp = inp.transpose(0, 3, 1, 2)
         posterior = vae_apply(inp, method=vae.encode)
 
         hidden_mode = posterior.latent_dist.mode()
+        latents = jnp.transpose(hidden_mode, (0, 3, 1, 2)) * 0.18215
 
         encoded = get_encoded(batch["input_ids"], batch["attention_mask"])
         unc = get_encoded(unconditioned_tokens["input_ids"][0], unconditioned_tokens["attention_mask"][0])
-        encoded = jnp.concatenate([unc, encoded], 0)
-
-        lshape = hidden_mode.shape[0], hidden_mode.shape[3], hidden_mode.shape[1], hidden_mode.shape[2]
-        hidden_dtype = hidden_mode.dtype
-
-        return sample_vae(hidden_mode), encoded
-
-    def sample(unet_params, encoded: jax.Array):
-        encoded = lax.broadcast_in_dim(encoded, (encoded.shape[0], 4, *encoded.shape[1:]),
-                                       (0, *range(2, encoded.ndim + 1)))
-        encoded = jnp.reshape(encoded, (-1, *encoded.shape[2:]))
+        encoded = jnp.concatenate([unc] * 4 + [encoded] * 4, 0)
 
         def _step(state, i):
             latents, state = state
             new = lax.broadcast_in_dim(latents, (2, *latents.shape), (1, 2, 3, 4)).reshape(-1, *latents.shape[1:])
             unet_pred = unet_fn(new, encoded, i, unet_params)
-            u, c = jnp.split(unet_pred, 2, 0)
-            pred = u + (c - u) * 2 ** jnp.arange(1, 5).reshape(-1, 1, 1, 1)
+            u1, u2, u4, u8, c1, c2, c4, c8 = jnp.split(unet_pred, 8, 0)
+            pred = jnp.concatenate([c1, u2 + (c2 - u2) * 2, u4 + (c4 - u4) * 4, u8 + (c8 - u8) * 8])
             return noise_scheduler.step(state, pred, i, latents).to_tuple(), None
 
-        shape = (lshape[1], lshape[0] * lshape[2], lshape[3])
-        noise = jax.random.normal(rng(0), shape, hidden_dtype)
-        noise = lax.broadcast_in_dim(noise, (4, *shape), (1, 2, 3))
-        state = noise_scheduler.set_timesteps(sched_state, schedule_length, noise.shape)
+        lshape = latents.shape
+        shape = (1, lshape[1], lshape[0] * lshape[2], lshape[3])
+        noise = jax.random.normal(latent_rng, shape, latents.dtype)
+        noise = lax.broadcast_in_dim(noise, (4, *noise.shape), (1, 2, 3, 4)).reshape(-1, *noise.shape[1:])
+        latents = lax.broadcast_in_dim(latents, (4, *latents.shape), (1, 2, 3, 4)).reshape(*noise.shape)
+        state = noise_scheduler.set_timesteps(sched_state, schedule_length, latents.shape)
+        start_step = schedule_length
+        t0 = jnp.full((), start_step, jnp.int32)
+        latents = noise_scheduler.add_noise(sched_state, latents, noise, t0)
 
-        (out, _), _ = lax.scan(_step, (noise, state), jnp.arange(schedule_length)[::-1])
+        (out, _), _ = lax.scan(_step, (latents, state), jnp.arange(start_step)[::-1])
         out = out.reshape(4, lshape[1], lshape[0], lshape[2], lshape[3])
-        out = out.transpose(0, 2, 3, 4, 1) / 0.18215
-        out = out.reshape(4 * lshape[0], lshape[2], lshape[3], lshape[1])
-        return sample_vae(out)
+        out = out.transpose(0, 2, 3, 4, 1) / 0.18215  # NCHW -> NHWC + remove latent folding
+        return jnp.concatenate([sample_vae(x) for x in [hidden_mode] + list(out)])
+
 
     def distance(x, y):
         dist = x - y
@@ -444,9 +435,8 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         "idx": jnp.zeros((jax.local_device_count(),), dtype=jnp.int_)
     }
     compile_fn(lambda: p_train_step(jax_utils.replicate(copy.deepcopy(unet_state)), batch), "train step")
-    _, sample_encoded = compile_fn(lambda: p_encode_for_sampling(batch), "sample encoder")
     unet_state = jax_utils.replicate(unet_state)
-    compile_fn(lambda: p_sample(unet_state.params, sample_encoded), "sampling")
+    compile_fn(lambda: p_sample(unet_state.params, batch), "sampling")
     del batch, sample_encoded
 
     def to_img(x: jax.Array) -> wandb.Image:
@@ -480,7 +470,8 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             if i % sample_interval == 0:
                 log("Sampling")
                 sample_out = p_sample(unet_state.params, sample_encoded)
-                for rid, g in enumerate(np.split(to_host(sample_out, lambda x: x), 4, 1)):
+                s_mode, *rec = np.split(to_host(sample_out, lambda x: x), 5, 1)
+                for rid, g in enumerate(rec):
                     extra[f"Samples/Reconstruction (U-Net, Guidance {2 ** rid}) {pid}"] = to_img(g)
                 log("Finished sampling")
 
