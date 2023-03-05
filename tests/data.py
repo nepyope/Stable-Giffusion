@@ -195,7 +195,7 @@ def get_video_frames(video_urls: List[dict], target_image_size: int, target_fps:
             vid = vid.filter("scale", w=w, h=h)
             vid = vid.filter("crop", w=target_image_size, h=target_image_size)
             vid = vid.filter("fps", target_fps)
-            vid = vid.filter("select", f"between(n,{0},{2*device_steps*context})")
+            vid = vid.filter("select", f"between(n,{0},{device_steps*context})")
             vid = vid.output("pipe:", format="rawvideo", pix_fmt="rgb24", loglevel="error", preset="ultrafast",
                              threads=target_image_size // 40)
             out, _ = vid.run(capture_stdout=True)
@@ -250,7 +250,7 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             diff = np.mean(np.abs(frames[:-1] - frames[1:]))
             
             frames = frames[:frames.shape[0] // group * group]
-            frames = frames.reshape(-1, context_size, *frames.shape[1:])[:2 * device_steps]
+            frames = frames.reshape(-1, context_size, *frames.shape[1:])[:device_steps]
 
             queue.put((to_share(frames, smm), batch_timed_subs))
         queue.put(_DONE)
