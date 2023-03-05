@@ -425,6 +425,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     p_sample = jax.pmap(sample, "batch")
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
+    unet_state = jax_utils.replicate(unet_state)
 
     def to_img(x: jax.Array) -> wandb.Image:
         return wandb.Image(x.reshape(-1, resolution, 3))
