@@ -28,8 +28,6 @@ import yt_dlp as youtube_dl
 _DEBUG = False
 _DONE = "DONE"
 
-r = redis.Redis(host='localhost', port=6379, db=0)
-
 @dataclasses.dataclass
 class Share:
     dtype: np.dtype
@@ -250,7 +248,6 @@ def frame_worker(work: list, worker_id: int, lock: threading.Semaphore, target_i
             batch_timed_subs = ["".join(list(dict.fromkeys(sub_list))) for sub_list in timed_subs]
             
             diff = np.mean(np.abs(frames[:-1] - frames[1:]))
-            r.append(f"{wor}", f"{diff/frames.shape[0]}")
             
             frames = frames[:frames.shape[0] // group * group]
             frames = frames.reshape(-1, context_size, *frames.shape[1:])[:8 * device_steps]
