@@ -421,7 +421,6 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                                                 jnp.arange(local_iterations))
         return outer_state, (scalars[0].reshape(-1), scalars[1].reshape(-1))
 
-    p_encode_for_sampling = jax.pmap(encode_for_sampling, "batch")
     p_sample = jax.pmap(sample, "batch")
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
 
@@ -437,7 +436,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     compile_fn(lambda: p_train_step(jax_utils.replicate(copy.deepcopy(unet_state)), batch), "train step")
     unet_state = jax_utils.replicate(unet_state)
     compile_fn(lambda: p_sample(unet_state.params, batch), "sampling")
-    del batch, sample_encoded
+    del batch
 
     def to_img(x: jax.Array) -> wandb.Image:
         return wandb.Image(x.reshape(-1, resolution, 3))
@@ -458,18 +457,13 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                      "idx": jnp.full((jax.local_device_count(),),
                                      int(hashlib.blake2b(str(i).encode()).hexdigest()[:4], 16), dtype=jnp.int_)
                      }
-            if global_step == 1:
-                log("Encoding eval samples")
-                s_mode, sample_encoded = p_encode_for_sampling(batch)
-                extra[f"Samples/Reconstruction (Mode) {pid}"] = to_img(to_host(s_mode, lambda x: x))
-                log("Finished encoding samples")
             if global_step <= 2:
                 log(f"Step {global_step}")
             i *= lsteps
 
             if i % sample_interval == 0:
                 log("Sampling")
-                sample_out = p_sample(unet_state.params, sample_encoded)
+                sample_out = p_sample(unet_state.params, batch)
                 s_mode, *rec = np.split(to_host(sample_out, lambda x: x), 5, 1)
                 for rid, g in enumerate(rec):
                     extra[f"Samples/Reconstruction (U-Net, Guidance {2 ** rid}) {pid}"] = to_img(g)
