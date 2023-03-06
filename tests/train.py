@@ -234,7 +234,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
          sample_interval: int = 2048, parallel_videos: int = 60, schedule_length: int = 1024, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 16, clip_tokens: int = 77, save_interval: int = 2048,
          overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_2", local_iterations: int = 16,
-         unet_batch: int = 1, video_group: int = 8, subsample: int = 32, do_trace: bool = True):
+         unet_batch: int = 1, video_group: int = 8, subsample: int = 32):
     lr *= subsample ** 0.5
     tokenizer = CLIPTokenizer.from_pretrained(base_model, subfolder="tokenizer")
     data = DataLoader(workers, data_path, downloaders, resolution, fps, context, jax.local_device_count() * video_group,
