@@ -426,19 +426,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     p_sample = jax.pmap(sample, "batch")
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
     
-    batch = {"pixel_values": jnp.zeros(
-        (jax.local_device_count(), jax.device_count() * video_group, context * resolution * resolution * 3),
-        dtype=jnp.uint8),
-        "input_ids": jnp.zeros((jax.local_device_count(), video_group * jax.device_count(), clip_tokens),
-                               dtype=jnp.int32),
-        "attention_mask": jnp.zeros((jax.local_device_count(), video_group * jax.device_count(), clip_tokens),
-                                    dtype=jnp.int32),
-        "idx": jnp.zeros((jax.local_device_count(),), dtype=jnp.int_)
-    }
-    compile_fn(lambda: p_train_step(jax_utils.replicate(copy.deepcopy(unet_state)), batch), "train step")
     unet_state = jax_utils.replicate(unet_state)
-    compile_fn(lambda: p_sample(unet_state.params, batch), "sampling")
-    del batch
 
     
     def to_img(x: jax.Array) -> wandb.Image:
@@ -460,13 +448,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                      "idx": jnp.full((jax.local_device_count(),),
                                      int(hashlib.blake2b(str(i).encode()).hexdigest()[:4], 16), dtype=jnp.int_)
                      }
-            
-            #if do_trace:
-               # if global_step == 1:
-                #    jax.profiler.start_trace("/home/ubuntu/trace")
-              #  if global_step == 3:
-               #     jax.profiler.stop_trace()            
-            
+
             if global_step <= 2:
                 log(f"Step {global_step}")
             i *= lsteps
