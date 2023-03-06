@@ -447,11 +447,11 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                                      int(hashlib.blake2b(str(i).encode()).hexdigest()[:4], 16), dtype=jnp.int_)
                      }
             
-            if do_trace:
-                if global_step == 1:
-                    jax.profiler.start_trace("/home/ubuntu/trace")
-                if global_step == 3:
-                    jax.profiler.stop_trace()            
+            #if do_trace:
+               # if global_step == 1:
+                #    jax.profiler.start_trace("/home/ubuntu/trace")
+              #  if global_step == 3:
+               #     jax.profiler.stop_trace()            
             
             if global_step <= 2:
                 log(f"Step {global_step}")
