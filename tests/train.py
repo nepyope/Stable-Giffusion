@@ -86,10 +86,12 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
 FlaxAttentionBlock.__call__ = _new_attention
 
 def wrapper(x, w, *args, **kwargs):
+    global _SHUFFLE
     def _fn(a, b):
         return lax.dot_general(a, b, *args, **kwargs)
     if not _SHUFFLE:
         return _fn(x, w)
+    
     @jax.custom_gradient
     def _call(a, b):
         def _grad(dy):
@@ -127,7 +129,6 @@ LaxPadding = Union[str, Sequence[Tuple[int, int]]]
 
 class _Conv(Module):
   """Convolution Module wrapping `lax.conv_general_dilated[_local]`.
-
   Attributes:
     features: number of convolution filters.
     kernel_size: shape of the convolutional kernel. For 1D convolution,
@@ -180,18 +181,15 @@ class _Conv(Module):
   @property
   def shared_weights(self) -> bool:  # type: ignore
     """Defines whether weights are shared or not between different pixels.
-
     Returns:
       `True` to use shared weights in convolution (regular convolution).
       `False` to use different weights at different pixels, a.k.a.
       "locally connected layer", "unshared convolution", or "local convolution".
-
     """
     ...
   @compact
   def __call__(self, inputs: Array) -> Array:
     """Applies a (potentially unshared) convolution to the inputs.
-
     Args:
       inputs: input data with dimensions (*batch_dims, spatial_dims...,
         features). This is the channels-last convention, i.e. NHWC for a 2d
@@ -204,7 +202,6 @@ class _Conv(Module):
         better performance than this default flattening approach.  If the input
         lacks a batch dimension it will be added for the convolution and removed
         n return, an allowance made to enable writing single-example code.
-
     Returns:
       The convolved data.
     """
@@ -504,6 +501,7 @@ def filter_dict(dct: Union[Dict[str, Any], jax.Array]
     for k, v in dct.items():
         if k == "kernel":
             dct[k] = jnp.concatenate([v] + [v * 0.001] * 2, -2)
+            
         elif isinstance(v, dict):
             dct[k] = filter_dict(v)
     return dct
