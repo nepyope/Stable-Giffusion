@@ -327,10 +327,10 @@ class _Conv(Module):
     if num_batch_dimensions != 1:
       output_shape = input_batch_shape + y.shape[1:]
       y = jnp.reshape(y, output_shape)
-
-    mid, left, right = jnp.split(y, 3, -1)
-    right, left = rotate(right, left)
-    return (mid + left + right)/3
+    print(y.shape)
+    #mid, left, right = jnp.split(y, 3, -1)
+    #right, left = rotate(right, left)
+    return y
 
 
 _original_call = _Conv.__call__
