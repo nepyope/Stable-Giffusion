@@ -341,7 +341,8 @@ def rotate(left: jax.Array, right: jax.Array):
 def communicate(x: jax.Array):
     def _grad(dy: jax.Array):
         mid, left, right = jnp.split(dy, 3, -1)
-        return mid
+        right, left = rotate(right, left)
+        return mid + left + right
 
     left, right = rotate(x, x)
     return jnp.concatenate([x, left, right], -1), _grad
