@@ -381,8 +381,7 @@ def communicate(x: jax.Array):
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     global _SHUFFLE
     inputs = jnp.asarray(inputs, self.dtype)
-    if _SHUFFLE and any(s.startswith("resnets_") for s in self.scope.path) and any(
-            k in self.scope.path for k in _PATCHED_BLOCK_NAMES):
+    if _SHUFFLE:
         out = _patched_call(self, inputs)
     else:
         out = _original_call(self, inputs)
@@ -500,16 +499,13 @@ def compile_fn(fn, name: str):
     return out
 
 
-def filter_dict(dct: Union[Dict[str, Any], jax.Array], keys: List[Union[str, List[str]]]
+def filter_dict(dct: Union[Dict[str, Any], jax.Array]
                 ) -> Union[Dict[str, Any], jax.Array]:
-    if not keys:
-        return jnp.concatenate([dct] + [dct * 0.01] * 2, 2)
-    key = keys[0]
-    if isinstance(key, str):
-        key = [key]
     for k, v in dct.items():
-        if any(map(k.startswith, key)):
-            dct[k] = filter_dict(v, keys[1:])
+        if k == "kernel":
+            dct[k] = jnp.concatenate([dct] + [dct * 0.001] * 2, -2)
+        elif isinstance(v, dict):
+            dct[k] = filter_dict(v)
     return dct
 
 
@@ -532,14 +528,8 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
 
     max_up_block = max(int(k.split('_')[-1]) for k in unet_params.keys() if k.startswith("up_blocks_"))
-    _PATCHED_BLOCK_NAMES.extend([f"down_blocks_{i}" for i in range(_PATCHED_BLOCKS)])
-    _PATCHED_BLOCK_NAMES.extend([f"up_blocks_{max_up_block - i}" for i in range(_PATCHED_BLOCKS)])
 
-    # Bulk of the parameters is in middle blocks (mid_block taking up 117M for conv) while the outer blocks are more
-    # parameter-efficient, with the down_blocks_0 using 3.6M params. We only patch the outermost blocks for
-    # param-efficiency, although the inner blocks would be more flop-efficient while taking up less intermediate space.
-
-    unet_params = filter_dict(unet_params, [_PATCHED_BLOCK_NAMES, "resnets_", "conv", "kernel"])
+    unet_params = filter_dict(unet_params)
 
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
