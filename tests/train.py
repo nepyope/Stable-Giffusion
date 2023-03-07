@@ -165,7 +165,7 @@ class _Conv(Module):
     """
     ...
 
-  @compact
+  @jax.custom_gradient
   def __call__(self, inputs: Array) -> Array:
     """Applies a (potentially unshared) convolution to the inputs.
 
@@ -185,6 +185,13 @@ class _Conv(Module):
     Returns:
       The convolved data.
     """
+    def _grad(dy: jax.Array):
+        mid, left, right = jnp.split(dy, 3, -1)
+        right, left = rotate(right, left)
+        return mid + left + right
+    
+    left, right = rotate(inputs, inputs)
+    inputs = jnp.concatenate([inputs, left, right], -1)
 
     if isinstance(self.kernel_size, int):
       raise TypeError('Expected Conv kernel_size to be a'
@@ -328,36 +335,25 @@ class _Conv(Module):
       output_shape = input_batch_shape + y.shape[1:]
       y = jnp.reshape(y, output_shape)
 
-    return y
+    return y, _grad
 
 
-_original_call = _Conv.__call__
+_original_call = nn.Conv.__call__
 
+_patched_call = _Conv.__call__
 
 def rotate(left: jax.Array, right: jax.Array):
     return (lax.ppermute(left, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())]),
             lax.ppermute(right, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())]))
-
-
-@jax.custom_gradient
-def communicate(x: jax.Array):
-    def _grad(dy: jax.Array):
-        print(dy.shape)
-        mid, left, right = jnp.split(dy, 3, -1)
-        right, left = rotate(right, left)
-        return mid + left + right
-
-    left, right = rotate(x, x)
-    return jnp.concatenate([x, left, right], -1), _grad
-
 
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     global _SHUFFLE
     inputs = jnp.asarray(inputs, self.dtype)
     if _SHUFFLE and any(s.startswith("resnets_") for s in self.scope.path) and any(
             k in self.scope.path for k in _PATCHED_BLOCK_NAMES):
-        inputs = communicate(inputs)
-    out = _original_call(self, inputs)
+        out = _patched_call(self, inputs)
+    else:
+        out = _original_call(self, inputs)
     return out
 
 nn.Conv.__call__ = conv_call 
