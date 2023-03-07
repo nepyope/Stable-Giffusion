@@ -86,11 +86,11 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
 FlaxAttentionBlock.__call__ = _new_attention
 
 def wrapper(x, w, *args, **kwargs):
-    global _SHUFFLE
+
     def _fn(a, b):
         return lax.dot_general(a, b, *args, **kwargs)
-    if not _SHUFFLE:
-        return _fn(x, w)
+   # if not _SHUFFLE:
+     #   return _fn(x, w)
     
     @jax.custom_gradient
     def _call(a, b):
@@ -501,7 +501,6 @@ def filter_dict(dct: Union[Dict[str, Any], jax.Array]
     for k, v in dct.items():
         if k == "kernel":
             dct[k] = jnp.concatenate([v] + [v * 0.001] * 2, -2)
-            
         elif isinstance(v, dict):
             dct[k] = filter_dict(v)
     return dct
