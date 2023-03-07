@@ -298,7 +298,8 @@ class _Conv(Module):
     @jax.custom_gradient
     def _conv(x, w):
         def _fn(a, b):
-            return lax.conv_general_dilated(
+            if self.shared_weights:
+                return lax.conv_general_dilated(
             a,
             b,
             strides,
@@ -309,6 +310,17 @@ class _Conv(Module):
             feature_group_count=self.feature_group_count,
             precision=self.precision
         )
+            return lax.conv_general_dilated_local(
+          lhs=inputs,
+          rhs=kernel,
+          window_strides=strides,
+          padding=padding_lax,
+          filter_shape=kernel_size,
+          lhs_dilation=input_dilation,
+          rhs_dilation=kernel_dilation,
+          dimension_numbers=dimension_numbers,
+          precision=self.precision
+      )
         def _grad(dy):
             inp = communicate(x)
             dy, dwgt = jax.jvp(_fn, inp, w)[1](dy)
@@ -318,10 +330,7 @@ class _Conv(Module):
         
         return _fn(communicate(x), w), _grad
 
-    if self.shared_weights:
-      y = _conv(inputs, kernel)
-    else:
-      y = _conv(inputs, kernel)
+    y = _conv(inputs, kernel)
 
     if self.use_bias:
       bias = bias.reshape((1,) * (y.ndim - bias.ndim) + bias.shape)
