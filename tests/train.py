@@ -106,7 +106,7 @@ _old_dense = nn.Dense.__call__
 def _new_dense(self, *args, **kwargs):
     if "patched" not in self.__dict__:
         self.__dict__["dot_general"] = wrapper
-        self["patched"] = True
+        self.__dict__["patched"] = True
     return _old_dense(self, *args, **kwargs)
 
 nn.Dense.__call__ = _new_dense
