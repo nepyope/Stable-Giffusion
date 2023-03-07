@@ -164,7 +164,7 @@ class _Conv(Module):
 
     """
     ...
-
+  @compact
   def __call__(self, inputs: Array) -> Array:
     """Applies a (potentially unshared) convolution to the inputs.
 
@@ -184,9 +184,6 @@ class _Conv(Module):
     Returns:
       The convolved data.
     """
-    print(inputs)
-    left, right = rotate(inputs, inputs)
-    inputs = jnp.concatenate([inputs, left, right], -1)
 
     if isinstance(self.kernel_size, int):
       raise TypeError('Expected Conv kernel_size to be a'
@@ -297,33 +294,34 @@ class _Conv(Module):
       bias = None
 
     inputs, kernel, bias = promote_dtype(inputs, kernel, bias, dtype=self.dtype)
-    
 
+    @jax.custom_gradient
+    def _conv(x, w):
+        def _fn(a, b):
+            return lax.conv_general_dilated(
+            a,
+            b,
+            strides,
+            padding_lax,
+            lhs_dilation=input_dilation,
+            rhs_dilation=kernel_dilation,
+            dimension_numbers=dimension_numbers,
+            feature_group_count=self.feature_group_count,
+            precision=self.precision
+        )
+        def _grad(dy):
+            inp = communicate(x)
+            dy, dwgt = jax.jvp(_fn, inp, w)[1](dy)
+            mid, left, right = jnp.split(dy, 3, -1)
+            right, left = rotate(right, left)
+            return mid + left + right
+        
+        return _fn(communicate(x), w), _grad
 
     if self.shared_weights:
-      y = lax.conv_general_dilated(
-          inputs,
-          kernel,
-          strides,
-          padding_lax,
-          lhs_dilation=input_dilation,
-          rhs_dilation=kernel_dilation,
-          dimension_numbers=dimension_numbers,
-          feature_group_count=self.feature_group_count,
-          precision=self.precision
-      )
+      y = _conv(inputs, kernel)
     else:
-      y = lax.conv_general_dilated_local(
-          lhs=inputs,
-          rhs=kernel,
-          window_strides=strides,
-          padding=padding_lax,
-          filter_shape=kernel_size,
-          lhs_dilation=input_dilation,
-          rhs_dilation=kernel_dilation,
-          dimension_numbers=dimension_numbers,
-          precision=self.precision
-      )
+      y = _conv(inputs, kernel)
 
     if self.use_bias:
       bias = bias.reshape((1,) * (y.ndim - bias.ndim) + bias.shape)
@@ -343,23 +341,15 @@ def rotate(left: jax.Array, right: jax.Array):
     return (lax.ppermute(left, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())]),
             lax.ppermute(right, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())]))
 
-
-@jax.custom_gradient
 def communicate(x: jax.Array):
-    
-    def _grad(dy: jax.Array):
-        mid, left, right = jnp.split(dy, 3, -1)
-        right, left = rotate(right, left)
-        return mid + left + right
-    
-    return x, _grad
+    left, right = rotate(x, x)
+    return jnp.concatenate([x, left, right], -1)
 
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     global _SHUFFLE
     inputs = jnp.asarray(inputs, self.dtype)
     if _SHUFFLE and any(s.startswith("resnets_") for s in self.scope.path) and any(
             k in self.scope.path for k in _PATCHED_BLOCK_NAMES):
-        inputs = communicate(inputs)
         out = _patched_call(self, inputs)
     else:
         out = _original_call(self, inputs)
