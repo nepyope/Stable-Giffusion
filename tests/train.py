@@ -89,8 +89,8 @@ def wrapper(x, w, *args, **kwargs):
 
     def _fn(a, b):
         return lax.dot_general(a, b, *args, **kwargs)
-   # if not _SHUFFLE:
-     #   return _fn(x, w)
+    if not _SHUFFLE:
+        return _fn(x, w)
     
     @jax.custom_gradient
     def _call(a, b):
