@@ -85,7 +85,31 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
 
 FlaxAttentionBlock.__call__ = _new_attention
 
+def wrapper(x, w, *args, **kwargs):
+    def _fn(a, b):
+        return lax.dot_general(a, b, *args, **kwargs)
+    if not SHUFFLE:
+        return _fn(x, w)
+    @jax.custom_gradient
+    def _call(a, b):
+        def _grad(dy):
+            inp = communicate(a)
+            dy, dwgt = jax.jvp(_fn, inp, b)(dy)
+            mid, left, right = jnp.split(dy, 3, -1)
+            right, left = rotate(right, left)
+            return mid + left + right
+        return _fn(communicate(a), b), _grad
+    return _call(x, w)
 
+_old_dense = nn.Dense.__call__
+
+def _new_dense(self, *args, **kwargs):
+    if "patched" not in self.__dict__:
+        self.__dict__["dot_general"] = wrapper
+        self["patched"] = True
+    return _old_dense(self, *args, **kwargs)
+
+nn.Dense.__call__ = _new_dense
 
 #####START_CONV_PATCH#####
 
