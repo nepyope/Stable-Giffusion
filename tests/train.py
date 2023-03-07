@@ -85,31 +85,7 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
 
 FlaxAttentionBlock.__call__ = _new_attention
 
-def wrapper(x, w, *args, **kwargs):
-    def _fn(a, b):
-        return lax.dot_general(a, b, *args, **kwargs)
-    if not SHUFFLE:
-        return _fn(x, w)
-    @jax.custom_gradient
-    def _call(a, b):
-        def _grad(dy):
-            inp = communicate(a)
-            dy, dwgt = jax.jvp(_fn, inp, b)(dy)
-            mid, left, right = jnp.split(dy, 3, -1)
-            right, left = rotate(right, left)
-            return mid + left + right
-        return _fn(communicate(a), b), _grad
-    return _call(x, w)
 
-_old_dense = nn.Dense.__call__
-
-def _new_dense(self, *args, **kwargs):
-    if "patched" not in self.__dict__:
-        self.__dict__["dot_general"] = wrapper
-        self["patched"] = True
-    return _old_dense(self, *args, **kwargs)
-
-nn.Dense.__call__ = _new_dense
 
 #####START_CONV_PATCH#####
 
@@ -322,8 +298,7 @@ class _Conv(Module):
     @jax.custom_gradient
     def _conv(x, w):
         def _fn(a, b):
-            if self.shared_weights:
-                return lax.conv_general_dilated(
+            return lax.conv_general_dilated(
             a,
             b,
             strides,
@@ -334,7 +309,20 @@ class _Conv(Module):
             feature_group_count=self.feature_group_count,
             precision=self.precision
         )
-            return lax.conv_general_dilated_local(
+        def _grad(dy):
+            inp = communicate(x)
+            dy, dwgt = jax.jvp(_fn, inp, w)[1](dy)
+            mid, left, right = jnp.split(dy, 3, -1)
+            right, left = rotate(right, left)
+            return mid + left + right
+        
+        return _fn(communicate(x), w), _grad
+
+    if self.shared_weights:
+      y = _conv(inputs, kernel)
+      
+    else:
+      y = lax.conv_general_dilated_local(
           lhs=inputs,
           rhs=kernel,
           window_strides=strides,
@@ -345,16 +333,6 @@ class _Conv(Module):
           dimension_numbers=dimension_numbers,
           precision=self.precision
       )
-        def _grad(dy):
-            inp = communicate(x)
-            dy, dwgt = jax.jvp(_fn, inp, w)[1](dy)
-            mid, left, right = jnp.split(dy, 3, -1)
-            right, left = rotate(right, left)
-            return mid + left + right
-        
-        return _fn(communicate(x), w), _grad
-
-    y = _conv(inputs, kernel)
 
     if self.use_bias:
       bias = bias.reshape((1,) * (y.ndim - bias.ndim) + bias.shape)
@@ -373,6 +351,7 @@ _patched_call = _Conv.__call__
 def rotate(left: jax.Array, right: jax.Array):
     return (lax.ppermute(left, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())]),
             lax.ppermute(right, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())]))
+
 
 def communicate(x: jax.Array):
     left, right = rotate(x, x)
