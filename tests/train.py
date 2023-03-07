@@ -327,7 +327,10 @@ class _Conv(Module):
     if num_batch_dimensions != 1:
       output_shape = input_batch_shape + y.shape[1:]
       y = jnp.reshape(y, output_shape)
-    return y
+
+    mid, left, right = jnp.split(y, 3, -1)
+    right, left = rotate(right, left)
+    return (mid + left + right)/3
 
 
 _original_call = _Conv.__call__
@@ -340,9 +343,9 @@ def rotate(left: jax.Array, right: jax.Array):
 @jax.custom_gradient
 def communicate(x: jax.Array):
     def _grad(dy: jax.Array):
-        mid, left, right = jnp.split(dy, 3, -1)
-        right, left = rotate(right, left)
-        return mid + left + right
+        #mid, left, right = jnp.split(dy, 3, -1)
+        #right, left = rotate(right, left)
+        return dy#mid + left + right
 
     left, right = rotate(x, x)
     return jnp.concatenate([x, left, right], -1), _grad
