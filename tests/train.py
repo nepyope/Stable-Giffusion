@@ -328,14 +328,12 @@ class _Conv(Module):
       output_shape = input_batch_shape + y.shape[1:]
       y = jnp.reshape(y, output_shape)
 
-    print(y.shape)
     return y
 
 
-#_original_call = _Conv.__call__
-nn.Conv.__call__ = _Conv.__call__
+_original_call = _Conv.__call__
 
-'''
+
 def rotate(left: jax.Array, right: jax.Array):
     return (lax.ppermute(left, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())]),
             lax.ppermute(right, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())]))
@@ -344,6 +342,7 @@ def rotate(left: jax.Array, right: jax.Array):
 @jax.custom_gradient
 def communicate(x: jax.Array):
     def _grad(dy: jax.Array):
+        print(dy.shape)
         mid, left, right = jnp.split(dy, 3, -1)
         right, left = rotate(right, left)
         return mid + left + right
@@ -362,7 +361,7 @@ def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     return out
 
 nn.Conv.__call__ = conv_call 
-'''
+
 #####END_CONV_PATCH#####
 
 
@@ -503,16 +502,16 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
 
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
-    
-   # max_up_block = max(int(k.split('_')[-1]) for k in unet_params.keys() if k.startswith("up_blocks_"))
-  #  _PATCHED_BLOCK_NAMES.extend([f"down_blocks_{i}" for i in range(_PATCHED_BLOCKS)])
-   #_PATCHED_BLOCK_NAMES.extend([f"up_blocks_{max_up_block - i}" for i in range(_PATCHED_BLOCKS)])
+
+    max_up_block = max(int(k.split('_')[-1]) for k in unet_params.keys() if k.startswith("up_blocks_"))
+    _PATCHED_BLOCK_NAMES.extend([f"down_blocks_{i}" for i in range(_PATCHED_BLOCKS)])
+    _PATCHED_BLOCK_NAMES.extend([f"up_blocks_{max_up_block - i}" for i in range(_PATCHED_BLOCKS)])
 
     # Bulk of the parameters is in middle blocks (mid_block taking up 117M for conv) while the outer blocks are more
     # parameter-efficient, with the down_blocks_0 using 3.6M params. We only patch the outermost blocks for
     # param-efficiency, although the inner blocks would be more flop-efficient while taking up less intermediate space.
 
-    #unet_params = filter_dict(unet_params, [_PATCHED_BLOCK_NAMES, "resnets_", "conv", "kernel"])
+    unet_params = filter_dict(unet_params, [_PATCHED_BLOCK_NAMES, "resnets_", "conv", "kernel"])
 
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
