@@ -84,7 +84,7 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
 
 
 FlaxAttentionBlock.__call__ = _new_attention
-'''
+
 def wrapper(x, w, *args, **kwargs):
 
     def _fn(a, b):
@@ -112,7 +112,7 @@ def _new_dense(self, *args, **kwargs):
     return _old_dense(self, *args, **kwargs)
 
 nn.Dense.__call__ = _new_dense
-'''
+
 
 #####START_CONV_PATCH#####
 
@@ -321,7 +321,6 @@ class _Conv(Module):
     def _conv(x, w):
         def _fn(a, b):
             if self.shared_weights:
-                a = communicate(a)
                 return lax.conv_general_dilated(
             a,
             b,
@@ -334,8 +333,8 @@ class _Conv(Module):
             precision=self.precision
         )
             return lax.conv_general_dilated_local(
-          lhs=inputs,
-          rhs=kernel,
+          lhs=a,
+          rhs=b,
           window_strides=strides,
           padding=padding_lax,
           filter_shape=kernel_size,
@@ -345,13 +344,13 @@ class _Conv(Module):
           precision=self.precision
       )
         def _grad(dy):
-            inp = communicate(x)
-            dy, dwgt = jax.jvp(_fn, inp, w)[1](dy)
-            mid, left, right = jnp.split(dy, 3, -1)
-            right, left = rotate(right, left)
+            inp = communicate(x) dy, dwgt = 
+            jax.jvp(_fn, inp, w)[1](dy) mid, 
+            left, right = jnp.split(dy, 3, -1) 
+            right, left = rotate(right, left) 
             return mid + left + right
-        
-        return _fn(x, w), _grad
+                a = communicate(a)
+        return _fn(communicate(a), w), _grad
 
     y = _conv(inputs, kernel)
 
