@@ -107,7 +107,7 @@ _old_dense = nn.Dense.__call__
 
 def _new_dense(self, inp):
     self.__dict__["dot_general"] = lambda *a, **k: wrapper(inp, *a[1:], **k)
-    return _old_dense(self, jnp.zeros((1, inp.shape[-1] * (3 if _SHUFFLE else 1))))
+    return _old_dense(self, jnp.zeros((*inp.shape[:-1], inp.shape[-1] * (3 if _SHUFFLE else 1),)))
 
 nn.Dense.__call__ = _new_dense
 
