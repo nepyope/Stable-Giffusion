@@ -504,7 +504,7 @@ def filter_dict(dct: Union[Dict[str, Any], jax.Array]
         elif isinstance(v, dict):
             dct[k] = filter_dict(v)
         elif k == "time_emb_proj":
-            dct[k] = jnp.concatenate([v] + [v * 0.001] * 2, -1)
+            dct[k] = jnp.concatenate([v] + [v * 0.001] * 2, 0)
     return dct
 
 
