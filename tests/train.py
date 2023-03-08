@@ -96,7 +96,7 @@ def wrapper(x, w, *args, **kwargs):
     def _call(a, b):
         def _grad(dy):
             inp = communicate(a)
-            dy, dwgt = jax.vjp(_fn, inp, b)(dy)
+            dy, dwgt = jax.vjp(_fn, inp, b)[1](dy)
             mid, left, right = jnp.split(dy, 3, -1)
             right, left = rotate(right, left)
             return mid + left + right
@@ -343,7 +343,7 @@ class _Conv(Module):
       )
         def _grad(dy):
             inp = communicate(x)
-            dy, dwgt = jax.jvp(_fn, inp, w)[1](dy)
+            dy, dwgt = jax.vjp(_fn, inp, w)[1](dy)
             mid, left, right = jnp.split(dy, 3, -1) 
             right, left = rotate(right, left) 
             return mid + left + right
