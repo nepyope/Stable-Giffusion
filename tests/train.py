@@ -321,6 +321,7 @@ class _Conv(Module):
     def _conv(x, w):
         def _fn(a, b):
             if self.shared_weights:
+                a = communicate(a)
                 return lax.conv_general_dilated(
             a,
             b,
@@ -350,7 +351,7 @@ class _Conv(Module):
             right, left = rotate(right, left)
             return mid + left + right
         
-        return _fn(communicate(x), w), _grad
+        return _fn(x, w), _grad
 
     y = _conv(inputs, kernel)
 
