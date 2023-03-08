@@ -97,9 +97,10 @@ def wrapper(x, w, *args, **kwargs):
         def _grad(dy):
             inp = communicate(a)
             dy, dwgt = jax.vjp(_fn, inp, b)[1](dy)
-            mid, left, right = jnp.split(dy, 3, -1)
+            mid, lr = jnp.split(dy, 2, -1)
+            left, right = jnp.split(lr, 2, -1)
             right, left = rotate(right, left)
-            return mid + left + right, dwgt
+            return mid + jnp.concatenate([left, right], -1), dwgt
         return _fn(communicate(a), b), _grad
     return _call(x, w)
 
@@ -344,9 +345,10 @@ class _Conv(Module):
         def _grad(dy):
             inp = communicate(x)
             dy, dwgt = jax.vjp(_fn, inp, w)[1](dy)
-            mid, left, right = jnp.split(dy, 3, -1) 
-            right, left = rotate(right, left) 
-            return mid + left + right, dwgt
+            mid, lr = jnp.split(dy, 2, -1)
+            left, right = jnp.split(lr, 2, -1)
+            right, left = rotate(right, left)
+            return mid + jnp.concatenate([left, right], -1), dwgt
         return _fn(communicate(x), w), _grad
 
     y = _conv(inputs, kernel)
@@ -370,7 +372,8 @@ def rotate(left: jax.Array, right: jax.Array):
             lax.ppermute(right, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())]))
 
 def communicate(x: jax.Array):
-    left, right = rotate(x, x)
+    left, right = jnp.split(x, 2, -1)
+    left, right = rotate(left, right)
     return jnp.concatenate([x, left, right], -1)
 
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
@@ -498,7 +501,7 @@ def filter_dict(dct: Union[Dict[str, Any], jax.Array]
                 ) -> Union[Dict[str, Any], jax.Array]:
     for k, v in dct.items():
         if k == "kernel":
-            dct[k] = jnp.concatenate([v] + [v * 0.001] * 2, -2)
+            dct[k] = jnp.concatenate([v] + [v * 0.001] * 1, -2)
             print(0, k, v.shape, dct[k].shape)
         elif isinstance(v, dict):
             print(1, k)
