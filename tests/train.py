@@ -108,7 +108,7 @@ _old_dense = nn.Dense.__call__
 
 def _new_dense(self, inp):
     self.__dict__["dot_general"] = lambda *a, **k: wrapper(inp, *a[1:], **k)
-    return _old_dense(self, jnp.zeros((*inp.shape[:-1], inp.shape[-1] * (3 if _SHUFFLE else 1),)))
+    return _old_dense(self, jnp.zeros((*inp.shape[:-1], inp.shape[-1] * (2 if _SHUFFLE else 1),)))
 
 nn.Dense.__call__ = _new_dense
 
@@ -263,7 +263,7 @@ class _Conv(Module):
       # One shared convolutional kernel for all pixels in the output.
       assert in_features % self.feature_group_count == 0
       kernel_shape = kernel_size + (
-          in_features // self.feature_group_count * 3, self.features)
+          in_features // self.feature_group_count * 2, self.features)
 
     else:
       if self.feature_group_count != 1:
@@ -290,7 +290,7 @@ class _Conv(Module):
 
       # One (unshared) convolutional kernel per each pixel in the output.
       kernel_shape = conv_output_shape[1:-1] + (np.prod(kernel_size) *
-                                                in_features * 3, self.features)
+                                                in_features * 2, self.features)
 
     if self.mask is not None and self.mask.shape != kernel_shape:
       raise ValueError('Mask needs to have the same shape as weights. '
