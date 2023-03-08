@@ -105,11 +105,9 @@ def wrapper(x, w, *args, **kwargs):
 
 _old_dense = nn.Dense.__call__
 
-def _new_dense(self, *args, **kwargs):
-    if "patched" not in self.__dict__:
-        self.__dict__["dot_general"] = wrapper
-        self.__dict__["patched"] = True
-    return _old_dense(self, *args, **kwargs)
+def _new_dense(self, inp):
+    self.__dict__["dot_general"] = lambda *a, **k: wrapper(inp, *a[1:], **k)
+    return _old_dense(self, jnp.zeros((1, inp.shape[-1] * (3 if _SHUFFLE else 1))))
 
 nn.Dense.__call__ = _new_dense
 
@@ -291,7 +289,7 @@ class _Conv(Module):
 
       # One (unshared) convolutional kernel per each pixel in the output.
       kernel_shape = conv_output_shape[1:-1] + (np.prod(kernel_size) *
-                                                in_features, self.features)
+                                                in_features * 3, self.features)
 
     if self.mask is not None and self.mask.shape != kernel_shape:
       raise ValueError('Mask needs to have the same shape as weights. '
