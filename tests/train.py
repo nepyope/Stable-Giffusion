@@ -347,7 +347,7 @@ class _Conv(Module):
             mid, left, right = jnp.split(dy, 3, -1) 
             right, left = rotate(right, left) 
             return mid + left + right
-        return _fn(communicate(a), w), _grad
+        return _fn(communicate(x), w), _grad
 
     y = _conv(inputs, kernel)
 
