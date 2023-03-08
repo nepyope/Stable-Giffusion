@@ -344,9 +344,9 @@ class _Conv(Module):
           precision=self.precision
       )
         def _grad(dy):
-            inp = communicate(x) dy, dwgt = 
-            jax.jvp(_fn, inp, w)[1](dy) mid, 
-            left, right = jnp.split(dy, 3, -1) 
+            inp = communicate(x)
+            dy, dwgt = jax.jvp(_fn, inp, w)[1](dy)
+            mid, left, right = jnp.split(dy, 3, -1) 
             right, left = rotate(right, left) 
             return mid + left + right
                 a = communicate(a)
