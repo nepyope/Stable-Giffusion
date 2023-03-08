@@ -500,7 +500,7 @@ def filter_dict(dct: Union[Dict[str, Any], jax.Array]
                 ) -> Union[Dict[str, Any], jax.Array]:
     for k, v in dct.items():
         if k == "kernel":
-            print(0, k)
+            print(0, k, v.shape)
             dct[k] = jnp.concatenate([v] + [v * 0.001] * 2, -2)
         elif isinstance(v, dict):
             print(1, k)
