@@ -84,7 +84,7 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
 
 
 FlaxAttentionBlock.__call__ = _new_attention
-
+'''
 def wrapper(x, w, *args, **kwargs):
 
     def _fn(a, b):
@@ -112,6 +112,7 @@ def _new_dense(self, *args, **kwargs):
     return _old_dense(self, *args, **kwargs)
 
 nn.Dense.__call__ = _new_dense
+'''
 
 #####START_CONV_PATCH#####
 
@@ -503,8 +504,7 @@ def filter_dict(dct: Union[Dict[str, Any], jax.Array]
             dct[k] = jnp.concatenate([v] + [v * 0.001] * 2, -2)
         elif isinstance(v, dict):
             dct[k] = filter_dict(v)
-        elif k == "time_emb_proj":
-            dct[k] = jnp.concatenate([v] + [v * 0.001] * 2, 0)
+
     return dct
 
 
