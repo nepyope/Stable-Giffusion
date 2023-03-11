@@ -728,15 +728,17 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
             if global_step <= 2:
                 log(f"Step {global_step}")
-            i *= lsteps
 
-            if i % sample_interval == 1:
+            if i % (sample_interval // lsteps) == 1:
                 log("Sampling")
                 sample_out = p_sample(unet_state.params, batch)
                 s_mode, *rec = np.split(to_host(sample_out, lambda x: x), 5, 1)
                 for rid, g in enumerate(rec):
                     extra[f"Samples/Reconstruction (U-Net, Guidance {2 ** rid}) {pid}"] = to_img(g)
                 log("Finished sampling")
+
+
+            i *= lsteps
 
             log(f"Before step {i}")
             unet_state, scalars = p_train_step(unet_state, batch)
