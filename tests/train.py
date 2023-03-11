@@ -501,7 +501,7 @@ def filter_dict(dct: Union[Dict[str, Any], jax.Array]
                 ) -> Union[Dict[str, Any], jax.Array]:
     for k, v in dct.items():
         if k == "kernel":
-            dct[k] = jnp.concatenate([v] + [v * 0.001] * 1, -2)
+            dct[k] = jnp.concatenate([v] + [v * 0.00001] * 1, -2)
             print(0, k, v.shape, dct[k].shape)
         elif isinstance(v, dict):
             print(1, k)
@@ -555,8 +555,8 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     sched_state = noise_scheduler.create_state()
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np")
 
-    def get_encoded(input_ids: jax.Array, attention_mask: jax.Array):
-        return text_encoder(input_ids[None], attention_mask[None], params=text_encoder.params)[0]
+    def get_encoded(input_ids: jax.Array):
+        return text_encoder(input_ids[None], params=text_encoder.params)[0]
 
     def unet_fn(noise, encoded, timesteps, params):
         global _SHUFFLE
@@ -578,8 +578,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     def all_to_all_batch(batch: Dict[str, Union[np.ndarray, int]]) -> Dict[str, Union[np.ndarray, int]]:
         return {"pixel_values": all_to_all(batch["pixel_values"], 1),
                 "idx": batch["idx"] + jnp.arange(jax.device_count() * video_group),
-                "input_ids": all_to_all(batch["input_ids"], 1),
-                "attention_mask": all_to_all(batch["attention_mask"], 1)}
+                "input_ids": all_to_all(batch["input_ids"], 1)}
 
     def rng(idx: jax.Array):
         return jax.random.PRNGKey(idx * jax.device_count() + device_id())
@@ -600,8 +599,8 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         hidden_mode = posterior.latent_dist.mode()
         latents = jnp.transpose(hidden_mode, (0, 3, 1, 2)) * 0.18215
 
-        encoded = get_encoded(batch["input_ids"], batch["attention_mask"])
-        unc = get_encoded(unconditioned_tokens["input_ids"][0], unconditioned_tokens["attention_mask"][0])
+        encoded = get_encoded(batch["input_ids"])
+        unc = get_encoded(unconditioned_tokens["input_ids"][0])
         encoded = jnp.concatenate([unc] * 4 + [encoded] * 4, 0)
 
         def _step(state, i):
@@ -644,7 +643,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             gauss0, drop0 = jax.random.split(rng(b["idx"] + 1), 2)
             out = vae_apply(inp, rngs={"gaussian": gauss0, "dropout": drop0}, deterministic=False,
                             method=vae.encode).latent_dist
-            enc = get_encoded(b['input_ids'], b['attention_mask'])
+            enc = get_encoded(b['input_ids'])
             return None, ((out.mean.astype(jnp.bfloat16), out.std.astype(jnp.bfloat16)), enc.astype(jnp.bfloat16))
 
         _, (all_vae_out, all_encoded) = lax.scan(_vae_apply, None, batch)
@@ -724,8 +723,6 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             batch = {"pixel_values": vid.astype(jnp.uint8).reshape(jax.local_device_count(), video_group * jax.device_count(), -1),
                      "input_ids": ids.astype(jnp.int32).reshape(jax.local_device_count(),
                                                                 video_group * jax.device_count(), clip_tokens),
-                     "attention_mask": msk.astype(jnp.int32).reshape(jax.local_device_count(),
-                                                                     video_group * jax.device_count(), clip_tokens),
                      "idx": jnp.full((jax.local_device_count(),),
                                      int(hashlib.blake2b(str(i).encode()).hexdigest()[:4], 16), dtype=jnp.int_)
                      }
@@ -734,7 +731,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 log(f"Step {global_step}")
             i *= lsteps
 
-            if i % sample_interval == 0:
+            if i % sample_interval == 1:
                 log("Sampling")
                 sample_out = p_sample(unet_state.params, batch)
                 s_mode, *rec = np.split(to_host(sample_out, lambda x: x), 5, 1)
@@ -754,11 +751,12 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 vid_per_day = i / timediff * 24 * 3600 * jax.device_count()
                 vals = {"U-Net MSE/Total": float(unet_sq), "U-Net MAE/Total": float(unet_abs),
                         "Step": i + offset - lsteps, "Epoch": epoch}
+                if offset == 0:
+                    vals.update(extra)
+                    extra = {}
                 if offset == lsteps - 1:
                     vals.update({"Runtime": timediff, "Speed/Videos per Day": vid_per_day,
                                  "Speed/Frames per Day": vid_per_day * context})
-                    vals.update(extra)
-                    extra = {}
                 run.log(vals, step=(global_step - 1) * lsteps + offset)
             if i % save_interval == 0 and jax.process_index() == 0:
                 for n, s in (("unet", unet_state),):
