@@ -515,7 +515,7 @@ def filter_dict(dct: Union[Dict[str, Any], jax.Array]
 def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float = 1e-16, downloaders: int = 2,
          resolution: int = 256, fps: int = 8, context: int = 8, workers: int = 2, prefetch: int = 1,
          batch_prefetch: int = 4, base_model: str = "flax_base_model", data_path: str = "./urls",
-         sample_interval: int = 2048, parallel_videos: int = 60, schedule_length: int = 1024, warmup_steps: int = 1024,
+         sample_interval: int = 2048, parallel_videos: int = 60, warmup_steps: int = 1024,
          lr_halving_every_n_steps: int = 2 ** 16, clip_tokens: int = 77, save_interval: int = 2048,
          overwrite: bool = True, base_path: str = "gs://video-us/checkpoint_2", local_iterations: int = 16,
          unet_batch: int = 1, video_group: int = 8, subsample: int = 32):
@@ -550,9 +550,8 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     unet_state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
-    noise_scheduler = FlaxPNDMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear",
-                                        num_train_timesteps=schedule_length)
-    sched_state = noise_scheduler.create_state()
+    noise_scheduler, sched_state = FlaxPNDMScheduler.from_pretrained(base_model, subfolder="scheduler")
+    schedule_length = len(noise_scheduler)
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np")
 
     def get_encoded(input_ids: jax.Array):
