@@ -422,7 +422,7 @@ def deepmerge(dct0, dct1):
     for k, v in dct1.items():
         if isinstance(v, dict):
             if k in new:
-                new[k] = {**new[k], **deepmerge(v, dct0.get(k, {}))}
+                new[k] = deepmerge(new[k], deepmerge(v, dct0.get(k, {})))
             else:
                 new[k] = deepmerge(v, dct0.get(k, {}))
             continue
