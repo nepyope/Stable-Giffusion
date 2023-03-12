@@ -571,16 +571,17 @@ def compile_fn(fn, name: str):
 
 def filter_dict(dct: Union[Dict[str, Any], jax.Array]
                 ) -> Union[Dict[str, Any], jax.Array]:
+    new = dct.copy()
     for k, v in list(dct.items()):
         if k == "kernel":
-            dct[k + "2"] = v * 0.00001
+            new[k + "2"] = v * 0.00001
             print(0, k, v.shape, dct[k].shape)
         elif isinstance(v, dict):
             print(1, k)
-            dct[k] = filter_dict(v)
+            new[k] = filter_dict(v)
         else:
             print(2, k)
-    return dct
+    return new
 
 
 @app.command()
@@ -600,12 +601,12 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
 
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
-    no_k2_params = ne_kernel2(unet_params)
-    unet_params = only_kernel2(unet_params)
+    no_k2_params = unet_params
 
     max_up_block = max(int(k.split('_')[-1]) for k in unet_params.keys() if k.startswith("up_blocks_"))
 
     unet_params = filter_dict(unet_params)
+    unet_params = only_kernel2(unet_params)
 
     text_encoder = FlaxCLIPTextModel.from_pretrained(base_model, subfolder="text_encoder", dtype=jnp.float32)
 
