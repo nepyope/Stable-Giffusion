@@ -522,14 +522,11 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule,
         return jnp.zeros_like(x, dtype=jnp.bfloat16)
 
     def init_fn(params):
-        params = only_kernel2(params)
         return {"mu": jax.tree_util.tree_map(zero, params),
                 "nu": jax.tree_util.tree_map(zero, params), "count": jnp.zeros((), dtype=jnp.int64)}
 
     def update_fn(updates, state, params=None):
         count = state["count"] + 1
-        updates = only_kernel2(updates)
-        params = only_kernel2(params)
 
         def get_update(grad: jax.Array, param: jax.Array, mu: jax.Array, nu: jax.Array):
             dtype = mu.dtype
@@ -611,6 +608,8 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(base_model, subfolder="vae", dtype=jnp.float32)
 
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(base_model, subfolder="unet", dtype=jnp.float32)
+    no_k2_params = ne_kernel2(unet_params)
+    unet_params = only_kernel2(unet_params)
 
     max_up_block = max(int(k.split('_')[-1]) for k in unet_params.keys() if k.startswith("up_blocks_"))
 
@@ -668,7 +667,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     def rng_synced(idx: jax.Array):
         return jax.random.PRNGKey(idx)
 
-    def sample(unet_params, batch: Dict[str, Union[np.ndarray, int]]):
+    def sample(k2_params, batch: Dict[str, Union[np.ndarray, int]]):
         batch = all_to_all_batch(batch)
         batch = jax.tree_map(lambda x: x[0], batch)
         latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 4)
@@ -683,6 +682,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         encoded = get_encoded(batch["input_ids"])
         unc = get_encoded(unconditioned_tokens["input_ids"][0])
         encoded = jnp.concatenate([unc] * 4 + [encoded] * 4, 0)
+        unet_params = deepmerge(no_k2_params, k2_params)
 
         def _step(state, i):
             latents, state = state
@@ -729,7 +729,6 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         _, (all_vae_out, all_encoded) = lax.scan(_vae_apply, None, batch)
         print(all_vae_out[0].shape, batch["pixel_values"].shape)
         all_encoded = all_encoded.reshape(all_encoded.shape[0], *all_encoded.shape[2:])  # remove batch dim
-        no_k2_params = ne_kernel2(outer_state.params)
 
         def _loss(k2_params, inp):
             global _SHUFFLE
@@ -764,7 +763,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
         def _outer(state: TrainState, k):
             ix, av, ae = k
-            params = only_kernel2(state.params)
+            params = state.params
             out = _grad(params, (ix[0], (av[0][0], av[1][0]), ae[0]))
             inp = ix[1:], (av[0][1:], av[1][1:]), ae[1:]
             out, _ = lax.scan(_inner(params), out, inp)
