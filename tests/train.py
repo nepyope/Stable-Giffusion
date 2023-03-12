@@ -416,9 +416,9 @@ def deepmerge(dct0, dct1):
     new = dct0.copy()
     for k, v in dct1.items():
         if k not in new:
+            print("new key", k)
             new[k] = v
-            continue
-        if isinstance(v, dict):
+        elif isinstance(v, dict):
             new[k] = deepmerge(new.get(k, {}), v)
         else:
             print("Duplicate key", k)
