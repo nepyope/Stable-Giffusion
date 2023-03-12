@@ -1,4 +1,3 @@
-import copy
 import datetime
 import hashlib
 import operator
@@ -18,23 +17,23 @@ from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel, FlaxPNDMSched
 from diffusers.models.attention_flax import FlaxAttentionBlock
 from flax import jax_utils
 from flax import linen as nn
+from flax.linen import initializers
+from flax.linen.dtypes import promote_dtype
+from flax.linen.initializers import lecun_normal
+from flax.linen.initializers import zeros
+from flax.linen.linear import canonicalize_padding, _conv_dimension_numbers
+from flax.linen.linear import default_kernel_init
+from flax.linen.module import Module
+from flax.linen.module import compact
 from flax.training.train_state import TrainState
+from jax import ShapedArray
+from jax import eval_shape
 from jax import lax
 from jax.experimental.compilation_cache import compilation_cache as cc
 from optax import GradientTransformation
 from transformers import CLIPTokenizer, FlaxCLIPTextModel
 
 from data import DataLoader
-
-from flax.linen.initializers import lecun_normal
-from flax.linen.initializers import zeros
-from flax.linen.module import compact
-from flax.linen.module import Module
-from flax.linen.dtypes import promote_dtype
-from flax.linen.linear import canonicalize_padding, _conv_dimension_numbers
-from jax import eval_shape
-from jax import ShapedArray
-
 
 cc.initialize_cache("/home/ubuntu/cache")
 app = typer.Typer(pretty_exceptions_enable=False)
@@ -85,33 +84,61 @@ def _new_attention(self: FlaxAttentionBlock, hidden_states: jax.Array, context: 
 
 FlaxAttentionBlock.__call__ = _new_attention
 
-def wrapper(x, w, *args, **kwargs):
 
-    def _fn(a, b):
-        return lax.dot_general(a, b, *args, **kwargs)
-    if not _SHUFFLE:
-        return _fn(x, w)
-    
-    @jax.custom_gradient
-    def _call(a, b):
-        def _grad(dy):
-            inp = communicate(a)
-            dy, dwgt = jax.vjp(_fn, inp, b)[1](dy)
-            mid, lr = jnp.split(dy, 2, -1)
-            left, right = jnp.split(lr, 2, -1)
-            right, left = rotate(right, left)
-            return mid + jnp.concatenate([left, right], -1), dwgt
-        return _fn(communicate(a), b), _grad
-    return _call(x, w)
+class Dense2(Module):
+    features: int
+    use_bias: bool = True
+    dtype = None
+    param_dtype = jnp.float32
+    precision = None
+    kernel_init = default_kernel_init
+    bias_init = initializers.zeros_init()
+    dot_general = lax.dot_general
 
-_old_dense = nn.Dense.__call__
+    @compact
+    def __call__(self, inputs):
+        kernel = self.param('kernel',
+                            self.kernel_init,
+                            (jnp.shape(inputs)[-1], self.features),
+                            self.param_dtype)
+        if self.use_bias:
+            bias = self.param('bias', self.bias_init, (self.features,),
+                              self.param_dtype)
+        else:
+            bias = None
+        inputs, kernel, bias = promote_dtype(inputs, kernel, bias, dtype=self.dtype)
 
-def _new_dense(self, inp):
-    self.__dict__["dot_general"] = lambda *a, **k: wrapper(inp, *a[1:], **k)
-    return _old_dense(self, jnp.zeros((*inp.shape[:-1], inp.shape[-1] * (2 if _SHUFFLE else 1),)))
+        def _fn(a, b):
+            return self.dot_general(a, b, (((inputs.ndim - 1,), (0,)), ((), ())), precision=self.precision)
 
-nn.Dense.__call__ = _new_dense
+        if not _SHUFFLE:
+            return _fn(inputs, kernel)
 
+        kernel2 = self.param('kernel2',
+                             self.kernel_init,
+                             (jnp.shape(inputs)[-1], self.features),
+                             self.param_dtype)
+        kernel2 = promote_dtype(kernel2, dtype=self.dtype)
+
+        @jax.custom_gradient
+        def _call(a, b, c):
+            def _grad(dy):
+                dy0, _ = jax.vjp(_fn, a, b)[1](dy)
+                dy1, dwgt1 = jax.vjp(_fn, communicate(a), c)[1](dy)
+                left, right = jnp.split(dy1, 2, -1)
+                right, left = rotate(right, left)
+                return dy0 + jnp.concatenate([left, right], -1), None, dwgt1
+
+            return _fn(a, b) + _fn(communicate(a), c), _grad
+
+        y = _call(inputs, kernel, kernel2)
+
+        if bias is not None:
+            y += jnp.reshape(bias, (1,) * (y.ndim - 1) + (-1,))
+        return y
+
+
+nn.Dense.__call__ = Dense2.__call__
 
 #####START_CONV_PATCH#####
 
@@ -120,262 +147,270 @@ Shape = Tuple[int, ...]
 Dtype = Any  # this could be a real type?
 Array = Any
 PrecisionLike = Union[None, str, lax.Precision, Tuple[str, str],
-                      Tuple[lax.Precision, lax.Precision]]
+Tuple[lax.Precision, lax.Precision]]
 
 default_kernel_init = lecun_normal()
 
 PaddingLike = Union[str, int, Sequence[Union[int, Tuple[int, int]]]]
 LaxPadding = Union[str, Sequence[Tuple[int, int]]]
 
+
 class _Conv(Module):
-  """Convolution Module wrapping `lax.conv_general_dilated[_local]`.
-  Attributes:
-    features: number of convolution filters.
-    kernel_size: shape of the convolutional kernel. For 1D convolution,
-      the kernel size can be passed as an integer. For all other cases, it must
-      be a sequence of integers.
-    strides: an integer or a sequence of `n` integers, representing the
-      inter-window strides (default: 1).
-    padding: either the string `'SAME'`, the string `'VALID'`, the string
-      `'CIRCULAR'` (periodic boundary conditions), or a sequence of `n` `(low,
-      high)` integer pairs that give the padding to apply before and after each
-      spatial dimension. A single int is interpeted as applying the same padding
-      in all dims and passign a single int in a sequence causes the same padding
-      to be used on both sides. `'CAUSAL'` padding for a 1D convolution will
-      left-pad the convolution axis, resulting in same-sized output.
-    input_dilation: an integer or a sequence of `n` integers, giving the
-      dilation factor to apply in each spatial dimension of `inputs`
-      (default: 1). Convolution with input dilation `d` is equivalent to
-      transposed convolution with stride `d`.
-    kernel_dilation: an integer or a sequence of `n` integers, giving the
-      dilation factor to apply in each spatial dimension of the convolution
-      kernel (default: 1). Convolution with kernel dilation
-      is also known as 'atrous convolution'.
-    feature_group_count: integer, default 1. If specified divides the input
-      features into groups.
-    use_bias: whether to add a bias to the output (default: True).
-    mask: Optional mask for the weights during masked convolution. The mask must
-          be the same shape as the convolution weight matrix.
-    dtype: the dtype of the computation (default: infer from input and params).
-    param_dtype: the dtype passed to parameter initializers (default: float32).
-    precision: numerical precision of the computation see `jax.lax.Precision`
-      for details.
-    kernel_init: initializer for the convolutional kernel.
-    bias_init: initializer for the bias.
-  """
-  features: int
-  kernel_size: Sequence[int]
-  strides: Union[None, int, Sequence[int]] = 1
-  padding: PaddingLike = 'SAME'
-  input_dilation: Union[None, int, Sequence[int]] = 1
-  kernel_dilation: Union[None, int, Sequence[int]] = 1
-  feature_group_count: int = 1
-  use_bias: bool = True
-  mask: Optional[Array] = None
-  dtype: Optional[Dtype] = None
-  param_dtype: Dtype = jnp.float32
-  precision: PrecisionLike = None
-  kernel_init: Callable[[PRNGKey, Shape, Dtype], Array] = default_kernel_init
-  bias_init: Callable[[PRNGKey, Shape, Dtype], Array] = zeros
-
-  @property
-  def shared_weights(self) -> bool:  # type: ignore
-    """Defines whether weights are shared or not between different pixels.
-    Returns:
-      `True` to use shared weights in convolution (regular convolution).
-      `False` to use different weights at different pixels, a.k.a.
-      "locally connected layer", "unshared convolution", or "local convolution".
+    """Convolution Module wrapping `lax.conv_general_dilated[_local]`.
+    Attributes:
+      features: number of convolution filters.
+      kernel_size: shape of the convolutional kernel. For 1D convolution,
+        the kernel size can be passed as an integer. For all other cases, it must
+        be a sequence of integers.
+      strides: an integer or a sequence of `n` integers, representing the
+        inter-window strides (default: 1).
+      padding: either the string `'SAME'`, the string `'VALID'`, the string
+        `'CIRCULAR'` (periodic boundary conditions), or a sequence of `n` `(low,
+        high)` integer pairs that give the padding to apply before and after each
+        spatial dimension. A single int is interpeted as applying the same padding
+        in all dims and passign a single int in a sequence causes the same padding
+        to be used on both sides. `'CAUSAL'` padding for a 1D convolution will
+        left-pad the convolution axis, resulting in same-sized output.
+      input_dilation: an integer or a sequence of `n` integers, giving the
+        dilation factor to apply in each spatial dimension of `inputs`
+        (default: 1). Convolution with input dilation `d` is equivalent to
+        transposed convolution with stride `d`.
+      kernel_dilation: an integer or a sequence of `n` integers, giving the
+        dilation factor to apply in each spatial dimension of the convolution
+        kernel (default: 1). Convolution with kernel dilation
+        is also known as 'atrous convolution'.
+      feature_group_count: integer, default 1. If specified divides the input
+        features into groups.
+      use_bias: whether to add a bias to the output (default: True).
+      mask: Optional mask for the weights during masked convolution. The mask must
+            be the same shape as the convolution weight matrix.
+      dtype: the dtype of the computation (default: infer from input and params).
+      param_dtype: the dtype passed to parameter initializers (default: float32).
+      precision: numerical precision of the computation see `jax.lax.Precision`
+        for details.
+      kernel_init: initializer for the convolutional kernel.
+      bias_init: initializer for the bias.
     """
-    ...
-  @compact
-  def __call__(self, inputs: Array) -> Array:
-    """Applies a (potentially unshared) convolution to the inputs.
-    Args:
-      inputs: input data with dimensions (*batch_dims, spatial_dims...,
-        features). This is the channels-last convention, i.e. NHWC for a 2d
-        convolution and NDHWC for a 3D convolution. Note: this is different from
-        the input convention used by `lax.conv_general_dilated`, which puts the
-        spatial dimensions last.
-        Note: If the input has more than 1 batch dimension, all batch dimensions
-        are flattened into a single dimension for the convolution and restored
-        before returning.  In some cases directly vmap'ing the layer may yield
-        better performance than this default flattening approach.  If the input
-        lacks a batch dimension it will be added for the convolution and removed
-        n return, an allowance made to enable writing single-example code.
-    Returns:
-      The convolved data.
-    """
+    features: int
+    kernel_size: Sequence[int]
+    strides: Union[None, int, Sequence[int]] = 1
+    padding: PaddingLike = 'SAME'
+    input_dilation: Union[None, int, Sequence[int]] = 1
+    kernel_dilation: Union[None, int, Sequence[int]] = 1
+    feature_group_count: int = 1
+    use_bias: bool = True
+    mask: Optional[Array] = None
+    dtype: Optional[Dtype] = None
+    param_dtype: Dtype = jnp.float32
+    precision: PrecisionLike = None
+    kernel_init: Callable[[PRNGKey, Shape, Dtype], Array] = default_kernel_init
+    bias_init: Callable[[PRNGKey, Shape, Dtype], Array] = zeros
 
-    if isinstance(self.kernel_size, int):
-      raise TypeError('Expected Conv kernel_size to be a'
-                      ' tuple/list of integers (eg.: [3, 3]) but got'
-                      f' {self.kernel_size}.')
-    else:
-      kernel_size = tuple(self.kernel_size)
+    @property
+    def shared_weights(self) -> bool:  # type: ignore
+        """Defines whether weights are shared or not between different pixels.
+        Returns:
+          `True` to use shared weights in convolution (regular convolution).
+          `False` to use different weights at different pixels, a.k.a.
+          "locally connected layer", "unshared convolution", or "local convolution".
+        """
+        ...
 
-    def maybe_broadcast(x: Optional[Union[int, Sequence[int]]]) -> (
-        Tuple[int, ...]):
-      if x is None:
-        # backward compatibility with using None as sentinel for
-        # broadcast 1
-        x = 1
-      if isinstance(x, int):
-        return (x,) * len(kernel_size)
-      return tuple(x)
+    @compact
+    def __call__(self, inputs: Array) -> Array:
+        """Applies a (potentially unshared) convolution to the inputs.
+        Args:
+          inputs: input data with dimensions (*batch_dims, spatial_dims...,
+            features). This is the channels-last convention, i.e. NHWC for a 2d
+            convolution and NDHWC for a 3D convolution. Note: this is different from
+            the input convention used by `lax.conv_general_dilated`, which puts the
+            spatial dimensions last.
+            Note: If the input has more than 1 batch dimension, all batch dimensions
+            are flattened into a single dimension for the convolution and restored
+            before returning.  In some cases directly vmap'ing the layer may yield
+            better performance than this default flattening approach.  If the input
+            lacks a batch dimension it will be added for the convolution and removed
+            n return, an allowance made to enable writing single-example code.
+        Returns:
+          The convolved data.
+        """
 
-    # Combine all input batch dimensions into a single leading batch axis.
-    num_batch_dimensions = inputs.ndim - (len(kernel_size) + 1)
-    if num_batch_dimensions != 1:
-      input_batch_shape = inputs.shape[:num_batch_dimensions]
-      total_batch_size = int(np.prod(input_batch_shape))
-      flat_input_shape = (
-          (total_batch_size,) + inputs.shape[num_batch_dimensions:])
-      inputs = jnp.reshape(inputs, flat_input_shape)
+        if isinstance(self.kernel_size, int):
+            raise TypeError('Expected Conv kernel_size to be a'
+                            ' tuple/list of integers (eg.: [3, 3]) but got'
+                            f' {self.kernel_size}.')
+        else:
+            kernel_size = tuple(self.kernel_size)
 
-    # self.strides or (1,) * (inputs.ndim - 2)
-    strides = maybe_broadcast(self.strides)
-    input_dilation = maybe_broadcast(self.input_dilation)
-    kernel_dilation = maybe_broadcast(self.kernel_dilation)
+        def maybe_broadcast(x: Optional[Union[int, Sequence[int]]]) -> (
+                Tuple[int, ...]):
+            if x is None:
+                # backward compatibility with using None as sentinel for
+                # broadcast 1
+                x = 1
+            if isinstance(x, int):
+                return (x,) * len(kernel_size)
+            return tuple(x)
 
-    padding_lax = canonicalize_padding(self.padding, len(kernel_size))
-    if padding_lax == 'CIRCULAR':
-      kernel_size_dilated = [
-          (k - 1) * d + 1 for k, d in zip(kernel_size, kernel_dilation)
-      ]
-      zero_pad: List[Tuple[int, int]] = [(0, 0)]
-      pads = (zero_pad + [((k - 1) // 2, k // 2) for k in kernel_size_dilated] +
-              [(0, 0)])
-      inputs = jnp.pad(inputs, pads, mode='wrap')
-      padding_lax = 'VALID'
-    elif padding_lax == 'CAUSAL':
-      if len(kernel_size) != 1:
-        raise ValueError(
-            'Causal padding is only implemented for 1D convolutions.')
-      left_pad = kernel_dilation[0] * (kernel_size[0] - 1)
-      pads = [(0, 0), (left_pad, 0), (0, 0)]
-      inputs = jnp.pad(inputs, pads)
-      padding_lax = 'VALID'
+        # Combine all input batch dimensions into a single leading batch axis.
+        num_batch_dimensions = inputs.ndim - (len(kernel_size) + 1)
+        if num_batch_dimensions != 1:
+            input_batch_shape = inputs.shape[:num_batch_dimensions]
+            total_batch_size = int(np.prod(input_batch_shape))
+            flat_input_shape = (
+                    (total_batch_size,) + inputs.shape[num_batch_dimensions:])
+            inputs = jnp.reshape(inputs, flat_input_shape)
 
-    dimension_numbers = _conv_dimension_numbers(inputs.shape)
-    in_features = jnp.shape(inputs)[-1]
+        # self.strides or (1,) * (inputs.ndim - 2)
+        strides = maybe_broadcast(self.strides)
+        input_dilation = maybe_broadcast(self.input_dilation)
+        kernel_dilation = maybe_broadcast(self.kernel_dilation)
 
-    if self.shared_weights:
-      # One shared convolutional kernel for all pixels in the output.
-      assert in_features % self.feature_group_count == 0
-      kernel_shape = kernel_size + (
-          in_features // self.feature_group_count * 2, self.features)
+        padding_lax = canonicalize_padding(self.padding, len(kernel_size))
+        if padding_lax == 'CIRCULAR':
+            kernel_size_dilated = [
+                (k - 1) * d + 1 for k, d in zip(kernel_size, kernel_dilation)
+            ]
+            zero_pad: List[Tuple[int, int]] = [(0, 0)]
+            pads = (zero_pad + [((k - 1) // 2, k // 2) for k in kernel_size_dilated] +
+                    [(0, 0)])
+            inputs = jnp.pad(inputs, pads, mode='wrap')
+            padding_lax = 'VALID'
+        elif padding_lax == 'CAUSAL':
+            if len(kernel_size) != 1:
+                raise ValueError(
+                    'Causal padding is only implemented for 1D convolutions.')
+            left_pad = kernel_dilation[0] * (kernel_size[0] - 1)
+            pads = [(0, 0), (left_pad, 0), (0, 0)]
+            inputs = jnp.pad(inputs, pads)
+            padding_lax = 'VALID'
 
-    else:
-      if self.feature_group_count != 1:
-        raise NotImplementedError(
-            f'`lax.conv_general_dilated_local` does not support '
-            f'`feature_group_count != 1`, got `{self.feature_group_count}`.'
-        )
+        dimension_numbers = _conv_dimension_numbers(inputs.shape)
+        in_features = jnp.shape(inputs)[-1]
 
-      # Need to know the spatial output shape of a standard convolution to
-      # create the unshared convolution kernel.
-      conv_output_shape = eval_shape(
-          lambda lhs, rhs: lax.conv_general_dilated(  # pylint: disable=g-long-lambda
-              lhs=lhs,
-              rhs=rhs,
-              window_strides=strides,
-              padding=padding_lax,
-              dimension_numbers=dimension_numbers,
-              lhs_dilation=input_dilation,
-              rhs_dilation=kernel_dilation,
-          ),
-          inputs,
-          ShapedArray(kernel_size + (in_features, self.features), inputs.dtype)
-      ).shape
+        if self.shared_weights:
+            # One shared convolutional kernel for all pixels in the output.
+            assert in_features % self.feature_group_count == 0
+            kernel_shape = kernel_size + (
+                in_features // self.feature_group_count * 2, self.features)
 
-      # One (unshared) convolutional kernel per each pixel in the output.
-      kernel_shape = conv_output_shape[1:-1] + (np.prod(kernel_size) *
-                                                in_features, self.features)
+        else:
+            if self.feature_group_count != 1:
+                raise NotImplementedError(
+                    f'`lax.conv_general_dilated_local` does not support '
+                    f'`feature_group_count != 1`, got `{self.feature_group_count}`.'
+                )
 
-    if self.mask is not None and self.mask.shape != kernel_shape:
-      raise ValueError('Mask needs to have the same shape as weights. '
-                       f'Shapes are: {self.mask.shape}, {kernel_shape}')
+            # Need to know the spatial output shape of a standard convolution to
+            # create the unshared convolution kernel.
+            conv_output_shape = eval_shape(
+                lambda lhs, rhs: lax.conv_general_dilated(  # pylint: disable=g-long-lambda
+                    lhs=lhs,
+                    rhs=rhs,
+                    window_strides=strides,
+                    padding=padding_lax,
+                    dimension_numbers=dimension_numbers,
+                    lhs_dilation=input_dilation,
+                    rhs_dilation=kernel_dilation,
+                ),
+                inputs,
+                ShapedArray(kernel_size + (in_features, self.features), inputs.dtype)
+            ).shape
 
-    kernel = self.param('kernel', self.kernel_init, kernel_shape,
-                        self.param_dtype)
-    kernel2 = self.param('kernel2', self.kernel_init, kernel_shape,
-                        self.param_dtype)
+            # One (unshared) convolutional kernel per each pixel in the output.
+            kernel_shape = conv_output_shape[1:-1] + (np.prod(kernel_size) *
+                                                      in_features, self.features)
 
-    if self.mask is not None:
-      kernel *= self.mask
+        if self.mask is not None and self.mask.shape != kernel_shape:
+            raise ValueError('Mask needs to have the same shape as weights. '
+                             f'Shapes are: {self.mask.shape}, {kernel_shape}')
 
-    if self.use_bias:
-      if self.shared_weights:
-        # One bias weight per output channel, shared between pixels.
-        bias_shape = (self.features,)
-      else:
-        # One bias weight per output entry, unshared betwen pixels.
-        bias_shape = conv_output_shape[1:]
+        kernel = self.param('kernel', self.kernel_init, kernel_shape,
+                            self.param_dtype)
+        kernel2 = self.param('kernel2', self.kernel_init, kernel_shape,
+                             self.param_dtype)
 
-      bias = self.param('bias', self.bias_init, bias_shape, self.param_dtype)
-    else:
-      bias = None
+        if self.mask is not None:
+            kernel *= self.mask
 
-    inputs, kernel, bias = promote_dtype(inputs, kernel, bias, dtype=self.dtype)
-
-    @jax.custom_gradient
-    def _conv(x, w0, w1):
-        def _fn(a, b):
+        if self.use_bias:
             if self.shared_weights:
-                return lax.conv_general_dilated(
-            a,
-            b,
-            strides,
-            padding_lax,
-            lhs_dilation=input_dilation,
-            rhs_dilation=kernel_dilation,
-            dimension_numbers=dimension_numbers,
-            feature_group_count=self.feature_group_count,
-            precision=self.precision
-        )
-            return lax.conv_general_dilated_local(
-          lhs=a,
-          rhs=b,
-          window_strides=strides,
-          padding=padding_lax,
-          filter_shape=kernel_size,
-          lhs_dilation=input_dilation,
-          rhs_dilation=kernel_dilation,
-          dimension_numbers=dimension_numbers,
-          precision=self.precision
-      )
-        def _grad(dy):
-            dy0, _ = jax.vjp(_fn, x, w0)[1](dy)
-            dy1, dwgt1 = jax.vjp(_fn, communicate(x), w1)[1](dy)
-            left, right = jnp.split(dy1, 2, -1)
-            right, left = rotate(right, left)
-            return dy0 + jnp.concatenate([left, right], -1), None, dwgt1
-        return _fn(x, w0) + _fn(communicate(x), w1), _grad
+                # One bias weight per output channel, shared between pixels.
+                bias_shape = (self.features,)
+            else:
+                # One bias weight per output entry, unshared betwen pixels.
+                bias_shape = conv_output_shape[1:]
 
-    y = _conv(inputs, kernel, kernel2)
+            bias = self.param('bias', self.bias_init, bias_shape, self.param_dtype)
+        else:
+            bias = None
 
-    if self.use_bias:
-      bias = bias.reshape((1,) * (y.ndim - bias.ndim) + bias.shape)
-      y += bias
+        inputs, kernel, bias = promote_dtype(inputs, kernel, bias, dtype=self.dtype)
 
-    if num_batch_dimensions != 1:
-      output_shape = input_batch_shape + y.shape[1:]
-      y = jnp.reshape(y, output_shape)
+        @jax.custom_gradient
+        def _conv(x, w0, w1):
+            def _fn(a, b):
+                if self.shared_weights:
+                    return lax.conv_general_dilated(
+                        a,
+                        b,
+                        strides,
+                        padding_lax,
+                        lhs_dilation=input_dilation,
+                        rhs_dilation=kernel_dilation,
+                        dimension_numbers=dimension_numbers,
+                        feature_group_count=self.feature_group_count,
+                        precision=self.precision
+                    )
+                return lax.conv_general_dilated_local(
+                    lhs=a,
+                    rhs=b,
+                    window_strides=strides,
+                    padding=padding_lax,
+                    filter_shape=kernel_size,
+                    lhs_dilation=input_dilation,
+                    rhs_dilation=kernel_dilation,
+                    dimension_numbers=dimension_numbers,
+                    precision=self.precision
+                )
 
-    return y
+            def _grad(dy):
+                dy0, _ = jax.vjp(_fn, x, w0)[1](dy)
+                dy1, dwgt1 = jax.vjp(_fn, communicate(x), w1)[1](dy)
+                left, right = jnp.split(dy1, 2, -1)
+                right, left = rotate(right, left)
+                return dy0 + jnp.concatenate([left, right], -1), None, dwgt1
+
+            return _fn(x, w0) + _fn(communicate(x), w1), _grad
+
+        y = _conv(inputs, kernel, kernel2)
+
+        if self.use_bias:
+            bias = bias.reshape((1,) * (y.ndim - bias.ndim) + bias.shape)
+            y += bias
+
+        if num_batch_dimensions != 1:
+            output_shape = input_batch_shape + y.shape[1:]
+            y = jnp.reshape(y, output_shape)
+
+        return y
+
 
 _original_call = nn.Conv.__call__
 
 _patched_call = _Conv.__call__
 
+
 def rotate(left: jax.Array, right: jax.Array):
     return (lax.ppermute(left, "batch", [(i, (i + 1) % jax.device_count()) for i in range(jax.device_count())]),
             lax.ppermute(right, "batch", [((i + 1) % jax.device_count(), i) for i in range(jax.device_count())]))
+
 
 def communicate(x: jax.Array):
     left, right = jnp.split(x, 2, -1)
     left, right = rotate(left, right)
     return jnp.concatenate([left, right], -1)
+
 
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     global _SHUFFLE
@@ -386,7 +421,9 @@ def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
         out = _original_call(self, inputs)
     return out
 
-nn.Conv.__call__ = conv_call 
+
+nn.Conv.__call__ = conv_call
+
 
 #####END_CONV_PATCH#####
 
@@ -438,15 +475,22 @@ def ema(x, y, beta, step):
     return out / (1 - beta ** step), out
 
 
-def del_kernel(dct: Union[Dict[str, Any], jax.Array]
-                ) -> Union[Dict[str, Any], jax.Array]:
+def only_kernel2(dct: Union[Dict[str, Any], jax.Array]) -> Union[Dict[str, Any], jax.Array]:
     new = {}
     for k, v in dct.items():
-        if k == "kernel":
-            continue
+        if k == "kernel2":
+            new[k] = v
         elif isinstance(v, dict):
-            new[k] = del_kernel(v)
-        else:
+            new[k] = only_kernel2(v)
+    return new
+
+
+def ne_kernel2(dct: Union[Dict[str, Any], jax.Array]) -> Union[Dict[str, Any], jax.Array]:
+    new = {}
+    for k, v in dct.items():
+        if isinstance(v, dict):
+            new[k] = only_kernel2(v)
+        elif k != "kernel2":
             new[k] = v
     return new
 
@@ -457,14 +501,14 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule,
         return jnp.zeros_like(x, dtype=jnp.bfloat16)
 
     def init_fn(params):
-        params = del_kernel(params)
+        params = only_kernel2(params)
         return {"mu": jax.tree_util.tree_map(zero, params),
                 "nu": jax.tree_util.tree_map(zero, params), "count": jnp.zeros((), dtype=jnp.int64)}
 
     def update_fn(updates, state, params=None):
         count = state["count"] + 1
-        updates = del_kernel(updates)
-        params = del_kernel(params)
+        updates = only_kernel2(updates)
+        params = only_kernel2(params)
 
         def get_update(grad: jax.Array, param: jax.Array, mu: jax.Array, nu: jax.Array):
             dtype = mu.dtype
@@ -478,8 +522,9 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule,
             muc, mu = ema(grad, mu, b1, count)
 
             update = lax.sign(muc)
-
-            update *= jnp.linalg.norm(muc) / clip_norm(update, 1e-8) * -lr(count)
+            update *= jnp.linalg.norm(muc) / clip_norm(update, 1e-8)
+            update += param * 0.01
+            update *= -lr(count)
             return update, mu.astype(dtype), nu.astype(dtype)
 
         leaves, treedef = jax.tree_util.tree_flatten(updates)
@@ -602,7 +647,6 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     def rng_synced(idx: jax.Array):
         return jax.random.PRNGKey(idx)
 
-
     def sample(unet_params, batch: Dict[str, Union[np.ndarray, int]]):
         batch = all_to_all_batch(batch)
         batch = jax.tree_map(lambda x: x[0], batch)
@@ -642,7 +686,6 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         out = out.transpose(0, 2, 3, 4, 1) / 0.18215  # NCHW -> NHWC + remove latent folding
         return jnp.concatenate([sample_vae(x) for x in [hidden_mode] + list(out)])
 
-
     def distance(x, y):
         dist = x - y
         dist_sq = lax.square(dist).mean()
@@ -665,9 +708,11 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         _, (all_vae_out, all_encoded) = lax.scan(_vae_apply, None, batch)
         print(all_vae_out[0].shape, batch["pixel_values"].shape)
         all_encoded = all_encoded.reshape(all_encoded.shape[0], *all_encoded.shape[2:])  # remove batch dim
+        no_k2_params = ne_kernel2(outer_state.params)
 
-        def _loss(params, inp):
+        def _loss(k2_params, inp):
             global _SHUFFLE
+            params = {**k2_params, **no_k2_params}
             itr, (v_mean, v_std), encoded = inp
             encoded = encoded.astype(jnp.float32)
 
@@ -698,9 +743,10 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
         def _outer(state: TrainState, k):
             ix, av, ae = k
-            out = _grad(state.params, (ix[0], (av[0][0], av[1][0]), ae[0]))
+            params = only_kernel2(state.params)
+            out = _grad(params, (ix[0], (av[0][0], av[1][0]), ae[0]))
             inp = ix[1:], (av[0][1:], av[1][1:]), ae[1:]
-            out, _ = lax.scan(_inner(state.params), out, inp)
+            out, _ = lax.scan(_inner(params), out, inp)
             scalars, grads = lax.psum(out, "batch")  # we can sum because we divide by device_count^2 above
             return state.apply_gradients(grads=grads), scalars
 
@@ -721,10 +767,9 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     p_sample = jax.pmap(sample, "batch")
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
-    
+
     unet_state = jax_utils.replicate(unet_state)
 
-    
     def to_img(x: jax.Array) -> wandb.Image:
         return wandb.Image(x.reshape(-1, resolution, 3))
 
@@ -736,7 +781,8 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         for i, (vid, ids, msk) in tqdm.tqdm(enumerate(data, 1)):
             global_step += 1
             pid = f'{jax.process_index() * context * jax.local_device_count()}-{(jax.process_index() + 1) * context * jax.local_device_count() - 1}'
-            batch = {"pixel_values": vid.astype(jnp.uint8).reshape(jax.local_device_count(), video_group * jax.device_count(), -1),
+            batch = {"pixel_values": vid.astype(jnp.uint8).reshape(jax.local_device_count(),
+                                                                   video_group * jax.device_count(), -1),
                      "input_ids": ids.astype(jnp.int32).reshape(jax.local_device_count(),
                                                                 video_group * jax.device_count(), clip_tokens),
                      "idx": jnp.full((jax.local_device_count(),),
@@ -753,7 +799,6 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
                 for rid, g in enumerate(rec):
                     extra[f"Samples/Reconstruction (U-Net, Guidance {2 ** rid}) {pid}"] = to_img(g)
                 log("Finished sampling")
-
 
             i *= lsteps
 
