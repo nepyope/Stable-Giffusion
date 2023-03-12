@@ -413,23 +413,15 @@ def communicate(x: jax.Array):
 
 
 def deepmerge(dct0, dct1):
-    new = {}
-    for k, v in dct0.items():
-        if isinstance(v, dict):
-            new[k] = deepmerge(v, dct1.get(k, {}))
-        else:
-            new[k] = v
+    new = dct0.copy()
     for k, v in dct1.items():
-        if isinstance(v, dict):
-            if k in new:
-                new[k] = deepmerge(new[k], deepmerge(v, dct0.get(k, {})))
-            else:
-                new[k] = deepmerge(v, dct0.get(k, {}))
-            continue
-        if k in new:
-            print("Duplicate key", k)
-        else:
+        if k not in new:
             new[k] = v
+            continue
+        if isinstance(v, dict):
+            new[k] = deepmerge(new.get(k, {}), v)
+        else:
+            print("Duplicate key", k)
     return new
 
 
