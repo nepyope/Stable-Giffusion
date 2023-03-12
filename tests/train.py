@@ -118,7 +118,7 @@ class Dense2(Module):
                              self.kernel_init,
                              (jnp.shape(inputs)[-1], self.features),
                              self.param_dtype)
-        kernel2 = promote_dtype(kernel2, dtype=self.dtype)
+        kernel2, = promote_dtype(kernel2, dtype=self.dtype)
 
         @jax.custom_gradient
         def _call(a, b, c):
