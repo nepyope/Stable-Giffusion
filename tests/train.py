@@ -412,6 +412,23 @@ def communicate(x: jax.Array):
     return jnp.concatenate([left, right], -1)
 
 
+def deepmerge(dct0, dct1):
+    new = {}
+    for k, v in dct0.items():
+        if isinstance(v, dict):
+            new[k] = deepmerge(v, dct1.get(k, {}))
+        else:
+            new[k] = v
+    for k, v in dct1.items():
+        if isinstance(v, dict):
+            continue
+        if k in new:
+            print("Duplicate key", k)
+        else:
+            new[k] = v
+    return new
+
+
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     global _SHUFFLE
     inputs = jnp.asarray(inputs, self.dtype)
@@ -712,7 +729,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
         def _loss(k2_params, inp):
             global _SHUFFLE
-            params = {**k2_params, **no_k2_params}
+            params = deepmerge(k2_params, no_k2_params)
             itr, (v_mean, v_std), encoded = inp
             encoded = encoded.astype(jnp.float32)
 
