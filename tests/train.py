@@ -660,7 +660,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     def rng_synced(idx: jax.Array):
         return jax.random.PRNGKey(idx)
 
-    def sample(k2_params, batch: Dict[str, Union[np.ndarray, int]]):
+    def sample(k2_params, no_k2_params, batch: Dict[str, Union[np.ndarray, int]]):
         batch = all_to_all_batch(batch)
         batch = jax.tree_map(lambda x: x[0], batch)
         latent_rng, sample_rng, noise_rng, step_rng = jax.random.split(rng(batch["idx"]), 4)
@@ -706,7 +706,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         dist_abs = lax.abs(dist).mean()
         return dist_sq / jax.device_count() ** 2, dist_abs / jax.device_count() ** 2
 
-    def train_step(outer_state: TrainState, batch: Dict[str, jax.Array]):
+    def train_step(outer_state: TrainState, no_k2_params, batch: Dict[str, jax.Array]):
         batch = all_to_all_batch(batch)
 
         def _vae_apply(_, b):
@@ -782,6 +782,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
 
     unet_state = jax_utils.replicate(unet_state)
+    no_k2_params = jax_utils.replicate(no_k2_params)
 
     def to_img(x: jax.Array) -> wandb.Image:
         return wandb.Image(x.reshape(-1, resolution, 3))
@@ -807,7 +808,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
             if i % (sample_interval // lsteps) == 1:
                 log("Sampling")
-                sample_out = p_sample(unet_state.params, batch)
+                sample_out = p_sample(unet_state.params, no_k2_params, batch)
                 s_mode, *rec = np.split(to_host(sample_out, lambda x: x), 5, 1)
                 for rid, g in enumerate(rec):
                     extra[f"Samples/Reconstruction (U-Net, Guidance {2 ** rid}) {pid}"] = to_img(g)
@@ -816,7 +817,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             i *= lsteps
 
             log(f"Before step {i}")
-            unet_state, scalars = p_train_step(unet_state, batch)
+            unet_state, scalars = p_train_step(unet_state, no_k2_params, batch)
             log("After")
 
             timediff = time.time() - start_time
