@@ -533,7 +533,7 @@ def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule,
 
             update = lax.sign(muc)
             update *= jnp.linalg.norm(muc) / clip_norm(update, 1e-8)
-            update += param * 0.01
+            update += param * 0.1
             update *= -lr(count)
             return update, mu.astype(dtype), nu.astype(dtype)
 
