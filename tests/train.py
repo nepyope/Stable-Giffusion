@@ -375,7 +375,7 @@ def rotate(left: jax.Array, right: jax.Array):
 def communicate(x: jax.Array):
     left, right = jnp.split(x, 2, -1)
     left, right = rotate(left, right)
-    return jnp.concatenate([x, left, right], -1)
+    return jnp.concatenate([left, right], -1)
 
 def conv_call(self: nn.Conv, inputs: jax.Array) -> jax.Array:
     global _SHUFFLE
