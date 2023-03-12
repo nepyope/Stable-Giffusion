@@ -779,7 +779,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
         return outer_state, (scalars[0].reshape(-1), scalars[1].reshape(-1))
 
     p_sample = jax.pmap(sample, "batch")
-    p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
+    p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 2))
 
     unet_state = jax_utils.replicate(unet_state)
     no_k2_params = jax_utils.replicate(no_k2_params)
