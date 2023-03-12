@@ -292,7 +292,7 @@ class _Conv(Module):
             # One shared convolutional kernel for all pixels in the output.
             assert in_features % self.feature_group_count == 0
             kernel_shape = kernel_size + (
-                in_features // self.feature_group_count * 2, self.features)
+                in_features // self.feature_group_count, self.features)
 
         else:
             if self.feature_group_count != 1:
