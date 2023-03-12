@@ -561,7 +561,7 @@ def compile_fn(fn, name: str):
 
 def filter_dict(dct: Union[Dict[str, Any], jax.Array]
                 ) -> Union[Dict[str, Any], jax.Array]:
-    for k, v in dct.items():
+    for k, v in list(dct.items()):
         if k == "kernel":
             dct[k + "2"] = v * 0.00001
             print(0, k, v.shape, dct[k].shape)
