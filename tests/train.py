@@ -563,7 +563,7 @@ def filter_dict(dct: Union[Dict[str, Any], jax.Array]
                 ) -> Union[Dict[str, Any], jax.Array]:
     for k, v in dct.items():
         if k == "kernel":
-            dct[k + 2] = v * 0.00001
+            dct[k + "2"] = v * 0.00001
             print(0, k, v.shape, dct[k].shape)
         elif isinstance(v, dict):
             print(1, k)
