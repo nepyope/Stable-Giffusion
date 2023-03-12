@@ -290,13 +290,15 @@ class _Conv(Module):
 
       # One (unshared) convolutional kernel per each pixel in the output.
       kernel_shape = conv_output_shape[1:-1] + (np.prod(kernel_size) *
-                                                in_features * 2, self.features)
+                                                in_features, self.features)
 
     if self.mask is not None and self.mask.shape != kernel_shape:
       raise ValueError('Mask needs to have the same shape as weights. '
                        f'Shapes are: {self.mask.shape}, {kernel_shape}')
 
     kernel = self.param('kernel', self.kernel_init, kernel_shape,
+                        self.param_dtype)
+    kernel2 = self.param('kernel2', self.kernel_init, kernel_shape,
                         self.param_dtype)
 
     if self.mask is not None:
@@ -317,7 +319,7 @@ class _Conv(Module):
     inputs, kernel, bias = promote_dtype(inputs, kernel, bias, dtype=self.dtype)
 
     @jax.custom_gradient
-    def _conv(x, w):
+    def _conv(x, w0, w1):
         def _fn(a, b):
             if self.shared_weights:
                 return lax.conv_general_dilated(
@@ -343,15 +345,14 @@ class _Conv(Module):
           precision=self.precision
       )
         def _grad(dy):
-            inp = communicate(x)
-            dy, dwgt = jax.vjp(_fn, inp, w)[1](dy)
-            mid, lr = jnp.split(dy, 2, -1)
-            left, right = jnp.split(lr, 2, -1)
+            dy0, _ = jax.vjp(_fn, x, w0)[1](dy)
+            dy1, dwgt1 = jax.vjp(_fn, communicate(x), w1)[1](dy)
+            left, right = jnp.split(dy1, 2, -1)
             right, left = rotate(right, left)
-            return mid + jnp.concatenate([left, right], -1), dwgt
-        return _fn(communicate(x), w), _grad
+            return dy0 + jnp.concatenate([left, right], -1), None, dwgt1
+        return _fn(x, w0) + _fn(communicate(x), w1), _grad
 
-    y = _conv(inputs, kernel)
+    y = _conv(inputs, kernel, kernel2)
 
     if self.use_bias:
       bias = bias.reshape((1,) * (y.ndim - bias.ndim) + bias.shape)
@@ -437,17 +438,33 @@ def ema(x, y, beta, step):
     return out / (1 - beta ** step), out
 
 
+def del_kernel(dct: Union[Dict[str, Any], jax.Array]
+                ) -> Union[Dict[str, Any], jax.Array]:
+    new = {}
+    for k, v in dct.items():
+        if k == "kernel":
+            continue
+        elif isinstance(v, dict):
+            new[k] = del_kernel(v)
+        else:
+            new[k] = v
+    return new
+
+
 def scale_by_laprop(b1: float, b2: float, eps: float, lr: optax.Schedule,
                     clip: float = 1e-2) -> GradientTransformation:  # adam+lion
     def zero(x):
         return jnp.zeros_like(x, dtype=jnp.bfloat16)
 
     def init_fn(params):
+        params = del_kernel(params)
         return {"mu": jax.tree_util.tree_map(zero, params),
                 "nu": jax.tree_util.tree_map(zero, params), "count": jnp.zeros((), dtype=jnp.int64)}
 
     def update_fn(updates, state, params=None):
         count = state["count"] + 1
+        updates = del_kernel(updates)
+        params = del_kernel(params)
 
         def get_update(grad: jax.Array, param: jax.Array, mu: jax.Array, nu: jax.Array):
             dtype = mu.dtype
@@ -501,7 +518,7 @@ def filter_dict(dct: Union[Dict[str, Any], jax.Array]
                 ) -> Union[Dict[str, Any], jax.Array]:
     for k, v in dct.items():
         if k == "kernel":
-            dct[k] = jnp.concatenate([v] + [v * 0.00001] * 1, -2)
+            dct[k + 2] = v * 0.00001
             print(0, k, v.shape, dct[k].shape)
         elif isinstance(v, dict):
             print(1, k)
