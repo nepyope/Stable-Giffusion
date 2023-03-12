@@ -510,7 +510,7 @@ def ne_kernel2(dct: Union[Dict[str, Any], jax.Array]) -> Union[Dict[str, Any], j
     new = {}
     for k, v in dct.items():
         if isinstance(v, dict):
-            new[k] = only_kernel2(v)
+            new[k] = ne_kernel2(v)
         elif k != "kernel2":
             new[k] = v
     return new
