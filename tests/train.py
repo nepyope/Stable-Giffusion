@@ -13,7 +13,7 @@ import smart_open
 import tqdm
 import typer
 import wandb
-from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel, FlaxPNDMScheduler
+from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel, FlaxDDIMScheduler
 from diffusers.models.attention_flax import FlaxAttentionBlock
 from flax import jax_utils
 from flax import linen as nn
@@ -625,7 +625,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
 
     unet_state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
-    noise_scheduler, sched_state = FlaxPNDMScheduler.from_pretrained(base_model, subfolder="scheduler")
+    noise_scheduler, sched_state = FlaxDDIMScheduler.from_pretrained(base_model, subfolder="scheduler")
     schedule_length = len(noise_scheduler)
     unconditioned_tokens = tokenizer([""], padding="max_length", max_length=77, return_tensors="np")
 
@@ -743,7 +743,7 @@ def main(lr: float = 5e-7, beta1: float = 0.9, beta2: float = 0.99, eps: float =
             noisy_latents = noise_scheduler.add_noise(sched_state, latents, noise, t0)
 
             unet_pred = unet_fn(noisy_latents, encoded, t0, params)
-            return distance(unet_pred, noise)
+            return distance(unet_pred, latents)
 
         def _grad(params, inp):
             return jax.value_and_grad(lambda x: _loss(x, inp), has_aux=True)(params)
